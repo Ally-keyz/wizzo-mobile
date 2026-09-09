@@ -1,0 +1,9 @@
+# Production signing (gitignored). After creating your upload keystore, copy
+# this file to key.properties and fill in the values. Never commit real
+# passwords. The default signing ceremony lives in the Android docs:
+#   keytool -genkey -v -keystore ~/keystores/wizzo-upload.jks -keyalg RSA \
+#     -keysize 2048 -validity 10000 -alias upload
+storeFile=../keystore/wizzo-upload.jks
+storePassword=REPLACE_ME
+keyAlias=upload
+keyPassword=REPLACE_ME

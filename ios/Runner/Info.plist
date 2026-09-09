@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>CFBundleDevelopmentRegion</key>
+		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<key>CFBundleDisplayName</key>
+		<string>Wizzo Market</string>
+		<key>CFBundleExecutable</key>
+		<string>$(EXECUTABLE_NAME)</string>
+		<key>CFBundleIdentifier</key>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<key>CFBundleInfoDictionaryVersion</key>
+		<string>6.0</string>
+		<key>CFBundleName</key>
+		<string>wizzo_market</string>
+		<key>CFBundlePackageType</key>
+		<string>APPL</string>
+		<key>CFBundleShortVersionString</key>
+		<string>$(FLUTTER_BUILD_NAME)</string>
+		<key>CFBundleSignature</key>
+		<string>????</string>
+		<key>CFBundleVersion</key>
+		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>LSRequiresIPhoneOS</key>
+		<true/>
+		<key>UILaunchStoryboardName</key>
+		<string>LaunchScreen</string>
+		<key>UIMainStoryboardFile</key>
+		<string>Main</string>
+		<key>UISupportedInterfaceOrientations</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>UISupportedInterfaceOrientations~ipad</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationPortraitUpsideDown</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+		<true/>
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
+		<key>UIStatusBarHidden</key>
+		<false/>
+		<!-- Permission usage descriptions (App Store review requires these). -->
+		<key>NSCameraUsageDescription</key>
+		<string>Wizzo uses the camera to take product photos or a profile picture for your store.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Wizzo accesses your photo library so you can pick product images and profile pictures.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Wizzo uses the microphone when recording product videos.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Wizzo uses your location to show nearby sellers and delivery areas on the map.</string>
+		<!--
+		  Google Sign-In: replace the scheme suffix with this app's dedicated
+		  iOS OAuth client (Google Cloud Console → Credentials → OAuth 2.0
+		  Client IDs for iOS → Client ID), reversed as a URL scheme, and drop
+		  the matching GoogleService-Info.plist into ios/Runner/.
+		-->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.REPLACE_WITH_IOS_CLIENT_ID</string>
+				</array>
+			</dict>
+		</array>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
+	</dict>
+</plist>
