@@ -35,6 +35,13 @@ const _googlePayConfig = {
       },
     ],
     'merchantInfo': {'merchantName': 'Wizzo'},
+    // Required by pay_android: it does `getJSONObject("transactionInfo")`
+    // while building the PaymentDataRequest. totalPrice/status are
+    // overwritten from the PaymentItem, but the key must exist.
+    'transactionInfo': {
+      'currencyCode': AppConfig.currencyCode,
+      'totalPriceStatus': 'FINAL',
+    },
     'environment': 'TEST',
   },
 };
@@ -286,6 +293,18 @@ class PaymentStep extends StatelessWidget {
                   if (result is Map<String, dynamic>) {
                     onGooglePayResult(result);
                   }
+                },
+                onError: (error) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Google Pay: $error',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      backgroundColor: theme.colorScheme.error,
+                    ),
+                  );
                 },
                 loadingIndicator: const SizedBox(
                   width: 20,
