@@ -2,10 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/w_widgets.dart';
 import '../../account/data/account_repository.dart';
 import '../../account/models/profile.dart';
@@ -39,13 +36,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String? _selectedAddressId;
   DeliveryKind _delivery = DeliveryKind.standard;
   final Map<String, PaymentKind> _methods = {};
-  final Map<String, PaymentProof> _proofs = {};
   final Map<String, SellerPaymentInfo> _paymentAccounts = {};
   String _momoPhone = '';
   String? _googlePayToken;
   Set<String> _loadedAccountIds = const {};
   String? _error;
-  final _picker = ImagePicker();
 
   void _maybeLoadPaymentAccounts(CartData cart) {
     final ids = cart.groups
@@ -103,70 +98,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(context.tr('addresses.saveFailed',
-                  namedArgs: {'error': '$e'}))),
-        );
-      }
-    }
-  }
-
-  Future<void> _uploadProof(String sellerId) async {
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: Text(context.tr('common.gallery')),
-              onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: Text(context.tr('common.takePhoto')),
-              onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-    if (source == null || !mounted) return;
-
-    final XFile? picked;
-    try {
-      picked = await _picker.pickImage(source: source, imageQuality: 80);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(context.tr('common.cameraFailed',
-                  namedArgs: {'error': '$e'}))),
-        );
-      }
-      return;
-    }
-    if (picked == null || !mounted) return;
-    final file = picked;
-
-    try {
-      final url =
-          await ref.read(checkoutRepositoryProvider).uploadImage(file.path);
-      if (mounted) {
-        final method = _methods[sellerId] ?? PaymentKind.momo;
-        setState(() {
-          _proofs[sellerId] = PaymentProof(
-            method: method,
-            proofUrl: url,
-            proofName: file.name,
-          );
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(context.tr('common.uploadFailed',
                   namedArgs: {'error': '$e'}))),
         );
       }
@@ -265,8 +196,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             'sellerId': g.sellerId,
             'paymentMethod':
                 (_methods[g.sellerId] ?? PaymentKind.momo).apiValue,
-            if (_proofs[g.sellerId] != null)
-              'proof': _proofs[g.sellerId]!.toApi(),
           },
       ];
 
@@ -286,7 +215,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             deliveryOption: deliveryOption,
             deliveryAddressId:
                 _delivery == DeliveryKind.pickup ? null : address.id,
-            proofSubmittedSellerIds: _proofs.keys.toList(),
             paymentMethod: onlineMethod,
             paymentDetails: paymentDetails,
           );
@@ -319,7 +247,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildBody() {
-    final theme = Theme.of(context);
     final cartAsync = ref.watch(cartProvider);
     final addressesAsync = ref.watch(addressesProvider);
 
@@ -372,7 +299,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     PaymentStep(
                       cart: cart,
                       methods: _methods,
-                      proofs: _proofs,
                       paymentAccounts: _paymentAccounts,
                       momoPhone: _momoPhone,
                       totalAmount: total,
@@ -381,9 +307,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       placing: _placing,
                       onMethodSelected: (sellerId, kind) =>
                           setState(() => _methods[sellerId] = kind),
-                      onUploadProof: _uploadProof,
-                      onRemoveProof: (sellerId) =>
-                          setState(() => _proofs.remove(sellerId)),
                       onMomoPhoneChanged: (phone) =>
                           setState(() => _momoPhone = phone),
                       onToggleTerms: () => setState(

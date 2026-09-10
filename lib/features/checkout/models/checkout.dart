@@ -101,27 +101,6 @@ class PaymentOption {
   ];
 }
 
-/// A completed proof-of-payment attachment for a non-COD seller order.
-class PaymentProof {
-  const PaymentProof({
-    required this.method,
-    this.reference,
-    this.proofUrl,
-    this.proofName,
-  });
-
-  final PaymentKind method;
-  final String? reference;
-  final String? proofUrl;
-  final String? proofName;
-
-  Map<String, dynamic> toApi() => {
-        if (reference != null && reference!.isNotEmpty) 'transactionReference': reference,
-        if (proofUrl != null && proofUrl!.isNotEmpty) 'proofUrl': proofUrl,
-        if (proofName != null && proofName!.isNotEmpty) 'proofName': proofName,
-      };
-}
-
 /// Seller-configured destination for a manual payment (mobile money / bank).
 class SellerPaymentAccount {
   const SellerPaymentAccount({
@@ -225,7 +204,6 @@ class PlacementSummary {
     this.email,
     this.deliveryAddress,
     this.sellerOrders = const [],
-    this.proofSubmittedSellerIds = const [],
   });
 
   final String orderId;
@@ -243,16 +221,7 @@ class PlacementSummary {
   /// Per-seller orders created by checkout — used on the confirmation page.
   final List<SellerOrderReceipt> sellerOrders;
 
-  /// Seller user ids that already had payment proof attached at checkout.
-  final List<String> proofSubmittedSellerIds;
-
-  bool hasProofFor(String sellerUserId) =>
-      proofSubmittedSellerIds.contains(sellerUserId);
-
-  factory PlacementSummary.fromApi(
-    dynamic json, {
-    List<String> proofSubmittedSellerIds = const [],
-  }) {
+  factory PlacementSummary.fromApi(dynamic json) {
     if (json is! Map<String, dynamic>) {
       return const PlacementSummary(orderId: '');
     }
@@ -287,7 +256,6 @@ class PlacementSummary {
       sellerOrders: rawSellers is List
           ? rawSellers.map(SellerOrderReceipt.fromApi).toList()
           : const [],
-      proofSubmittedSellerIds: proofSubmittedSellerIds,
     );
   }
 }

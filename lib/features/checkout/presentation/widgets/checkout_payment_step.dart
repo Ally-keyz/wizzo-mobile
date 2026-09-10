@@ -44,7 +44,6 @@ class PaymentStep extends StatelessWidget {
     super.key,
     required this.cart,
     required this.methods,
-    required this.proofs,
     required this.paymentAccounts,
     required this.momoPhone,
     required this.totalAmount,
@@ -52,8 +51,6 @@ class PaymentStep extends StatelessWidget {
     this.error,
     this.placing = false,
     required this.onMethodSelected,
-    required this.onUploadProof,
-    required this.onRemoveProof,
     required this.onMomoPhoneChanged,
     required this.onToggleTerms,
     required this.onGooglePayResult,
@@ -62,7 +59,6 @@ class PaymentStep extends StatelessWidget {
 
   final CartData cart;
   final Map<String, PaymentKind> methods;
-  final Map<String, PaymentProof> proofs;
   final Map<String, SellerPaymentInfo> paymentAccounts;
   final String momoPhone;
   final num totalAmount;
@@ -70,8 +66,6 @@ class PaymentStep extends StatelessWidget {
   final String? error;
   final bool placing;
   final void Function(String sellerId, PaymentKind kind) onMethodSelected;
-  final void Function(String sellerId) onUploadProof;
-  final void Function(String sellerId) onRemoveProof;
   final void Function(String phone) onMomoPhoneChanged;
   final VoidCallback onToggleTerms;
   final void Function(Map<String, dynamic> result) onGooglePayResult;
@@ -183,7 +177,6 @@ class PaymentStep extends StatelessWidget {
   Widget _sellerCard(
       BuildContext context, ThemeData theme, CartSellerGroup group) {
     final method = methods[group.sellerId] ?? PaymentKind.momo;
-    final proof = proofs[group.sellerId];
     final isOnlineMethod = method == PaymentKind.googlePay;
     final needsPhone = method == PaymentKind.momo;
     final account = accountFor(group.sellerId, method);
@@ -309,18 +302,6 @@ class PaymentStep extends StatelessWidget {
                 method: method,
                 account: account,
                 amount: group.subtotal,
-              ),
-            ),
-          ],
-          if (method == PaymentKind.momo) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: _ProofSection(
-                sellerId: group.sellerId,
-                proof: proof,
-                amount: group.subtotal,
-                onUpload: onUploadProof,
-                onRemove: onRemoveProof,
               ),
             ),
           ],
@@ -486,92 +467,6 @@ class _PaymentIcon extends StatelessWidget {
             : Icons.payments_outlined,
         size: 20,
         color: theme.colorScheme.onSurfaceVariant,
-      ),
-    );
-  }
-}
-
-class _ProofSection extends StatelessWidget {
-  const _ProofSection({
-    required this.sellerId,
-    required this.proof,
-    required this.amount,
-    required this.onUpload,
-    required this.onRemove,
-  });
-
-  final String sellerId;
-  final PaymentProof? proof;
-  final num amount;
-  final void Function(String sellerId) onUpload;
-  final void Function(String sellerId) onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = context.appColors;
-
-    if (proof != null) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colors.successContainer.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.verified_outlined,
-                size: 18, color: colors.success),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Payment proof attached${proof!.proofName != null ? ': ${proof!.proofName}' : ''}',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ),
-            GestureDetector(
-              onTap: () => onRemove(sellerId),
-              child: Icon(Icons.close,
-                  size: 16,
-                  color: theme.colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return GestureDetector(
-      onTap: () => onUpload(sellerId),
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest
-              .withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.attach_file_outlined,
-                size: 18, color: colors.gold),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Attach payment receipt',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500),
-              ),
-            ),
-            Text(
-              formatMoney(amount),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Palette.gold,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

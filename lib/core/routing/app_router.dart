@@ -50,7 +50,6 @@ import '../../features/seller/presentation/product_form_screen.dart';
 import '../../features/seller/presentation/seller_home_screen.dart';
 import '../../features/seller/presentation/seller_earnings_screen.dart';
 import '../../features/seller/presentation/seller_funds_screen.dart';
-import '../../features/seller/presentation/seller_home_screen.dart';
 import '../../features/seller/presentation/seller_order_detail_screen.dart';
 import '../../features/seller/presentation/seller_orders_screen.dart';
 import '../../features/seller/presentation/store_settings_screen.dart';

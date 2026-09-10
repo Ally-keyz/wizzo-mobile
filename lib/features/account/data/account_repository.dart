@@ -70,20 +70,6 @@ class AccountRepository {
     });
   }
 
-  /// Reports a group order's payment proof (shared with the order flow).
-  Future<void> submitPaymentProof({
-    required String orderId,
-    required String sellerId,
-    required String method,
-    String? reference,
-  }) async {
-    await _api.post('/orders/$orderId/payment-proof', body: {
-      'sellerId': sellerId,
-      'method': method,
-      if (reference != null && reference.isNotEmpty) 'reference': reference,
-    });
-  }
-
   // -- Wishlist ---------------------------------------------------------------
   /// Paginated wishlist (max 100) whose `productId` is a populated Product doc.
   Future<List<Product>> wishlistProducts() async {

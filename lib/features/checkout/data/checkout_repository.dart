@@ -1,12 +1,8 @@
-﻿import 'dart:convert';
-import 'dart:io';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-
-import '../../../core/network/api_providers.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_providers.dart';
+
 import '../models/checkout.dart';
 
 class CheckoutRepository {
@@ -18,7 +14,6 @@ class CheckoutRepository {
     required List<Map<String, dynamic>> sellerPayments,
     String deliveryOption = 'delivery',
     String? deliveryAddressId,
-    List<String> proofSubmittedSellerIds = const [],
     String? paymentMethod,
     Map<String, dynamic>? paymentDetails,
   }) async {
@@ -32,10 +27,7 @@ class CheckoutRepository {
       if (paymentDetails != null && paymentDetails.isNotEmpty)
         'paymentDetails': paymentDetails,
     });
-    return PlacementSummary.fromApi(
-      data,
-      proofSubmittedSellerIds: proofSubmittedSellerIds,
-    );
+    return PlacementSummary.fromApi(data);
   }
 
   /// Pay-in instructions for a set of seller user ids (mirrors the web
@@ -51,71 +43,6 @@ class CheckoutRepository {
     );
     final items = data is List ? data : const <dynamic>[];
     return items.map(SellerPaymentInfo.fromApi).toList();
-  }
-
-  /// Attaches payment proof to an already-placed seller order (the buyer
-  /// sends money out-of-band, then uploads a receipt/screenshot here).
-  Future<void> submitPaymentProof({
-    required String orderId,
-    required PaymentKind method,
-    String? transactionReference,
-    String? proofUrl,
-    String? proofName,
-    String? proofType,
-  }) async {
-    await _api.post('/orders/$orderId/payment-proof', body: {
-      'method': method.apiValue,
-      if (transactionReference != null && transactionReference.isNotEmpty)
-        'transactionReference': transactionReference,
-      if (proofUrl != null && proofUrl.isNotEmpty) 'proofUrl': proofUrl,
-      if (proofName != null && proofName.isNotEmpty) 'proofName': proofName,
-      if (proofType != null && proofType.isNotEmpty) 'proofType': proofType,
-    });
-  }
-
-  /// Uploads a local image to Cloudinary and returns its URL (used for the
-  /// obligatory payment-proof attachment on non-COD orders).
-  Future<String> uploadImage(String filePath, {String folder = 'wizzo/proofs'}) async {
-    final sigData = await _api.post(
-      '/uploads/cloudinary-signature',
-      body: {'folder': folder},
-    );
-    final sig = sigData is Map ? sigData : const <String, dynamic>{};
-    final cloudName = sig['cloudName']?.toString();
-    if (cloudName == null || cloudName.isEmpty) {
-      throw Exception('Could not get an upload signature');
-    }
-    final uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
-    final request = http.MultipartRequest('POST', uri)
-      ..fields['api_key'] = sig['apiKey']?.toString() ?? ''
-      ..fields['timestamp'] = sig['timestamp']?.toString() ?? ''
-      ..fields['signature'] = sig['signature']?.toString() ?? ''
-      ..fields['folder'] = folder
-      ..fields['cloud_name'] = cloudName;
-    try {
-      request.files.add(await http.MultipartFile.fromPath('file', filePath));
-    } on FileSystemException catch (e) {
-      throw Exception('Could not read the selected file: ${e.message}');
-    }
-
-    final streamed = await request.send().timeout(const Duration(seconds: 120));
-    final response = await http.Response.fromStream(streamed);
-    dynamic decoded;
-    try {
-      decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    } catch (_) {
-      decoded = null;
-    }
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final url = decoded is Map
-          ? (decoded['secure_url'] ?? decoded['url'])?.toString()
-          : null;
-      if (url == null || url.isEmpty) {
-        throw Exception('Upload failed: could not read the URL');
-      }
-      return url;
-    }
-    throw Exception('Upload failed (${response.statusCode})');
   }
 }
 
