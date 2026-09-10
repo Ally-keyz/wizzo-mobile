@@ -103,7 +103,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Payment'), findsWidgets);
     expect(find.text('Mobile Money'), findsOneWidget);
-    expect(find.text('Cash on Delivery'), findsWidgets);
+    expect(find.text('Google Pay'), findsWidgets);
 
     // Step 3 — Review
     await tester.tap(find.text('Continue'));

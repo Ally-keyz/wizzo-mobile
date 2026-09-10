@@ -89,26 +89,14 @@ class PaymentOption {
     PaymentOption(
       kind: PaymentKind.momo,
       label: 'Mobile Money',
-      description: 'Pay directly via MoMo STK push',
+      description: 'Pay directly via MTN MoMo or Airtel Money',
       providers: ['MTN MoMo', 'Airtel Money'],
     ),
     PaymentOption(
       kind: PaymentKind.googlePay,
       label: 'Google Pay',
-      description: 'Pay with your saved card via Google Pay',
+      description: 'Pay securely with your saved card',
       providers: ['Google Pay'],
-    ),
-    PaymentOption(
-      kind: PaymentKind.bank,
-      label: 'Bank Transfer',
-      description: 'Direct bank deposit or transfer to the seller',
-      providers: ['Bank Transfer'],
-    ),
-    PaymentOption(
-      kind: PaymentKind.cashOnDelivery,
-      label: 'Cash on Delivery',
-      description: 'Pay cash when your order arrives',
-      providers: ['Cash on Delivery'],
     ),
   ];
 }

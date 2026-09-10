@@ -52,39 +52,6 @@ class PaymentInstructionsCard extends StatelessWidget {
       );
     }
 
-    if (method == PaymentKind.cashOnDelivery) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colors.successContainer.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.payments_outlined, size: 18, color: colors.success),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                context.tr(
-                  'common.payCashOnDelivery',
-                  namedArgs: {
-                    'details': amount != null
-                        ? ' (${formatMoney(amount)})'
-                        : '',
-                  },
-                ),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     if (account == null) {
       return Container(
         padding: const EdgeInsets.all(12),
@@ -122,9 +89,8 @@ class PaymentInstructionsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +139,7 @@ class PaymentInstructionsCard extends StatelessWidget {
           ),
           if (account!.instructions != null &&
               account!.instructions!.isNotEmpty) ...[
-            const Divider(height: 20),
+            const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -354,7 +320,6 @@ class SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,13 +433,10 @@ class CheckoutPaymentTile extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected
-              ? context.appColors.goldSoft
-              : theme.colorScheme.surface,
+              ? context.appColors.goldSoft.withValues(alpha: 0.5)
+              : theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? Palette.gold : theme.colorScheme.outlineVariant,
-            width: selected ? 2 : 1,
-          ),
         ),
         child: Row(
           children: [
@@ -509,9 +471,20 @@ class CheckoutPaymentTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              selected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: selected ? Palette.gold : theme.colorScheme.outline,
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: selected ? Palette.gold : Colors.transparent,
+                border: Border.all(
+                  color: selected ? Palette.gold : theme.colorScheme.outline,
+                  width: 2,
+                ),
+              ),
+              child: selected
+                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  : null,
             ),
           ],
         ),
@@ -589,9 +562,6 @@ class CheckoutBottomNav extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: theme.colorScheme.outlineVariant),
-        ),
       ),
       child: Row(
         children: [

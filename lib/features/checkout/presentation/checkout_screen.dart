@@ -422,9 +422,6 @@ _goNext();
                       totalAmount: total,
                       onMethodSelected: (sellerId, kind) => setState(() {
                         _methods[sellerId] = kind;
-                        if (kind == PaymentKind.cashOnDelivery) {
-                          _proofs.remove(sellerId);
-                        }
                       }),
                       onUploadProof: _uploadProof,
                       onRemoveProof: (sellerId) =>
