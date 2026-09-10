@@ -143,14 +143,6 @@ class WalletScreen extends ConsumerWidget {
         description: context.tr('wallet.googlePayDescription'),
       ));
     }
-    if (Platform.isIOS) {
-      combined.removeWhere((m) => m.id == 'apple_pay');
-      combined.insert(0, PaymentMethod(
-        id: 'apple_pay',
-        name: context.tr('wallet.applePay'),
-        description: context.tr('wallet.applePayDescription'),
-      ));
-    }
     return combined;
   }
 
