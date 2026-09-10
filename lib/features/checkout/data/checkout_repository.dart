@@ -20,8 +20,6 @@ class CheckoutRepository {
     String deliveryOption = 'delivery',
     String? deliveryAddressId,
     List<String> proofSubmittedSellerIds = const [],
-    String? paymentMethod,
-    String? cardPaymentIntentId,
   }) async {
     final data = await _api.post('/orders/checkout', body: {
       'sellerPaymentSelection': sellerPayments,
@@ -29,33 +27,11 @@ class CheckoutRepository {
       if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
         'deliveryAddressId': deliveryAddressId,
       if (couponCode != null && couponCode.isNotEmpty) 'couponCode': couponCode,
-      if (paymentMethod != null && paymentMethod.isNotEmpty)
-        'paymentMethod': paymentMethod,
-      if (cardPaymentIntentId != null && cardPaymentIntentId.isNotEmpty)
-        'paymentDetails': {'paymentIntentId': cardPaymentIntentId},
     });
     return PlacementSummary.fromApi(
       data,
       proofSubmittedSellerIds: proofSubmittedSellerIds,
     );
-  }
-
-  /// Asks the server to create a Stripe PaymentIntent for the exact cart
-  /// total, returning the client secret + publishable key needed to present
-  /// Stripe PaymentSheet. The confirmed `paymentIntentId` is then sent to
-  /// [placeOrder] so the order is created against the already-paid intent.
-  Future<StripeIntentResult> createStripePaymentIntent({
-    String deliveryOption = 'delivery',
-    String? deliveryAddressId,
-    String? couponCode,
-  }) async {
-    final data = await _api.post('/orders/stripe/payment-intent', body: {
-      'deliveryOption': deliveryOption,
-      if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
-        'deliveryAddressId': deliveryAddressId,
-      if (couponCode != null && couponCode.isNotEmpty) 'couponCode': couponCode,
-    });
-    return StripeIntentResult.fromApi(data);
   }
 
   Future<Coupon> validateCoupon(String code, {List<Map<String, dynamic>> lines = const []}) async {

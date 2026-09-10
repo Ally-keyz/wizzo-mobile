@@ -104,7 +104,7 @@ class ReviewStep extends StatelessWidget {
         ),
         SectionCard(
           title: context.tr('wallet.paymentMethods'),
-          trailing: const Icon(Icons.credit_card_outlined),
+          trailing: const Icon(Icons.payments_outlined),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -187,11 +187,7 @@ class ReviewStep extends StatelessWidget {
     final IconData icon;
     final Color color;
     final String status;
-    if (method == PaymentKind.card) {
-      icon = Icons.credit_card;
-      color = colors.success;
-      status = context.tr('checkout.paidByCard');
-    } else if (method == PaymentKind.cashOnDelivery) {
+    if (method == PaymentKind.cashOnDelivery) {
       icon = Icons.payments_outlined;
       color = colors.info;
       status = formatMoney(group.subtotal);

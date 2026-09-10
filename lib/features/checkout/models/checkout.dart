@@ -54,14 +54,12 @@ class DeliveryOption {
 enum PaymentKind {
   momo,
   bank,
-  cashOnDelivery,
-  card;
+  cashOnDelivery;
 
   String get apiValue => switch (this) {
         PaymentKind.momo => 'momo',
         PaymentKind.bank => 'bank',
         PaymentKind.cashOnDelivery => 'cash_on_delivery',
-        PaymentKind.card => 'card',
       };
 }
 
@@ -82,7 +80,6 @@ class PaymentOption {
         PaymentKind.momo => 'momo',
         PaymentKind.bank => 'bank',
         PaymentKind.cashOnDelivery => 'cash_on_delivery',
-        PaymentKind.card => 'card',
       };
 
   static const List<PaymentOption> all = [
@@ -97,12 +94,6 @@ class PaymentOption {
       label: 'Bank Transfer',
       description: 'Direct bank deposit or transfer to the seller',
       providers: ['Bank Transfer'],
-    ),
-    PaymentOption(
-      kind: PaymentKind.card,
-      label: 'Card (Stripe)',
-      description: 'Pay once by card for your whole order',
-      providers: ['Visa', 'Mastercard', 'Amex'],
     ),
     PaymentOption(
       kind: PaymentKind.cashOnDelivery,
@@ -263,38 +254,7 @@ PaymentKind? _kindFrom(String? raw) {
   if (v.contains('momo')) return PaymentKind.momo;
   if (v.contains('bank')) return PaymentKind.bank;
   if (v.contains('cash')) return PaymentKind.cashOnDelivery;
-  if (v.contains('card')) return PaymentKind.card;
   return null;
-}
-
-/// A Stripe PaymentIntent prepared by the server for PaymentSheet.
-class StripeIntentResult {
-  const StripeIntentResult({
-    required this.clientSecret,
-    required this.paymentIntentId,
-    this.amount,
-    this.currency,
-    this.publishableKey,
-  });
-
-  final String clientSecret;
-  final String paymentIntentId;
-  final num? amount;
-  final String? currency;
-
-  /// Publishable key the app must set before opening the sheet.
-  final String? publishableKey;
-
-  factory StripeIntentResult.fromApi(dynamic json) {
-    if (json is! Map<String, dynamic>) throw const FormatException('Invalid stripe intent');
-    return StripeIntentResult(
-      clientSecret: json['clientSecret']?.toString() ?? '',
-      paymentIntentId: json['paymentIntentId']?.toString() ?? '',
-      amount: (json['amount'] as num?)?.toDouble(),
-      currency: json['currency']?.toString(),
-      publishableKey: json['publishableKey']?.toString(),
-    );
-  }
 }
 
 class PlacementSummary {
@@ -348,9 +308,7 @@ class PlacementSummary {
             ? PaymentKind.bank
             : kindRaw.contains('cash')
                 ? PaymentKind.cashOnDelivery
-                : kindRaw.contains('card')
-                    ? PaymentKind.card
-                    : null;
+                : null;
     final rawSellers = json['sellerOrders'] ?? order['sellerOrders'];
     return PlacementSummary(
       orderId: (json['orderId'] ?? order['id'] ?? order['_id'])?.toString() ?? '',

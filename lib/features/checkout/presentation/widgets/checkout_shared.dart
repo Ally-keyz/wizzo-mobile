@@ -26,39 +26,6 @@ class PaymentInstructionsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = context.appColors;
 
-    if (method == PaymentKind.card) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colors.successContainer.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.credit_card, size: 18, color: colors.success),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                context.tr(
-                  'checkout.cardPaysWholeOrder',
-                  namedArgs: {
-                    'details': amount != null
-                        ? ' (${formatMoney(amount!)})'
-                        : '',
-                  },
-                ),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     if (method == PaymentKind.cashOnDelivery) {
       return Container(
         padding: const EdgeInsets.all(12),
@@ -489,7 +456,6 @@ class CheckoutPaymentTile extends StatelessWidget {
               switch (option.kind) {
                 PaymentKind.momo => Icons.phone_android_outlined,
                 PaymentKind.bank => Icons.account_balance_outlined,
-                PaymentKind.card => Icons.credit_card,
                 PaymentKind.cashOnDelivery => Icons.payments_outlined,
               },
               color: selected
