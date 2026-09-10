@@ -93,10 +93,19 @@ class AuthRepository {
       }
       final idToken = await account.authentication.then((a) => a.idToken);
       if (idToken == null) {
+        // On Android an ID token is only issued when the app has an OAuth
+        // audience configured: build with GOOGLE_SERVER_CLIENT_ID / a
+        // google-services.json exposing default_web_client_id. Without it the
+        // native plugin never calls requestIdToken() and idToken stays null.
+        CrashLogger.record(
+          'auth/google',
+          'idToken is null: app built without Google OAuth config',
+        );
         throw const ApiException(
           status: 0,
-          code: 'google',
-          message: 'Could not get a Google login token. Try again.',
+          code: 'google-config',
+          message: 'Google isn\'t set up on this build yet. '
+              'Use email sign-in in the meantime.',
         );
       }
       final data = await _api.post('/auth/google', body: {'idToken': idToken});
