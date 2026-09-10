@@ -54,6 +54,7 @@ dependencies:
   share_plus: ^13.3.0
   socket_io_client: ^3.1.1
   easy_localization: 3.0.8
+  pay: ^3.3.0
 
 dev_dependencies:
   flutter_test:

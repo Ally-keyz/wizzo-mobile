@@ -63,6 +63,12 @@ class AppConfig {
   static const String currencyCode = 'RWF';
   static const String webUrl = 'https://wizzomarketplace.com';
   static const String supportEmail = 'support@wizzo.com';
+
+  /// Stripe publishable key for Google Pay on mobile (test mode).
+  static const String stripePublishableKey = String.fromEnvironment(
+    'STRIPE_PUBLISHABLE_KEY',
+    defaultValue: 'pk_test_51UE1ZQ1HGKUHOr34tixbSjZVi5MCBHbdhJLHKeaT2ntl55iIAnmklzBtEU3XLkxaJmgRH42qTipbnQANqb13kWZk00kFInznQI',
+  );
   /// Upper bound for API calls. Kept generous because the free-tier Render
   /// hosting sleeps after idle and can take 30-60s to cold start.
   static const int requestTimeoutSeconds = 90;

@@ -20,6 +20,8 @@ class CheckoutRepository {
     String deliveryOption = 'delivery',
     String? deliveryAddressId,
     List<String> proofSubmittedSellerIds = const [],
+    String? paymentMethod,
+    Map<String, dynamic>? paymentDetails,
   }) async {
     final data = await _api.post('/orders/checkout', body: {
       'sellerPaymentSelection': sellerPayments,
@@ -27,6 +29,10 @@ class CheckoutRepository {
       if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
         'deliveryAddressId': deliveryAddressId,
       if (couponCode != null && couponCode.isNotEmpty) 'couponCode': couponCode,
+      if (paymentMethod != null && paymentMethod.isNotEmpty)
+        'paymentMethod': paymentMethod,
+      if (paymentDetails != null && paymentDetails.isNotEmpty)
+        'paymentDetails': paymentDetails,
     });
     return PlacementSummary.fromApi(
       data,

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/w_widgets.dart';
@@ -43,6 +44,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final Map<String, PaymentKind> _methods = {};
   final Map<String, PaymentProof> _proofs = {};
   final Map<String, SellerPaymentInfo> _paymentAccounts = {};
+  String _momoPhone = '';
+  String? _googlePayToken;
   Set<String> _loadedAccountIds = const {};
   String? _error;
   final _couponController = TextEditingController();
@@ -281,6 +284,26 @@ _goNext();
       _showError(context.tr('checkout.acceptTerms'));
       return;
     }
+
+    // Determine the primary online method (first seller's choice).
+    // Both google_pay and momo are online methods that trigger gateway charges.
+    final firstMethod = _methods.values.firstOrNull ?? PaymentKind.momo;
+    final isGooglePay = firstMethod == PaymentKind.googlePay;
+    final isMomo = firstMethod == PaymentKind.momo;
+    final isOnline = isGooglePay || isMomo;
+
+    // Google Pay: token must have been collected via the button in step 3.
+    if (isGooglePay && _googlePayToken == null) {
+      _showError('Tap the Google Pay button to authorize payment');
+      return;
+    }
+
+    // Validate MoMo phone number.
+    if (isMomo && _momoPhone.trim().length < 9) {
+      _showError('Enter a valid MoMo phone number');
+      return;
+    }
+
     setState(() {
       _placing = true;
       _error = null;
@@ -297,12 +320,25 @@ _goNext();
             if (_proofs[g.sellerId] != null) 'proof': _proofs[g.sellerId]!.toApi(),
           },
       ];
+
+      // Build the top-level paymentMethod + paymentDetails for gateway charge.
+      final onlineMethod = isOnline ? firstMethod.apiValue : null;
+      final Map<String, dynamic>? paymentDetails = isGooglePay
+          ? {
+              if (_googlePayToken != null) 'walletToken': _googlePayToken,
+            }
+          : (isMomo && _momoPhone.trim().isNotEmpty
+              ? {'momoPhone': _momoPhone.trim()}
+              : null);
+
       final summary = await ref.read(checkoutRepositoryProvider).placeOrder(
             sellerPayments: selection,
             couponCode: couponCode,
             deliveryOption: deliveryOption,
             deliveryAddressId: _delivery == DeliveryKind.pickup ? null : address.id,
             proofSubmittedSellerIds: _proofs.keys.toList(),
+            paymentMethod: onlineMethod,
+            paymentDetails: paymentDetails,
           );
       await ref.read(cartProvider.notifier).clear();
       ref.invalidate(cartProvider);
@@ -382,6 +418,8 @@ _goNext();
                       methods: _methods,
                       proofs: _proofs,
                       paymentAccounts: _paymentAccounts,
+                      momoPhone: _momoPhone,
+                      totalAmount: total,
                       onMethodSelected: (sellerId, kind) => setState(() {
                         _methods[sellerId] = kind;
                         if (kind == PaymentKind.cashOnDelivery) {
@@ -391,6 +429,14 @@ _goNext();
                       onUploadProof: _uploadProof,
                       onRemoveProof: (sellerId) =>
                           setState(() => _proofs.remove(sellerId)),
+                      onMomoPhoneChanged: (phone) =>
+                          setState(() => _momoPhone = phone),
+                      onGooglePayResult: (result) {
+                        final tokenData = result['tokenizationData'];
+                        if (tokenData is Map && tokenData['token'] != null) {
+                          setState(() => _googlePayToken = tokenData['token'] as String);
+                        }
+                      },
                     )
                   else
                     ReviewStep(

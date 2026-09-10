@@ -26,6 +26,32 @@ class PaymentInstructionsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = context.appColors;
 
+    if (method == PaymentKind.googlePay) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colors.infoContainer.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.account_balance_wallet_outlined, size: 18, color: colors.info),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Google Pay will charge your saved card when you place the order. No extra steps needed.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (method == PaymentKind.cashOnDelivery) {
       return Container(
         padding: const EdgeInsets.all(12),
@@ -455,6 +481,7 @@ class CheckoutPaymentTile extends StatelessWidget {
             Icon(
               switch (option.kind) {
                 PaymentKind.momo => Icons.phone_android_outlined,
+                PaymentKind.googlePay => Icons.account_balance_wallet_outlined,
                 PaymentKind.bank => Icons.account_balance_outlined,
                 PaymentKind.cashOnDelivery => Icons.payments_outlined,
               },

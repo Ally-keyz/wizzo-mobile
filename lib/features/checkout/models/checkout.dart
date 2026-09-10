@@ -54,12 +54,14 @@ class DeliveryOption {
 enum PaymentKind {
   momo,
   bank,
-  cashOnDelivery;
+  cashOnDelivery,
+  googlePay;
 
   String get apiValue => switch (this) {
         PaymentKind.momo => 'momo',
         PaymentKind.bank => 'bank',
         PaymentKind.cashOnDelivery => 'cash_on_delivery',
+        PaymentKind.googlePay => 'google_pay',
       };
 }
 
@@ -80,14 +82,21 @@ class PaymentOption {
         PaymentKind.momo => 'momo',
         PaymentKind.bank => 'bank',
         PaymentKind.cashOnDelivery => 'cash_on_delivery',
+        PaymentKind.googlePay => 'google_pay',
       };
 
   static const List<PaymentOption> all = [
     PaymentOption(
       kind: PaymentKind.momo,
       label: 'Mobile Money',
-      description: 'Pay directly to the seller via mobile money',
-      providers: ['M-Pesa', 'Airtel Money', 'T-Kash'],
+      description: 'Pay directly via MoMo STK push',
+      providers: ['MTN MoMo', 'Airtel Money'],
+    ),
+    PaymentOption(
+      kind: PaymentKind.googlePay,
+      label: 'Google Pay',
+      description: 'Pay with your saved card via Google Pay',
+      providers: ['Google Pay'],
     ),
     PaymentOption(
       kind: PaymentKind.bank,
@@ -254,6 +263,7 @@ PaymentKind? _kindFrom(String? raw) {
   if (v.contains('momo')) return PaymentKind.momo;
   if (v.contains('bank')) return PaymentKind.bank;
   if (v.contains('cash')) return PaymentKind.cashOnDelivery;
+  if (v.contains('google_pay') || v.contains('googlepay')) return PaymentKind.googlePay;
   return null;
 }
 
@@ -308,7 +318,9 @@ class PlacementSummary {
             ? PaymentKind.bank
             : kindRaw.contains('cash')
                 ? PaymentKind.cashOnDelivery
-                : null;
+                : kindRaw.contains('google')
+                    ? PaymentKind.googlePay
+                    : null;
     final rawSellers = json['sellerOrders'] ?? order['sellerOrders'];
     return PlacementSummary(
       orderId: (json['orderId'] ?? order['id'] ?? order['_id'])?.toString() ?? '',

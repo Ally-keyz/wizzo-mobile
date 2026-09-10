@@ -1,12 +1,25 @@
-﻿import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
+﻿import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:pay/pay.dart' as pay;
+
+import '../../../../core/config/app_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/w_widgets.dart';
 import '../../../cart/models/cart.dart';
 import '../../models/checkout.dart';
 import 'checkout_shared.dart';
+
+const _googlePayConfig = {
+  'provider': 'stripe',
+  'data': {
+    'gateway': 'stripe',
+    'stripe:version': '2024-12-18',
+    'stripe:publishableKey': AppConfig.stripePublishableKey,
+  },
+};
 
 class PaymentStep extends StatelessWidget {
   const PaymentStep({
@@ -15,9 +28,13 @@ class PaymentStep extends StatelessWidget {
     required this.methods,
     required this.proofs,
     required this.paymentAccounts,
+    required this.momoPhone,
+    required this.totalAmount,
     required this.onMethodSelected,
     required this.onUploadProof,
     required this.onRemoveProof,
+    required this.onMomoPhoneChanged,
+    required this.onGooglePayResult,
   });
 
   final CartData cart;
@@ -26,9 +43,13 @@ class PaymentStep extends StatelessWidget {
 
   /// Pay-in instructions keyed by seller user id (and seller document id).
   final Map<String, SellerPaymentInfo> paymentAccounts;
+  final String momoPhone;
+  final num totalAmount;
   final void Function(String sellerId, PaymentKind kind) onMethodSelected;
   final void Function(String sellerId) onUploadProof;
   final void Function(String sellerId) onRemoveProof;
+  final void Function(String phone) onMomoPhoneChanged;
+  final void Function(Map<String, dynamic> result) onGooglePayResult;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +81,9 @@ class PaymentStep extends StatelessWidget {
   Widget _sellerCard(BuildContext context, ThemeData theme, CartSellerGroup group) {
     final method = methods[group.sellerId] ?? PaymentKind.momo;
     final proof = proofs[group.sellerId];
-    final needsProof = method != PaymentKind.cashOnDelivery;
+    final isOnlineMethod = method == PaymentKind.googlePay;
+    final needsPhone = method == PaymentKind.momo;
+    final needsProof = !isOnlineMethod && method != PaymentKind.cashOnDelivery;
     final account = accountFor(group.sellerId, method);
     return SectionCard(
       title: group.sellerName ?? context.tr('common.seller'),
@@ -77,6 +100,53 @@ class PaymentStep extends StatelessWidget {
               selected: method == option.kind,
               onTap: () => onMethodSelected(group.sellerId, option.kind),
             ),
+          if (needsPhone) ...[
+            const SizedBox(height: 8),
+            TextField(
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: 'Your MoMo phone number',
+                hintText: 'e.g. 0788123456',
+                prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                isDense: true,
+              ),
+              onChanged: onMomoPhoneChanged,
+            ),
+          ],
+          if (isOnlineMethod) ...[
+            const SizedBox(height: 4),
+            PaymentInstructionsCard(
+              method: method,
+              amount: group.subtotal,
+            ),
+            if (method == PaymentKind.googlePay) ...[
+              const SizedBox(height: 12),
+              pay.GooglePayButton(
+                paymentConfiguration: pay.PaymentConfiguration.fromJsonString(
+                  jsonEncode(_googlePayConfig),
+                ),
+                paymentItems: [
+                  pay.PaymentItem(
+                    label: 'Total',
+                    amount: totalAmount.toInt().toString(),
+                    status: pay.PaymentItemStatus.final_price,
+                  ),
+                ],
+                type: pay.GooglePayButtonType.pay,
+                margin: const EdgeInsets.only(top: 8),
+                onPaymentResult: (result) {
+                  if (result is Map<String, dynamic>) {
+                    onGooglePayResult(result);
+                  }
+                },
+                loadingIndicator: const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ],
+          ],
           if (needsProof) ...[
             const SizedBox(height: 4),
             PaymentInstructionsCard(
