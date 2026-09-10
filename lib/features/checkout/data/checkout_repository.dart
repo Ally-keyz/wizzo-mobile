@@ -16,7 +16,6 @@ class CheckoutRepository {
 
   Future<PlacementSummary> placeOrder({
     required List<Map<String, dynamic>> sellerPayments,
-    String? couponCode,
     String deliveryOption = 'delivery',
     String? deliveryAddressId,
     List<String> proofSubmittedSellerIds = const [],
@@ -28,7 +27,6 @@ class CheckoutRepository {
       'deliveryOption': deliveryOption,
       if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
         'deliveryAddressId': deliveryAddressId,
-      if (couponCode != null && couponCode.isNotEmpty) 'couponCode': couponCode,
       if (paymentMethod != null && paymentMethod.isNotEmpty)
         'paymentMethod': paymentMethod,
       if (paymentDetails != null && paymentDetails.isNotEmpty)
@@ -38,14 +36,6 @@ class CheckoutRepository {
       data,
       proofSubmittedSellerIds: proofSubmittedSellerIds,
     );
-  }
-
-  Future<Coupon> validateCoupon(String code, {List<Map<String, dynamic>> lines = const []}) async {
-    final data = await _api.post('/coupons/validate', body: {
-      'code': code.trim(),
-      if (lines.isNotEmpty) 'lines': lines,
-    });
-    return Coupon.fromApi(data is Map ? data : {'code': code.trim()});
   }
 
   /// Pay-in instructions for a set of seller user ids (mirrors the web

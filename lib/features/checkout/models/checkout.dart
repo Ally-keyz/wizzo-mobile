@@ -122,46 +122,6 @@ class PaymentProof {
       };
 }
 
-class Coupon {
-  const Coupon({
-    required this.code,
-    this.discountPercent,
-    this.discountAmount,
-    this.minOrderAmount,
-    this.discount,
-  });
-
-  final String code;
-  final num? discountPercent;
-  final num? discountAmount;
-  final num? minOrderAmount;
-
-  /// Exact discount returned by POST /coupons/validate (preferred when set).
-  final num? discount;
-
-  num applyTo(num subtotal) {
-    if (discount != null) return discount!;
-    if (discountPercent != null) return subtotal * (discountPercent! / 100);
-    if (discountAmount != null) return discountAmount!;
-    return 0;
-  }
-
-  factory Coupon.fromApi(dynamic json) {
-    if (json is! Map<String, dynamic>) throw const FormatException('Invalid coupon');
-    // /coupons/validate answers `{coupon:{...}, productId, discount, ...}`.
-    final coupon = json['coupon'] is Map<String, dynamic>
-        ? json['coupon'] as Map<String, dynamic>
-        : json;
-    return Coupon(
-      code: coupon['code']?.toString() ?? json['code']?.toString() ?? '',
-      discountPercent: (coupon['discountPercent'] as num?)?.toDouble(),
-      discountAmount: (coupon['discountAmount'] as num?)?.toDouble(),
-      minOrderAmount: (coupon['minOrderAmount'] as num?)?.toDouble(),
-      discount: (json['discount'] as num?)?.toDouble(),
-    );
-  }
-}
-
 /// Seller-configured destination for a manual payment (mobile money / bank).
 class SellerPaymentAccount {
   const SellerPaymentAccount({

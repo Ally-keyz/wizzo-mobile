@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../catalog/models/product.dart';
 import '../data/seller_repository.dart';
-import '../models/coupon.dart';
 import '../models/seller_order.dart';
 import '../models/store.dart';
 
@@ -17,10 +16,6 @@ final myProductsProvider = FutureProvider<List<Product>>((ref) {
 
 final sellerOrdersProvider = FutureProvider<List<SellerOrder>>((ref) {
   return ref.watch(sellerRepositoryProvider).sellerOrders();
-});
-
-final couponsProvider = FutureProvider<List<Coupon>>((ref) {
-  return ref.watch(sellerRepositoryProvider).myCoupons();
 });
 
 /// Allowed next statuses for a specific order.

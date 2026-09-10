@@ -4,7 +4,6 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/api_providers.dart';
 import '../../catalog/models/product.dart';
-import '../models/coupon.dart';
 import '../models/payment_account.dart';
 import '../models/seller_order.dart';
 import '../models/store.dart';
@@ -191,27 +190,6 @@ class SellerRepository {
     });
   }
 
-  // -- Coupons ----------------------------------------------------------------
-  Future<List<Coupon>> myCoupons() async {
-    final data = await _api.get('/coupons/mine');
-    final items = _extractList(data);
-    return items.map(Coupon.fromApi).toList();
-  }
-
-  Future<Coupon> createCoupon(CouponInput input) async {
-    final data = await _api.post('/coupons', body: input.toJson());
-    return Coupon.fromApi(_unwrap(data));
-  }
-
-  Future<Coupon> updateCoupon(String id, Map<String, dynamic> body) async {
-    final data = await _api.patch('/coupons/$id', body: body);
-    return Coupon.fromApi(_unwrap(data));
-  }
-
-  Future<void> deleteCoupon(String id) async {
-    await _api.delete('/coupons/$id');
-  }
-
   // -- Uploads ---------------------------------------------------------------
   Future<String> uploadImage(String path, {String folder = 'wizzo/products'}) {
     return _uploads.uploadImage(path, folder: folder);
@@ -234,9 +212,6 @@ class SellerRepository {
     if (data is Map<String, dynamic> && data.containsKey('order')) {
       return data['order'];
     }
-    if (data is Map<String, dynamic> && data.containsKey('coupon')) {
-      return data['coupon'];
-    }
     if (data is Map<String, dynamic> &&
         data.containsKey('data') &&
         data['data'] is Map) {
@@ -248,13 +223,13 @@ class SellerRepository {
   static List<dynamic> _extractList(dynamic data) {
     if (data is List) return data;
     if (data is Map<String, dynamic>) {
-      for (final key in ['items', 'orders', 'products', 'coupons', 'payments', 'reviews']) {
+      for (final key in ['items', 'orders', 'products', 'payments', 'reviews']) {
         if (data[key] is List) return data[key] as List;
       }
       final nested = data['data'];
       if (nested is List) return nested;
       if (nested is Map<String, dynamic>) {
-        for (final key in ['items', 'orders', 'products', 'coupons']) {
+        for (final key in ['items', 'orders', 'products']) {
           if (nested[key] is List) return nested[key] as List;
         }
       }

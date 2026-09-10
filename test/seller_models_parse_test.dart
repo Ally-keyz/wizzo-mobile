@@ -1,10 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'helpers/l10n.dart';
-
 import 'package:wizzo_market/features/seller/data/seller_repository.dart';
-import 'package:wizzo_market/features/seller/models/coupon.dart';
 import 'package:wizzo_market/features/seller/models/payment_account.dart';
 import 'package:wizzo_market/features/seller/models/seller_order.dart';
 import 'package:wizzo_market/features/seller/models/store.dart';
@@ -80,19 +76,6 @@ const sellerOrderPayload = {
     {'status': 'placed', 'at': '2026-09-06T07:37:50.291Z'},
     {'status': 'processing', 'at': '2026-09-06T09:12:00.000Z'},
   ],
-};
-
-const couponPayload = {
-  '_id': 'coupon-1',
-  'code': 'SAVE10',
-  'discountType': 'percent',
-  'discountValue': 10,
-  'productId': {'_id': 'prod-1'},
-  'maxUses': 50,
-  'timesUsed': 3,
-  'startsAt': '2026-09-01T00:00:00.000Z',
-  'expiresAt': '2026-12-31T23:59:59.000Z',
-  'isActive': true,
 };
 
 void main() {
@@ -180,48 +163,6 @@ void main() {
         final hits = OrderBucket.values.where((b) => b.matches(s)).length;
         expect(hits, greaterThan(0), reason: s);
       }
-    });
-  });
-
-  group('Coupon.fromApi', () {
-    test('parses a populated product ref with _id', () {
-      final coupon = Coupon.fromApi(couponPayload);
-      expect(coupon.id, 'coupon-1');
-      expect(coupon.code, 'SAVE10');
-      expect(coupon.discountType, DiscountType.percent);
-      expect(coupon.discountValue, 10);
-      expect(coupon.productId, 'prod-1');
-      expect(coupon.maxUses, 50);
-      expect(coupon.timesUsed, 3);
-      expect(coupon.isActive, isTrue);
-    });
-
-    testWidgets('valueLabel renders a localized percent label', (tester) async {
-      final coupon = Coupon.fromApi(couponPayload);
-      await tester.pumpWidget(
-        localizedApp(
-          Builder(
-            builder: (context) =>
-                Scaffold(body: Text(coupon.valueLabel(context))),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('10% off'), findsOneWidget);
-    });
-
-    test('round-trips the create payload', () {
-      final input = CouponInput(
-        productId: 'prod-1',
-        code: 'save10',
-        discountType: DiscountType.percent,
-        discountValue: 10,
-        maxUses: 50,
-      );
-      final json = input.toJson();
-      expect(json['code'], 'SAVE10');
-      expect(json['discountType'], 'percent');
-      expect(json.containsKey('isActive'), isFalse);
     });
   });
 

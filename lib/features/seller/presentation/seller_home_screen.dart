@@ -176,11 +176,6 @@ class SellerDashboard extends ConsumerWidget {
         '/seller/earnings',
       ),
       (
-        Icons.campaign_outlined,
-        context.tr('seller.promotionsTitle'),
-        '/seller/promotions',
-      ),
-      (
         Icons.settings_outlined,
         context.tr('seller.settingsTitle'),
         '/seller/settings',

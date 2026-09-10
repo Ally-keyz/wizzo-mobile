@@ -47,7 +47,7 @@ import '../../features/seller/presentation/create_store_screen.dart';
 import '../../features/seller/presentation/my_products_screen.dart';
 import '../../features/seller/presentation/payment_accounts_screen.dart';
 import '../../features/seller/presentation/product_form_screen.dart';
-import '../../features/seller/presentation/promotions_screen.dart';
+import '../../features/seller/presentation/seller_home_screen.dart';
 import '../../features/seller/presentation/seller_earnings_screen.dart';
 import '../../features/seller/presentation/seller_funds_screen.dart';
 import '../../features/seller/presentation/seller_home_screen.dart';
@@ -218,10 +218,6 @@ List<RouteBase> _buildSharedRoutes() => [
   GoRoute(
     path: '/seller/settings',
     builder: (_, _) => const StoreSettingsScreen(),
-  ),
-  GoRoute(
-    path: '/seller/promotions',
-    builder: (_, _) => const PromotionsScreen(),
   ),
   GoRoute(path: '/wishlist', builder: (_, _) => const WishlistScreen()),
   GoRoute(path: '/addresses', builder: (_, _) => const AddressesScreen()),

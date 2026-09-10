@@ -314,11 +314,6 @@ class AccountScreen extends ConsumerWidget {
                 () => context.go('/seller'),
               ),
               _MenuItem(
-                Icons.campaign_outlined,
-                context.tr('account.promotions'),
-                () => context.go('/seller'),
-              ),
-              _MenuItem(
                 Icons.receipt_outlined,
                 context.tr('account.billingTax'),
                 () => _locked(context, context.tr('account.billingTax')),

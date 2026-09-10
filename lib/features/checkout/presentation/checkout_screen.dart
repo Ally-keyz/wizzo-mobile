@@ -45,15 +45,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String? _googlePayToken;
   Set<String> _loadedAccountIds = const {};
   String? _error;
-  final _couponController = TextEditingController();
   final _picker = ImagePicker();
-  Coupon? _coupon;
-
-  @override
-  void dispose() {
-    _couponController.dispose();
-    super.dispose();
-  }
 
   void _maybeLoadPaymentAccounts(CartData cart) {
     final ids = cart.groups
@@ -83,43 +75,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ..addAll(map);
       });
     }).catchError((_) {});
-  }
-
-  Future<void> _applyCoupon() async {
-    final code = _couponController.text.trim();
-    if (code.isEmpty) return;
-    final cart = ref.read(cartProvider).value;
-    final lines = [
-      for (final g in cart?.groups ?? const <CartSellerGroup>[])
-        for (final item in g.items)
-          {
-            'productId': item.product.id,
-            'price': item.product.price,
-            'quantity': item.quantity,
-          },
-    ];
-    try {
-      final coupon = await ref
-          .read(checkoutRepositoryProvider)
-          .validateCoupon(code, lines: lines);
-      if (mounted) {
-        setState(() => _coupon = coupon);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(context.tr('checkout.couponApplied',
-                  namedArgs: {'code': coupon.code}))),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _coupon = null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(context.tr('checkout.invalidCoupon',
-                  namedArgs: {'error': '$e'}))),
-        );
-      }
-    }
   }
 
   Future<void> _createAddress(Address draft) async {
@@ -268,8 +223,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  num _discountFor(CartData cart) => _coupon?.applyTo(cart.subtotal) ?? 0;
-
   num _deliveryFee() =>
       DeliveryOption.all.firstWhere((o) => o.id == _delivery).price;
 
@@ -305,7 +258,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     });
     try {
       final deliveryOption = _delivery.apiValue;
-      final couponCode = _coupon?.code;
 
       final selection = [
         for (final g in cart.groups)
@@ -331,7 +283,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
       final summary = await ref.read(checkoutRepositoryProvider).placeOrder(
             sellerPayments: selection,
-            couponCode: couponCode,
             deliveryOption: deliveryOption,
             deliveryAddressId:
                 _delivery == DeliveryKind.pickup ? null : address.id,
@@ -391,9 +342,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         }
         final book = addressesAsync.value ?? const AddressBook();
         final address = _effectiveAddress(book);
-        final discount = _discountFor(cart);
         final deliveryFee = _deliveryFee();
-        final total = cart.subtotal - discount + deliveryFee;
+        final total = cart.subtotal + deliveryFee;
         _maybeLoadPaymentAccounts(cart);
 
         return Column(
@@ -449,8 +399,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       },
                       onPayNow: () => _placeOrder(cart),
                     ),
-                  const SizedBox(height: 8),
-                  _couponCard(theme),
                 ],
               ),
             ),
@@ -502,48 +450,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _couponCard(ThemeData theme) {
-    final subtotal = ref.watch(cartProvider).value?.subtotal ?? 0;
-    return SectionCard(
-      title: context.tr('checkout.couponTitle'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _couponController,
-                  decoration: InputDecoration(
-                      hintText: context.tr('checkout.enterCode'),
-                      isDense: true),
-                ),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: _applyCoupon,
-                child: Text(context.tr('common.apply')),
-              ),
-            ],
-          ),
-          if (_coupon != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              context.tr('checkout.couponOff', namedArgs: {
-                'code': _coupon!.code,
-                'amount': formatMoney(_coupon!.applyTo(subtotal)),
-              }),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: context.appColors.success,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 }
