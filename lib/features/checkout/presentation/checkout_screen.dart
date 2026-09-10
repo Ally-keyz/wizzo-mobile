@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/w_widgets.dart';
@@ -16,7 +15,6 @@ import '../../cart/providers/cart_provider.dart';
 import '../data/checkout_repository.dart';
 import '../models/checkout.dart';
 import 'widgets/checkout_payment_step.dart';
-import 'widgets/checkout_review_step.dart';
 import 'widgets/checkout_shared.dart';
 import 'widgets/checkout_shipping_step.dart';
 
@@ -32,7 +30,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         context.tr('checkout.stepCart'),
         context.tr('checkout.stepShipping'),
         context.tr('checkout.stepPayment'),
-        context.tr('checkout.stepReview'),
       ];
 
   int _step = 0;
@@ -58,14 +55,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     super.dispose();
   }
 
-  /// Fetches each seller's pay-in details (like the web checkout) so the
-  /// payment step can show exactly where to send the money.
   void _maybeLoadPaymentAccounts(CartData cart) {
     final ids = cart.groups
         .map((g) => g.sellerId)
         .where((id) => id.isNotEmpty)
         .toSet();
-    if (_loadedAccountIds.length == ids.length && _loadedAccountIds.containsAll(ids)) {
+    if (_loadedAccountIds.length == ids.length &&
+        _loadedAccountIds.containsAll(ids)) {
       return;
     }
     _loadedAccountIds = ids;
@@ -73,23 +69,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         .read(checkoutRepositoryProvider)
         .getSellersPaymentAccounts(ids.toList())
         .then((infos) {
-          if (!mounted) return;
-          final map = <String, SellerPaymentInfo>{};
-          for (final info in infos) {
-            map[info.sellerUserId] = info;
-            if (info.sellerId != null && info.sellerId!.isNotEmpty) {
-              map[info.sellerId!] = info;
-            }
-          }
-          setState(() {
-            _paymentAccounts
-              ..clear()
-              ..addAll(map);
-          });
-        })
-        .catchError((_) {
-          // Instructions card falls back to a hint when not loaded.
-        });
+      if (!mounted) return;
+      final map = <String, SellerPaymentInfo>{};
+      for (final info in infos) {
+        map[info.sellerUserId] = info;
+        if (info.sellerId != null && info.sellerId!.isNotEmpty) {
+          map[info.sellerId!] = info;
+        }
+      }
+      setState(() {
+        _paymentAccounts
+          ..clear()
+          ..addAll(map);
+      });
+    }).catchError((_) {});
   }
 
   Future<void> _applyCoupon() async {
@@ -112,14 +105,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       if (mounted) {
         setState(() => _coupon = coupon);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('checkout.couponApplied', namedArgs: {'code': coupon.code}))),
+          SnackBar(
+              content: Text(context.tr('checkout.couponApplied',
+                  namedArgs: {'code': coupon.code}))),
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _coupon = null);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('checkout.invalidCoupon', namedArgs: {'error': '$e'}))),
+          SnackBar(
+              content: Text(context.tr('checkout.invalidCoupon',
+                  namedArgs: {'error': '$e'}))),
         );
       }
     }
@@ -143,13 +140,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           _selectedAddressId = id;
           _creating = false;
         });
-_goNext();
+        _goNext();
       }
     } catch (e) {
       if (mounted) {
         setState(() => _creating = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('addresses.saveFailed', namedArgs: {'error': '$e'}))),
+          SnackBar(
+              content: Text(context.tr('addresses.saveFailed',
+                  namedArgs: {'error': '$e'}))),
         );
       }
     }
@@ -185,7 +184,9 @@ _goNext();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('common.cameraFailed', namedArgs: {'error': '$e'}))),
+          SnackBar(
+              content: Text(context.tr('common.cameraFailed',
+                  namedArgs: {'error': '$e'}))),
         );
       }
       return;
@@ -194,7 +195,8 @@ _goNext();
     final file = picked;
 
     try {
-      final url = await ref.read(checkoutRepositoryProvider).uploadImage(file.path);
+      final url =
+          await ref.read(checkoutRepositoryProvider).uploadImage(file.path);
       if (mounted) {
         final method = _methods[sellerId] ?? PaymentKind.momo;
         setState(() {
@@ -208,7 +210,9 @@ _goNext();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('common.uploadFailed', namedArgs: {'error': '$e'}))),
+          SnackBar(
+              content: Text(context.tr('common.uploadFailed',
+                  namedArgs: {'error': '$e'}))),
         );
       }
     }
@@ -228,7 +232,6 @@ _goNext();
     });
   }
 
-  /// Validates the current step; returns false to stay put.
   bool _validate(CartData cart, AddressBook book) {
     switch (_step) {
       case 0:
@@ -241,11 +244,6 @@ _goNext();
           _showError(context.tr('checkout.selectAddress'));
           return false;
         }
-        return true;
-      case 2:
-        // Matching the web flow, proof is optional at checkout — the buyer
-        // can pick a method here and attach proof later from the order
-        // confirmation screen.
         return true;
       default:
         return true;
@@ -260,7 +258,8 @@ _goNext();
   Address? _effectiveAddress(AddressBook book) {
     final id = _effectiveAddressId(book);
     if (id == null) return null;
-    return book.addresses.firstWhere((a) => a.id == id, orElse: () => book.addresses.first);
+    return book.addresses
+        .firstWhere((a) => a.id == id, orElse: () => book.addresses.first);
   }
 
   void _showError(String message) {
@@ -275,7 +274,8 @@ _goNext();
       DeliveryOption.all.firstWhere((o) => o.id == _delivery).price;
 
   Future<void> _placeOrder(CartData cart) async {
-    final address = _effectiveAddress(ref.read(addressesProvider).value ?? AddressBook());
+    final address = _effectiveAddress(
+        ref.read(addressesProvider).value ?? AddressBook());
     if (address == null) {
       _showError(context.tr('checkout.selectAddressFirst'));
       return;
@@ -285,20 +285,15 @@ _goNext();
       return;
     }
 
-    // Determine the primary online method (first seller's choice).
-    // Both google_pay and momo are online methods that trigger gateway charges.
     final firstMethod = _methods.values.firstOrNull ?? PaymentKind.momo;
     final isGooglePay = firstMethod == PaymentKind.googlePay;
     final isMomo = firstMethod == PaymentKind.momo;
-    final isOnline = isGooglePay || isMomo;
 
-    // Google Pay: token must have been collected via the button in step 3.
     if (isGooglePay && _googlePayToken == null) {
       _showError('Tap the Google Pay button to authorize payment');
       return;
     }
 
-    // Validate MoMo phone number.
     if (isMomo && _momoPhone.trim().length < 9) {
       _showError('Enter a valid MoMo phone number');
       return;
@@ -316,13 +311,16 @@ _goNext();
         for (final g in cart.groups)
           {
             'sellerId': g.sellerId,
-            'paymentMethod': (_methods[g.sellerId] ?? PaymentKind.momo).apiValue,
-            if (_proofs[g.sellerId] != null) 'proof': _proofs[g.sellerId]!.toApi(),
+            'paymentMethod':
+                (_methods[g.sellerId] ?? PaymentKind.momo).apiValue,
+            if (_proofs[g.sellerId] != null)
+              'proof': _proofs[g.sellerId]!.toApi(),
           },
       ];
 
-      // Build the top-level paymentMethod + paymentDetails for gateway charge.
-      final onlineMethod = isOnline ? firstMethod.apiValue : null;
+      final onlineMethod = (isGooglePay || isMomo)
+          ? firstMethod.apiValue
+          : null;
       final Map<String, dynamic>? paymentDetails = isGooglePay
           ? {
               if (_googlePayToken != null) 'walletToken': _googlePayToken,
@@ -335,7 +333,8 @@ _goNext();
             sellerPayments: selection,
             couponCode: couponCode,
             deliveryOption: deliveryOption,
-            deliveryAddressId: _delivery == DeliveryKind.pickup ? null : address.id,
+            deliveryAddressId:
+                _delivery == DeliveryKind.pickup ? null : address.id,
             proofSubmittedSellerIds: _proofs.keys.toList(),
             paymentMethod: onlineMethod,
             paymentDetails: paymentDetails,
@@ -358,7 +357,11 @@ _goNext();
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.tr('checkout.title'), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        title: Text(context.tr('checkout.title'),
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.w800)),
       ),
       body: _buildBody(),
     );
@@ -395,7 +398,8 @@ _goNext();
 
         return Column(
           children: [
-            CheckoutStepIndicator(current: _step, labels: _stepLabels(context)),
+            CheckoutStepIndicator(
+                current: _step, labels: _stepLabels(context)),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(16),
@@ -408,11 +412,13 @@ _goNext();
                       selectedAddressId: address?.id,
                       creating: _creating,
                       delivery: _delivery,
-                      onSelectAddress: (a) => setState(() => _selectedAddressId = a.id),
+                      onSelectAddress: (a) =>
+                          setState(() => _selectedAddressId = a.id),
                       onCreateAddress: _createAddress,
-                      onDeliveryChanged: (d) => setState(() => _delivery = d),
+                      onDeliveryChanged: (d) =>
+                          setState(() => _delivery = d),
                     )
-                  else if (_step == 2)
+                  else
                     PaymentStep(
                       cart: cart,
                       methods: _methods,
@@ -420,51 +426,45 @@ _goNext();
                       paymentAccounts: _paymentAccounts,
                       momoPhone: _momoPhone,
                       totalAmount: total,
-                      onMethodSelected: (sellerId, kind) => setState(() {
-                        _methods[sellerId] = kind;
-                      }),
+                      termsAccepted: _termsAccepted,
+                      error: _placing ? null : _error,
+                      placing: _placing,
+                      onMethodSelected: (sellerId, kind) =>
+                          setState(() => _methods[sellerId] = kind),
                       onUploadProof: _uploadProof,
                       onRemoveProof: (sellerId) =>
                           setState(() => _proofs.remove(sellerId)),
                       onMomoPhoneChanged: (phone) =>
                           setState(() => _momoPhone = phone),
+                      onToggleTerms: () => setState(
+                          () => _termsAccepted = !_termsAccepted),
                       onGooglePayResult: (result) {
                         final tokenData = result['tokenizationData'];
-                        if (tokenData is Map && tokenData['token'] != null) {
-                          setState(() => _googlePayToken = tokenData['token'] as String);
+                        if (tokenData is Map &&
+                            tokenData['token'] != null) {
+                          setState(() => _googlePayToken =
+                              tokenData['token'] as String);
+                          _placeOrder(cart);
                         }
                       },
-                    )
-                  else
-                    ReviewStep(
-                      cart: cart,
-                      address: address!,
-                      delivery: _delivery,
-                      methods: _methods,
-                      proofs: _proofs,
-                      couponDiscount: discount,
-                      termsAccepted: _termsAccepted,
-                      error: _error,
-                      onToggleTerms: () => setState(() => _termsAccepted = !_termsAccepted),
-                      onEditShipping: () => setState(() => _step = 1),
+                      onPayNow: () => _placeOrder(cart),
                     ),
                   const SizedBox(height: 8),
                   _couponCard(theme),
                 ],
               ),
             ),
-            CheckoutBottomNav(
-              step: _step,
-              last: _step == _stepLabels(context).length - 1,
-              busy: _placing,
-              label: context.tr('checkout.placeOrder', namedArgs: {'total': formatMoney(total)}),
-              onBack: _step > 0 ? _goBack : null,
-              onContinue: _step == _stepLabels(context).length - 1
-                  ? () => _placeOrder(cart)
-                  : () {
-                      if (_validate(cart, book)) _goNext();
-                    },
-            ),
+            if (_step < 2)
+              CheckoutBottomNav(
+                step: _step,
+                last: false,
+                busy: false,
+                label: context.tr('common.continue'),
+                onBack: _step > 0 ? _goBack : null,
+                onContinue: () {
+                  if (_validate(cart, book)) _goNext();
+                },
+              ),
           ],
         );
       },
@@ -488,12 +488,14 @@ _goNext();
         SectionCard(
           child: Row(
             children: [
-              Icon(Icons.inventory_2_outlined, size: 18, color: theme.colorScheme.onSurfaceVariant),
+              Icon(Icons.inventory_2_outlined,
+                  size: 18, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   context.tr('checkout.sellersPaidSeparately'),
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.4),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant, height: 1.4),
                 ),
               ),
             ],
@@ -515,7 +517,9 @@ _goNext();
               Expanded(
                 child: TextField(
                   controller: _couponController,
-                  decoration: InputDecoration(hintText: context.tr('checkout.enterCode'), isDense: true),
+                  decoration: InputDecoration(
+                      hintText: context.tr('checkout.enterCode'),
+                      isDense: true),
                 ),
               ),
               const SizedBox(width: 8),

@@ -48,11 +48,16 @@ class PaymentStep extends StatelessWidget {
     required this.paymentAccounts,
     required this.momoPhone,
     required this.totalAmount,
+    required this.termsAccepted,
+    this.error,
+    this.placing = false,
     required this.onMethodSelected,
     required this.onUploadProof,
     required this.onRemoveProof,
     required this.onMomoPhoneChanged,
+    required this.onToggleTerms,
     required this.onGooglePayResult,
+    required this.onPayNow,
   });
 
   final CartData cart;
@@ -61,15 +66,21 @@ class PaymentStep extends StatelessWidget {
   final Map<String, SellerPaymentInfo> paymentAccounts;
   final String momoPhone;
   final num totalAmount;
+  final bool termsAccepted;
+  final String? error;
+  final bool placing;
   final void Function(String sellerId, PaymentKind kind) onMethodSelected;
   final void Function(String sellerId) onUploadProof;
   final void Function(String sellerId) onRemoveProof;
   final void Function(String phone) onMomoPhoneChanged;
+  final VoidCallback onToggleTerms;
   final void Function(Map<String, dynamic> result) onGooglePayResult;
+  final VoidCallback onPayNow;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -77,12 +88,83 @@ class PaymentStep extends StatelessWidget {
             subtitle: context.tr('checkout.paymentHint')),
         const SizedBox(height: 16),
         for (final group in cart.groups) _sellerCard(context, theme, group),
+        const SizedBox(height: 12),
+        if (error != null)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(error!,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onErrorContainer)),
+          ),
+        InkWell(
+          onTap: onToggleTerms,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  termsAccepted
+                      ? Icons.check_circle
+                      : Icons.check_circle_outline,
+                  size: 20,
+                  color: termsAccepted
+                      ? colors.success
+                      : theme.colorScheme.outline,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'I agree to the Terms of Service and Privacy Policy',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: (placing || !termsAccepted) ? null : onPayNow,
+            style: FilledButton.styleFrom(
+              backgroundColor: Palette.gold,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: placing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.black),
+                  )
+                : Text(
+                    'Pay ${formatMoney(totalAmount)}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 16),
+                  ),
+          ),
+        ),
         const SizedBox(height: 8),
         Row(
           children: [
-            Icon(Icons.lock_outline,
-                size: 16, color: context.appColors.success),
-            const SizedBox(width: 8),
+            Icon(Icons.lock_outline, size: 14, color: colors.success),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 context.tr('checkout.paymentsGoDirectly'),
@@ -158,7 +240,7 @@ class PaymentStep extends StatelessWidget {
           ),
           if (needsPhone) ...[
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: TextField(
                 keyboardType: TextInputType.phone,
                 style: theme.textTheme.bodyMedium,
@@ -183,17 +265,16 @@ class PaymentStep extends StatelessWidget {
                     borderSide:
                         BorderSide(color: Palette.gold, width: 1.5),
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
                 ),
                 onChanged: onMomoPhoneChanged,
               ),
             ),
-            const SizedBox(height: 8),
           ],
           if (isOnlineMethod) ...[
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: pay.GooglePayButton(
                 paymentConfiguration:
                     pay.PaymentConfiguration.fromJsonString(
@@ -231,10 +312,9 @@ class PaymentStep extends StatelessWidget {
               ),
             ),
           ],
-          if (method == PaymentKind.momo &&
-              method != PaymentKind.cashOnDelivery) ...[
+          if (method == PaymentKind.momo) ...[
             Padding(
-              padding: const.fromLTRB(20, 0, 20, 16),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               child: _ProofSection(
                 sellerId: group.sellerId,
                 proof: proof,
@@ -274,14 +354,14 @@ class _PaymentMethodTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = context.appColors;
-    final isMomo = option.kind == PaymentKind.momo;
 
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: selected
               ? colors.goldSoft.withValues(alpha: 0.6)
@@ -318,18 +398,16 @@ class _PaymentMethodTile extends StatelessWidget {
               height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected
-                    ? Palette.gold
-                    : Colors.transparent,
+                color: selected ? Palette.gold : Colors.transparent,
                 border: Border.all(
-                  color: selected
-                      ? Palette.gold
-                      : theme.colorScheme.outline,
+                  color:
+                      selected ? Palette.gold : theme.colorScheme.outline,
                   width: 2,
                 ),
               ),
               child: selected
-                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  ? const Icon(Icons.check,
+                      size: 14, color: Colors.white)
                   : null,
             ),
           ],
@@ -364,7 +442,6 @@ class _PaymentIcon extends StatelessWidget {
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Color(0xFF4285F4),
-            fontFamily: 'Google Sans',
           ),
         ),
       );
@@ -374,13 +451,13 @@ class _PaymentIcon extends StatelessWidget {
       return Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [Color(0xFFFFCC00), Color(0xFFFDB913)],
           ),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
         alignment: Alignment.center,
         child: const Text(
@@ -398,7 +475,8 @@ class _PaymentIcon extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        color: theme.colorScheme.surfaceContainerHighest
+            .withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
       ),
       alignment: Alignment.center,
@@ -455,7 +533,8 @@ class _ProofSection extends StatelessWidget {
             GestureDetector(
               onTap: () => onRemove(sellerId),
               child: Icon(Icons.close,
-                  size: 16, color: theme.colorScheme.onSurfaceVariant),
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -465,7 +544,8 @@ class _ProofSection extends StatelessWidget {
     return GestureDetector(
       onTap: () => onUpload(sellerId),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainerHighest
               .withValues(alpha: 0.3),

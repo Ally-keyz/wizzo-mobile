@@ -98,19 +98,12 @@ void main() {
     expect(find.text('Delivery address'), findsOneWidget);
     expect(find.text('Delivery method'), findsOneWidget);
 
-    // Step 2 — Payment: per-seller card + payment options + instructions
+    // Step 2 — Payment (final step)
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     expect(find.text('Payment'), findsWidgets);
     expect(find.text('Mobile Money'), findsOneWidget);
     expect(find.text('Google Pay'), findsWidgets);
-
-    // Step 3 — Review
-    await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
-    expect(find.text('Review'), findsWidgets);
-    expect(find.text('Shipping address'), findsOneWidget);
-    expect(find.text('Summary'), findsOneWidget);
-    expect(find.textContaining('Place Order'), findsOneWidget);
+    expect(find.textContaining('Pay '), findsWidgets);
   });
 }
