@@ -323,6 +323,31 @@ class _OrderConfirmationScreenState
               method: PaymentKind.cashOnDelivery,
               amount: order.subtotal,
             )
+          else if (method == PaymentKind.card)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colors.successContainer.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.verified_outlined, size: 18, color: colors.success),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      context.tr('checkout.cardPaid'),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
           else if (hasProof)
             Container(
               width: double.infinity,

@@ -12,7 +12,7 @@ class AppConfig {
   /// Override at build time with `--dart-define=API_BASE_URL=...`
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://wizzo-backend-3.onrender.com/api/v1',
+    defaultValue: 'https://api.wizzomarketplace.com/api/v1',
   );
 
   /// MapTiler raster tiles (realistic street/satellite maps). Leave empty to

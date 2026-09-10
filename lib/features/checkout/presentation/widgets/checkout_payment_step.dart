@@ -60,7 +60,8 @@ class PaymentStep extends StatelessWidget {
   Widget _sellerCard(BuildContext context, ThemeData theme, CartSellerGroup group) {
     final method = methods[group.sellerId] ?? PaymentKind.momo;
     final proof = proofs[group.sellerId];
-    final needsProof = method != PaymentKind.cashOnDelivery;
+    final needsProof =
+        method != PaymentKind.cashOnDelivery && method != PaymentKind.card;
     final account = accountFor(group.sellerId, method);
     return SectionCard(
       title: group.sellerName ?? context.tr('common.seller'),
@@ -82,7 +83,7 @@ class PaymentStep extends StatelessWidget {
             PaymentInstructionsCard(
               method: method,
               account: account,
-              amount: group.subtotal,
+              amount: method == PaymentKind.card ? null : group.subtotal,
             ),
             const Divider(height: 20),
             const SizedBox(height: 4),

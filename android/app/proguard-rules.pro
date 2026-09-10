@@ -19,3 +19,15 @@
 -dontwarn com.google.android.play.core.tasks.OnFailureListener
 -dontwarn com.google.android.play.core.tasks.OnSuccessListener
 -dontwarn com.google.android.play.core.tasks.Task
+
+# Stripe PaymentSheet (required by flutter_stripe):
+-dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivity$g
+-dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Args
+-dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Error
+-dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter
+-dontwarn com.stripe.android.pushProvisioning.PushProvisioningEphemeralKeyProvider
+-dontwarn kotlinx.parcelize.Parceler$DefaultImpls
+-dontwarn kotlinx.parcelize.Parceler
+-dontwarn kotlinx.parcelize.Parcelize
+# Keep Stripe classes
+-keep class com.stripe.** { *; }

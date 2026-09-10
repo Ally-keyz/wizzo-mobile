@@ -187,7 +187,11 @@ class ReviewStep extends StatelessWidget {
     final IconData icon;
     final Color color;
     final String status;
-    if (method == PaymentKind.cashOnDelivery) {
+    if (method == PaymentKind.card) {
+      icon = Icons.credit_card;
+      color = colors.success;
+      status = context.tr('checkout.paidByCard');
+    } else if (method == PaymentKind.cashOnDelivery) {
       icon = Icons.payments_outlined;
       color = colors.info;
       status = formatMoney(group.subtotal);

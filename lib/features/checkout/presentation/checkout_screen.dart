@@ -1,9 +1,11 @@
 ﻿import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' hide Address;
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/w_widgets.dart';
@@ -271,6 +273,12 @@ _goNext();
   num _deliveryFee() =>
       DeliveryOption.all.firstWhere((o) => o.id == _delivery).price;
 
+  /// Card (Stripe) pays once for the whole order, so it is only valid when
+  /// every seller in the group is set to card.
+  bool _isCardSelected(CartData cart) =>
+      cart.groups.isNotEmpty &&
+      cart.groups.every((g) => _methods[g.sellerId] == PaymentKind.card);
+
   Future<void> _placeOrder(CartData cart) async {
     final address = _effectiveAddress(ref.read(addressesProvider).value ?? AddressBook());
     if (address == null) {
@@ -286,6 +294,44 @@ _goNext();
       _error = null;
     });
     try {
+      final useCard = _isCardSelected(cart);
+      final deliveryOption = _delivery.apiValue;
+      final couponCode = _coupon?.code;
+
+      String? paymentIntentId;
+      if (useCard) {
+        final intent = await ref
+            .read(checkoutRepositoryProvider)
+            .createStripePaymentIntent(
+              deliveryOption: deliveryOption,
+              deliveryAddressId:
+                  _delivery == DeliveryKind.pickup ? null : address.id,
+              couponCode: couponCode,
+            );
+        if (intent.clientSecret.isEmpty) {
+          throw Exception(context.tr('checkout.paymentNotReady'));
+        }
+        if (intent.publishableKey != null && intent.publishableKey!.isNotEmpty) {
+          Stripe.publishableKey = intent.publishableKey!;
+        }
+        await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            paymentIntentClientSecret: intent.clientSecret,
+            merchantDisplayName: AppConfig.appName,
+            style: Theme.of(context).brightness == Brightness.dark
+                ? ThemeMode.dark
+                : ThemeMode.light,
+          ),
+        );
+        final option = await Stripe.instance.presentPaymentSheet();
+        if (option == null) {
+          if (mounted) setState(() => _placing = false);
+          _showError(context.tr('checkout.paymentCanceled'));
+          return;
+        }
+        paymentIntentId = intent.paymentIntentId;
+      }
+
       final selection = [
         for (final g in cart.groups)
           {
@@ -296,10 +342,12 @@ _goNext();
       ];
       final summary = await ref.read(checkoutRepositoryProvider).placeOrder(
             sellerPayments: selection,
-            couponCode: _coupon?.code,
-            deliveryOption: _delivery.apiValue,
+            couponCode: couponCode,
+            deliveryOption: deliveryOption,
             deliveryAddressId: _delivery == DeliveryKind.pickup ? null : address.id,
             proofSubmittedSellerIds: _proofs.keys.toList(),
+            paymentMethod: useCard ? 'card' : null,
+            cardPaymentIntentId: paymentIntentId,
           );
       await ref.read(cartProvider.notifier).clear();
       ref.invalidate(cartProvider);
@@ -380,8 +428,20 @@ _goNext();
                       proofs: _proofs,
                       paymentAccounts: _paymentAccounts,
                       onMethodSelected: (sellerId, kind) => setState(() {
-                        _methods[sellerId] = kind;
-                        if (kind == PaymentKind.cashOnDelivery) _proofs.remove(sellerId);
+                        // Card (Stripe) pays once for the whole order — selecting
+                        // it anywhere selects it for every seller and clears any
+                        // attached proof (no per-seller bank transfer needed).
+                        if (kind == PaymentKind.card) {
+                          for (final g in cart.groups) {
+                            _methods[g.sellerId] = PaymentKind.card;
+                          }
+                          _proofs.clear();
+                        } else {
+                          _methods[sellerId] = kind;
+                          if (kind == PaymentKind.cashOnDelivery) {
+                            _proofs.remove(sellerId);
+                          }
+                        }
                       }),
                       onUploadProof: _uploadProof,
                       onRemoveProof: (sellerId) =>
