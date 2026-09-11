@@ -242,6 +242,7 @@
     "noAddresses": "Aucune adresse enregistrée pour le moment. Ajoutez-en une pour continuer.",
     "orderPlaced": "Commande passée !",
     "orderPlacedHint": "Votre commande a été passée. Payez chaque vendeur directement pour finaliser votre commande.",
+    "orderPlacedMomoHint": "Nous avons envoyé une demande de paiement (STK push) sur votre téléphone. Confirmez-la pour valider le paiement.",
     "orderSummary": "Récapitulatif de la commande",
     "orderTotalInclDelivery": "Total de la commande (livraison incluse)",
     "paymentHint": "Choisissez comment payer chaque vendeur séparément.",

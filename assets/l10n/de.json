@@ -242,6 +242,7 @@
     "noAddresses": "Noch keine Adressen gespeichert. Füge eine hinzu, um fortzufahren.",
     "orderPlaced": "Bestellung aufgegeben!",
     "orderPlacedHint": "Deine Bestellung wurde aufgegeben. Zahle jeden Verkäufer direkt, um deine Bestellung abzuschließen.",
+    "orderPlacedMomoHint": "Wir haben eine Zahlungsaufforderung (STK-Push) an dein Telefon gesendet. Bestätige sie, um die Zahlung abzuschließen.",
     "orderSummary": "Bestellübersicht",
     "orderTotalInclDelivery": "Bestellsumme (inkl. Versand)",
     "paymentHint": "Wähle, wie du jeden Verkäufer separat bezahlen möchtest.",

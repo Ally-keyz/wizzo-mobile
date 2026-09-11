@@ -42,22 +42,29 @@ class AppConfig {
 
   /// Google OAuth client IDs for Google Sign-In (Google Cloud Console).
   ///
-  /// SECURITY: these are rotated build-time values, NOT committed. Supply them
-  /// when building the app:
+  /// These are public OAuth client identifiers (they must ship inside the app,
+  /// exactly like google-services.json), NOT secrets — so they are compiled in
+  /// below to guarantee Google Sign-In works in every build. They can still be
+  /// overridden at build time if the credentials are ever rotated:
   ///   flutter build apk --release \
   ///     --dart-define=GOOGLE_ANDROID_CLIENT_ID=... \
   ///     --dart-define=GOOGLE_SERVER_CLIENT_ID=...
+  ///
+  /// On Android google_sign_in ignores `clientId` (the app is identified by
+  /// package name + signing-key SHA-1) and uses `serverClientId` to request an
+  /// ID token. `serverClientId` MUST be the OAuth Web client id so the tokens
+  /// are issued for the audience the backend's `/auth/google` verifies.
   ///
   /// The Android client must be registered for package `app.wizzo.wizzo_market`
   /// with the signing key's SHA-1. The server client must match the backend's
   /// GOOGLE_CLIENT_ID so `/auth/google` accepts the tokens the app produces.
   static const String googleAndroidClientId = String.fromEnvironment(
     'GOOGLE_ANDROID_CLIENT_ID',
-    defaultValue: '',
+    defaultValue: '953421637514-ohh0fj36g97d9lg7s7ogf18ricb0bvil.apps.googleusercontent.com',
   );
   static const String googleServerClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
-    defaultValue: '',
+    defaultValue: '953421637514-1p9054rkqo9t5onpi0j8tbab0jmvq75l.apps.googleusercontent.com',
   );
 
   static const String currencyCode = 'RWF';

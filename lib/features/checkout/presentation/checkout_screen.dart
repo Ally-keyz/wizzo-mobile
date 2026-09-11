@@ -36,41 +36,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String? _selectedAddressId;
   DeliveryKind _delivery = DeliveryKind.standard;
   final Map<String, PaymentKind> _methods = {};
-  final Map<String, SellerPaymentInfo> _paymentAccounts = {};
   String _momoPhone = '';
   String? _googlePayToken;
-  Set<String> _loadedAccountIds = const {};
   String? _error;
-
-  void _maybeLoadPaymentAccounts(CartData cart) {
-    final ids = cart.groups
-        .map((g) => g.sellerId)
-        .where((id) => id.isNotEmpty)
-        .toSet();
-    if (_loadedAccountIds.length == ids.length &&
-        _loadedAccountIds.containsAll(ids)) {
-      return;
-    }
-    _loadedAccountIds = ids;
-    ref
-        .read(checkoutRepositoryProvider)
-        .getSellersPaymentAccounts(ids.toList())
-        .then((infos) {
-      if (!mounted) return;
-      final map = <String, SellerPaymentInfo>{};
-      for (final info in infos) {
-        map[info.sellerUserId] = info;
-        if (info.sellerId != null && info.sellerId!.isNotEmpty) {
-          map[info.sellerId!] = info;
-        }
-      }
-      setState(() {
-        _paymentAccounts
-          ..clear()
-          ..addAll(map);
-      });
-    }).catchError((_) {});
-  }
 
   Future<void> _createAddress(Address draft) async {
     setState(() => _creating = true);
@@ -271,7 +239,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         final address = _effectiveAddress(book);
         final deliveryFee = _deliveryFee();
         final total = cart.subtotal + deliveryFee;
-        _maybeLoadPaymentAccounts(cart);
 
         return Column(
           children: [
@@ -299,7 +266,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     PaymentStep(
                       cart: cart,
                       methods: _methods,
-                      paymentAccounts: _paymentAccounts,
                       momoPhone: _momoPhone,
                       totalAmount: total,
                       termsAccepted: _termsAccepted,

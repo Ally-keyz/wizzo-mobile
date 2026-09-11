@@ -242,6 +242,7 @@
     "noAddresses": "Bado hakuna anwani zilizohifadhiwa. Ongeza moja ili kuendelea.",
     "orderPlaced": "Agizo limewekwa!",
     "orderPlacedHint": "Agizo lako limewekwa. Mlipe kila muuzaji moja kwa moja ili kukamilisha agizo lako.",
+    "orderPlacedMomoHint": "Tumetuma ombi la malipo (STK push) kwenye simu yako. Kamilisha ombi ili kulipa lihakikiwe.",
     "orderSummary": "Muhtasari wa agizo",
     "orderTotalInclDelivery": "Jumla ya agizo (pamoja na uwasilishaji)",
     "paymentHint": "Chagua jinsi utakavyomlipa kila muuzaji kando.",

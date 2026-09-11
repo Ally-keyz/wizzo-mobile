@@ -41,11 +41,11 @@ The AAB above is built with the app's **defaults**. Before the actual Play relea
 | Dart-define | Default in code | Notes / needed for |
 |---|---|---|
 | `API_BASE_URL` | `https://api.wizzomarketplace.com/api/v1` (confirmed) | Production API — now the code default. Only pass this define if you ever need to point at staging. |
-| `GOOGLE_ANDROID_CLIENT_ID` | empty | Required for Chrome-based Google Sign-In on Android |
-| `GOOGLE_SERVER_CLIENT_ID` | empty | Required so Android OAuth works against the backend |
-| `MAPTILER_KEY` | empty | Map tiles for delivery-address map |
+| `GOOGLE_ANDROID_CLIENT_ID` | `953421637514-ohh0fj36g97d9lg7s7ogf18ricb0bvil.apps.googleusercontent.com` (compiled in) | Required for Google Sign-In on Android. Value is public (ships inside the app); a `--dart-define` can still override it. |
+| `GOOGLE_SERVER_CLIENT_ID` | `953421637514-1p9054rkqo9t5onpi0j8tbab0jmvq75l.apps.googleusercontent.com` (compiled in) | Required so Android OAuth works against the backend. Same value as the server's GOOGLE_CLIENT_ID. |
+| `MAPTILER_KEY` | empty | Map tiles for delivery-address map — pass if the map is wanted. |
 
-Without these, Google Sign-In and the map will not work in the released build.. The values are build-time and must be passed on the build machine; they are not present in the repo (no secrets in `git`).
+The Google Sign-In client IDs are now hard-coded as defaults in `AppConfig` (v1.2.0+13), so Google login works in any release build without extra flags. Only `MAPTILER_KEY` still needs to be provided (for the address map) if it's required.
 
 ## 4. DATA SAFETY — Play store form answers (Phase 7)
 

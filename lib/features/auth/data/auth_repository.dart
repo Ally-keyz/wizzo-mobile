@@ -77,9 +77,19 @@ class AuthRepository {
   }
 
   Future<AuthResult> google() async {
+    // Only pass non-empty values. On Android an empty `serverClientId` string
+    // would make the native plugin call requestIdToken('') and fail instead of
+    // falling back to requestEmail-only sign-in.
+    final serverClientId =
+        AppConfig.googleServerClientId.trim().isEmpty
+            ? null
+            : AppConfig.googleServerClientId.trim();
     final google = GoogleSignIn(
-      clientId: AppConfig.googleAndroidClientId,
-      serverClientId: AppConfig.googleServerClientId,
+      clientId:
+          AppConfig.googleAndroidClientId.trim().isEmpty
+              ? null
+              : AppConfig.googleAndroidClientId.trim(),
+      serverClientId: serverClientId,
       scopes: ['email', 'profile'],
     );
     try {
@@ -93,10 +103,9 @@ class AuthRepository {
       }
       final idToken = await account.authentication.then((a) => a.idToken);
       if (idToken == null) {
-        // On Android an ID token is only issued when the app has an OAuth
-        // audience configured: build with GOOGLE_SERVER_CLIENT_ID / a
-        // google-services.json exposing default_web_client_id. Without it the
-        // native plugin never calls requestIdToken() and idToken stays null.
+        // On Android an ID token is only issued when an OAuth audience is
+        // configured: the app needs `serverClientId` (the web client id) and
+        // the signing key's SHA-1 registered in the Google Cloud console.
         CrashLogger.record(
           'auth/google',
           'idToken is null: app built without Google OAuth config',
@@ -104,8 +113,9 @@ class AuthRepository {
         throw const ApiException(
           status: 0,
           code: 'google-config',
-          message: 'Google isn\'t set up on this build yet. '
-              'Use email sign-in in the meantime.',
+          message: 'Google sign-in didn\'t return an auth token. '
+              'Make sure the app is signed with the registered key, '
+              'or use email sign-in in the meantime.',
         );
       }
       final data = await _api.post('/auth/google', body: {'idToken': idToken});
@@ -119,7 +129,8 @@ class AuthRepository {
       final detail = e.toString().trim();
       final hint = detail.contains('10:')
           ? ' (the app signing key is not registered with Google Cloud — '
-                'add the release SHA-1 fingerprint to the Android OAuth client.)'
+                'add the SHA-1 fingerprint of this build\'s signing key to '
+                'the Android OAuth client.)'
           : '';
       throw ApiException(
         status: 0,

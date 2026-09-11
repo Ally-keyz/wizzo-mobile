@@ -81,6 +81,7 @@ class _OrderConfirmationScreenState
               ? s.sellerOrders.fold<num>(0, (acc, o) => acc + o.subtotal)
               : s.total);
     final grandTotal = s?.grandTotal ?? s?.total;
+    final isMomoPending = s?.paymentKind == PaymentKind.momo;
 
     return Scaffold(
       appBar: AppBar(
@@ -145,13 +146,48 @@ class _OrderConfirmationScreenState
             ),
             const SizedBox(height: 6),
             Text(
-              context.tr('checkout.orderPlacedHint'),
+              isMomoPending
+                  ? context.tr('checkout.orderPlacedMomoHint')
+                  : context.tr('checkout.orderPlacedHint'),
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
             ),
+            if (isMomoPending && grandTotal != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colors.warningContainer.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.schedule_send_outlined,
+                      size: 20,
+                      color: colors.onWarningContainer,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'MoMo payment initiated for ${formatMoney(grandTotal)}. '
+                        'Enter your PIN on the prompt sent to your phone. '
+                        'Your order will be marked as paid only after the '
+                        'payment is confirmed.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onWarningContainer,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (grandTotal != null) ...[
               const SizedBox(height: 12),
               Text(
@@ -294,6 +330,34 @@ class _OrderConfirmationScreenState
             PaymentInstructionsCard(
               method: PaymentKind.cashOnDelivery,
               amount: order.subtotal,
+            )
+          else if (method == PaymentKind.momo)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.schedule_outlined,
+                      size: 18, color: Palette.gold),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Awaiting MoMo payment confirmation. Your order will '
+                      'be confirmed once your mobile money provider approves '
+                      'the payment from the prompt sent to your phone.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             )
           else
             PaymentInstructionsCard(

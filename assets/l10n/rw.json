@@ -242,6 +242,7 @@
     "noAddresses": "Nta aderesi byazwe. Ongeraho imwe kugira ngo ukomeze.",
     "orderPlaced": "Ubuyoboze bwawe bwoherejwe!",
     "orderPlacedHint": "Ubuyoboze bwawe bwoherejwe. Ishyura buri mucuruzi ku giti cye kugira ngo urangize ubuyoboze.",
+    "orderPlacedMomoHint": "Twohereje icyifuzo cyo kwishyura (STK push) kuri telefoni yawe. Emeza icyifuzo kugira ngo ishyura ryemezwe.",
     "orderSummary": "Incamake y'ubuyoboze",
     "orderTotalInclDelivery": "Igiteranyo cy'ubuyoboze (harimo ukohereza)",
     "paymentHint": "Hitamo uko uzishyura buri mucuruzi ku giti cye.",

@@ -10,7 +10,6 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/w_widgets.dart';
 import '../../../cart/models/cart.dart';
 import '../../models/checkout.dart';
-import 'checkout_shared.dart';
 
 const _googlePayConfig = {
   'provider': 'google_pay',
@@ -51,7 +50,6 @@ class PaymentStep extends StatelessWidget {
     super.key,
     required this.cart,
     required this.methods,
-    required this.paymentAccounts,
     required this.momoPhone,
     required this.totalAmount,
     required this.termsAccepted,
@@ -66,7 +64,6 @@ class PaymentStep extends StatelessWidget {
 
   final CartData cart;
   final Map<String, PaymentKind> methods;
-  final Map<String, SellerPaymentInfo> paymentAccounts;
   final String momoPhone;
   final num totalAmount;
   final bool termsAccepted;
@@ -186,7 +183,6 @@ class PaymentStep extends StatelessWidget {
     final method = methods[group.sellerId] ?? PaymentKind.momo;
     final isOnlineMethod = method == PaymentKind.googlePay;
     final needsPhone = method == PaymentKind.momo;
-    final account = accountFor(group.sellerId, method);
     final colors = context.appColors;
 
     return Container(
@@ -247,6 +243,9 @@ class PaymentStep extends StatelessWidget {
                 decoration: InputDecoration(
                   labelText: 'MoMo phone number',
                   hintText: '0788 123 456',
+                  helperText:
+                      "We'll send a payment prompt (STK push) to this number.",
+                  helperMaxLines: 2,
                   prefixIcon: Icon(Icons.phone_outlined,
                       size: 20, color: colors.gold),
                   filled: true,
@@ -269,6 +268,29 @@ class PaymentStep extends StatelessWidget {
                       horizontal: 16, vertical: 14),
                 ),
                 onChanged: onMomoPhoneChanged,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.schedule_outlined,
+                    size: 16,
+                    color: colors.warning,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Your order stays \u201CPayment submitted\u201D until your MoMo provider confirms the payment from the prompt on your phone. It is NOT marked as paid automatically.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -314,28 +336,40 @@ class PaymentStep extends StatelessWidget {
               ),
             ),
           ],
-          if (method == PaymentKind.momo && account != null) ...[
+          if (method == PaymentKind.momo) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: PaymentInstructionsCard(
-                method: method,
-                account: account,
-                amount: group.subtotal,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.infoContainer.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.phone_android_outlined,
+                        size: 18, color: colors.info),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Your whole order is charged once via MoMo. '
+                        'We\'ll send an STK push to the number above when '
+                        'you tap Pay.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ],
       ),
     );
-  }
-
-  SellerPaymentAccount? accountFor(String sellerId, PaymentKind method) {
-    final info = paymentAccounts[sellerId];
-    if (info == null) return null;
-    for (final account in info.paymentAccounts) {
-      if (account.method == method) return account;
-    }
-    return null;
   }
 }
 

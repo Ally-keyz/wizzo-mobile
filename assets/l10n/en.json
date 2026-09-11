@@ -242,6 +242,7 @@
     "noAddresses": "No saved addresses yet. Add one to continue.",
     "orderPlaced": "Order placed!",
     "orderPlacedHint": "Your order has been placed. Pay each seller directly to complete your order.",
+    "orderPlacedMomoHint": "We've sent a payment prompt (STK push) to your phone. Complete the prompt to confirm payment.",
     "orderSummary": "Order summary",
     "orderTotalInclDelivery": "Order total (incl. delivery)",
     "paymentHint": "Choose how you'll pay each seller separately.",
