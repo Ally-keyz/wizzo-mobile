@@ -180,7 +180,7 @@ class _OrderCard extends StatelessWidget {
 
   String _statusLabel(BuildContext context, String? status) {
     if (status == null) return context.tr('orders.statusPlaced');
-    return status.replaceAll('_', ' ').toUpperCase();
+    return _orderStatusLabel(context, status);
   }
 
   Color _statusColor(BuildContext context) {
@@ -196,4 +196,27 @@ class _OrderCard extends StatelessWidget {
         return colors.info;
     }
   }
+}
+
+const _knownOrderStatuses = <String>{
+  'placed',
+  'seller_confirmed',
+  'payment_submitted',
+  'payment_confirmed',
+  'processing',
+  'shipped',
+  'out_for_delivery',
+  'delivered',
+  'completed',
+  'cancelled',
+  'returned',
+  'ready_for_pickup',
+};
+
+String _orderStatusLabel(BuildContext context, String status) {
+  final key = status.toLowerCase();
+  if (_knownOrderStatuses.contains(key)) {
+    return context.tr('orders.status.$key');
+  }
+  return status.replaceAll('_', ' ').toUpperCase();
 }

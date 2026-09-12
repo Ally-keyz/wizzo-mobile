@@ -7,6 +7,23 @@ import '../../../../core/widgets/w_image.dart';
 import '../../../cart/models/cart.dart';
 import '../../models/checkout.dart';
 
+/// Localized display label for a payment method.
+String paymentKindLabel(BuildContext context, PaymentKind kind) => switch (kind) {
+      PaymentKind.momo => context.tr('checkout.payment.momo.name'),
+      PaymentKind.bank => context.tr('checkout.payment.bank.name'),
+      PaymentKind.cashOnDelivery => context.tr('checkout.payment.cod.name'),
+      PaymentKind.googlePay => context.tr('checkout.payment.google.name'),
+    };
+
+/// Localized one-line description for a payment method.
+String paymentKindDescription(BuildContext context, PaymentKind kind) =>
+    switch (kind) {
+      PaymentKind.momo => context.tr('checkout.payment.momo.desc'),
+      PaymentKind.bank => context.tr('checkout.payment.bank.desc'),
+      PaymentKind.cashOnDelivery => context.tr('checkout.payment.cod.desc'),
+      PaymentKind.googlePay => context.tr('checkout.payment.google.desc'),
+    };
+
 /// Shows the seller's pay-in details for a manual payment — the mobile
 /// equivalent of the web checkout `PaymentInstructions` component.
 class PaymentInstructionsCard extends StatelessWidget {
@@ -40,7 +57,7 @@ class PaymentInstructionsCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Google Pay will charge your saved card when you place the order. No extra steps needed.',
+                context.tr('checkout.googlePayNote'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   height: 1.4,
@@ -387,7 +404,7 @@ class CheckoutGroupLine extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      '${item.product.name} Ã— ${item.quantity}',
+                      '${item.product.name} × ${item.quantity}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall,
@@ -457,7 +474,7 @@ class CheckoutPaymentTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    option.label,
+                    paymentKindLabel(context, option.kind),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

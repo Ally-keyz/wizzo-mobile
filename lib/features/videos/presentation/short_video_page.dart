@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -123,7 +124,7 @@ class _ShortVideoPageState extends ConsumerState<ShortVideoPage> {
         .addItem(productId: product.id, quantity: 1, size: size, color: color)
         .then((_) {})
         .catchError((_) {
-          if (mounted) _toast('Could not add to cart');
+          if (mounted) _toast(context.tr('cart.addFailed'));
         });
     _showAddedToCart(prevCount + 1);
   }
@@ -142,7 +143,7 @@ class _ShortVideoPageState extends ConsumerState<ShortVideoPage> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Added to cart ($count)',
+                  context.tr('cart.addedCount', namedArgs: {'count': '$count'}),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -275,7 +276,7 @@ class _ShortVideoPageState extends ConsumerState<ShortVideoPage> {
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 200),
                         child: Text(
-                          seller?.displayName ?? 'Wizzo Seller',
+                          seller?.displayName ?? context.tr('common.wizzoSeller'),
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.white,
@@ -419,9 +420,9 @@ class _ActionRail extends StatelessWidget {
         _RailAction(
           icon: Icons.shopping_bag_outlined,
           color: Palette.gold,
-          label: const Text(
-            'Cart',
-            style: TextStyle(color: Colors.white, fontSize: 11),
+          label: Text(
+            context.tr('common.cart'),
+            style: const TextStyle(color: Colors.white, fontSize: 11),
           ),
           onTap: onAddToCart,
         ),
@@ -534,11 +535,11 @@ class _ProductChip extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Padding(
-              padding: EdgeInsets.only(right: 4),
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
               child: Text(
-                'Shop',
-                style: TextStyle(color: Colors.white, fontSize: 12),
+                context.tr('product.viewShop'),
+                style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
             ),
           ],
@@ -604,7 +605,7 @@ class _VariantSheetState extends State<_VariantSheet> {
             const SizedBox(height: 20),
             if (product.sizeOptions.isNotEmpty) ...[
               VariantSelector(
-                title: 'Select Size',
+                title: context.tr('product.selectSize'),
                 options: product.sizeOptions,
                 value: _size,
                 onSelect: (v) => setState(() => _size = v),
@@ -613,7 +614,7 @@ class _VariantSheetState extends State<_VariantSheet> {
             ],
             if (product.colorOptions.isNotEmpty) ...[
               VariantSelector(
-                title: 'Select Color',
+                title: context.tr('product.selectColor'),
                 options: product.colorOptions,
                 value: _color,
                 onSelect: (v) => setState(() => _color = v),
@@ -626,9 +627,9 @@ class _VariantSheetState extends State<_VariantSheet> {
               onPressed: () => Navigator.of(
                 context,
               ).pop(VariantChoice(size: _size, color: _color)),
-              child: const Text(
-                'Add to Cart',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              child: Text(
+                context.tr('product.addToCart'),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -705,16 +706,16 @@ class _ProductSheet extends StatelessWidget {
             FilledButton(
               onPressed: () => context.push('/product/${product.id}'),
               style: FilledButton.styleFrom(minimumSize: const Size(0, 52)),
-              child: const Text(
-                'View Full Details',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              child: Text(
+                context.tr('product.viewFullDetails'),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
             const SizedBox(height: 10),
             OutlinedButton(
               onPressed: onAddToCart,
               style: OutlinedButton.styleFrom(minimumSize: const Size(0, 52)),
-              child: const Text('Add to Cart'),
+              child: Text(context.tr('product.addToCart')),
             ),
           ],
         ),

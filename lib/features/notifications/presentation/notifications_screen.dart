@@ -144,7 +144,7 @@ class _NotificationTile extends StatelessWidget {
                   if (notification.createdAt != null) ...[
                     const SizedBox(height: 6),
                     Text(
-                      relativeDate(notification.createdAt),
+                      relativeDate(context, notification.createdAt),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.outline,
                       ),

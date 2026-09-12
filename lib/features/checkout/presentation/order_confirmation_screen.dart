@@ -296,12 +296,7 @@ class _OrderConfirmationScreenState
   ) {
     final isCod = order.isCashOnDelivery;
     final method = order.paymentMethod ?? PaymentKind.momo;
-    final methodLabel = PaymentOption.all
-        .firstWhere(
-          (o) => o.kind == method,
-          orElse: () => PaymentOption.all.first,
-        )
-        .label;
+    final methodLabel = paymentKindLabel(context, method);
 
     return SectionCard(
       title: _storeNameFor(order) ?? context.tr('common.seller'),
@@ -347,9 +342,7 @@ class _OrderConfirmationScreenState
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Awaiting MoMo payment confirmation. Your order will '
-                      'be confirmed once your mobile money provider approves '
-                      'the payment from the prompt sent to your phone.',
+                      context.tr('checkout.momoAwaitingConfirmation'),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         height: 1.4,

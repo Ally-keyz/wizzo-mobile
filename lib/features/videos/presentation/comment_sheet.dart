@@ -1,6 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../account/data/account_repository.dart';
 import '../../account/models/profile.dart';
@@ -49,13 +49,13 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
       ref.invalidate(productReviewsProvider(widget.productId));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Review posted')),
+          SnackBar(content: Text(context.tr('reviews.posted'))),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not post your review')),
+          SnackBar(content: Text(context.tr('reviews.postFailed'))),
         );
       }
     } finally {
@@ -97,7 +97,7 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
                 ),
                 Expanded(
                   child: Text(
-                    'Comments & Reviews',
+                    context.tr('reviews.commentsTitle'),
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
@@ -107,7 +107,9 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
                     () => _viewerRatingsOnly = !_viewerRatingsOnly,
                   ),
                   child: Text(
-                    _viewerRatingsOnly ? 'Viewer reviews' : 'All',
+                    _viewerRatingsOnly
+                        ? context.tr('reviews.viewerReviews')
+                        : context.tr('common.all'),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w600,
@@ -123,7 +125,7 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
                 ? Padding(
                     padding: const EdgeInsets.all(32),
                     child: Text(
-                      'No reviews yet. Be the first to review this short.',
+                      context.tr('reviews.emptyShort'),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -152,7 +154,7 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Your rating',
+                        context.tr('reviews.yourRating'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -188,9 +190,9 @@ class _CommentSheetState extends ConsumerState<CommentSheet> {
                           maxLines: 3,
                           minLines: 1,
                           textInputAction: TextInputAction.newline,
-                          decoration: const InputDecoration(
-                            hintText: 'Add your review...',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            hintText: context.tr('reviews.addHint'),
+                            border: const OutlineInputBorder(),
                           ),
                         ),
                       ),
@@ -255,7 +257,7 @@ class _ReviewTile extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        review.authorName ?? 'Anonymous',
+                        review.authorName ?? context.tr('reviews.anonymous'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -263,7 +265,7 @@ class _ReviewTile extends StatelessWidget {
                     ),
                     if (review.createdAt != null)
                       Text(
-                        _rel(review.createdAt!),
+                        _rel(context, review.createdAt!),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -293,9 +295,9 @@ class _ReviewTile extends StatelessWidget {
     );
   }
 
-  String _rel(DateTime t) {
+  String _rel(BuildContext context, DateTime t) {
     final diff = DateTime.now().difference(t);
-    if (diff.inMinutes < 1) return 'now';
+    if (diff.inMinutes < 1) return context.tr('common.time.now');
     if (diff.inHours < 1) return '${diff.inMinutes}m';
     if (diff.inDays < 1) return '${diff.inHours}h';
     return DateFormat('MMM d').format(t);

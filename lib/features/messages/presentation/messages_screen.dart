@@ -341,7 +341,7 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
             children: [
               Expanded(
                 child: Text(
-                  'New chat',
+                  context.tr('chat.newChat'),
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -630,7 +630,7 @@ class _ConversationTile extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        chatTime(conversation.lastMessageAt),
+                        chatTime(context, conversation.lastMessageAt),
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: unread
                               ? Palette.goldDark

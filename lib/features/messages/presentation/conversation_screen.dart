@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/i18n/localization_helpers.dart';
 import '../../../core/network/chat_socket.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
@@ -147,7 +148,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              context.tr('chat.errorSend', namedArgs: {'error': '${e}'}),
+              context.tr(
+                'chat.errorSend',
+                namedArgs: {'error': localizeException(context, e)},
+              ),
             ),
           ),
         );
@@ -230,7 +234,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              context.tr('chat.errorAttachPhoto', namedArgs: {'error': '${e}'}),
+              context.tr(
+                'chat.errorAttachPhoto',
+                namedArgs: {'error': localizeException(context, e)},
+              ),
             ),
           ),
         );
@@ -475,7 +482,7 @@ class _MessageBubble extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    chatTime(message.sentAt),
+                    chatTime(context, message.sentAt),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: isOutgoing
                           ? Colors.white54

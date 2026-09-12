@@ -142,7 +142,12 @@
       "title": "Fungura konte yawe",
       "tagline": "Injira muri Wizzo Marketplace mu masegonda macye",
       "orSignUpWithEmail": "cyangwa iyandikishe ukoresheje imeyili"
-    }
+    },
+    "googleCancelled": "Kwinjira kuri Google byarahanzwe.",
+    "googleNoToken": "Kwinjira kwa Google ntikwatanze ikimenyetso cyo kwinjira.",
+    "invalidServerResponse": "Seriveri yatanze igisubizo kitari cyo.",
+    "loginFailed": "Kwinjira byanze. Gerageza usubire.",
+    "sessionUpgradeFailed": "Igihe cyawe ntikibashije kuzamurwa. Injira usubire."
   },
   "browse": {
     "all": "Byose",
@@ -174,7 +179,9 @@
     "loadFailed": "Ntibyashobotse gupakira agasanduku kawe",
     "subtotal": "Igiteranyo gito",
     "summary": "Incamake",
-    "title": "Agasanduku k'Ibiguzwe"
+    "title": "Agasanduku k'Ibiguzwe",
+    "addFailed": "Ntibishoboka kongera mu ngando",
+    "addedCount": "Byongewe mu ngando ({count})"
   },
   "chat": {
     "attachPhoto": "Ongeraho ifoto",
@@ -202,7 +209,11 @@
     "searchChatsHint": "Shakisha ibiganiro…",
     "searchPeopleHint": "Shakisha abacuruzi n’abakoresha…",
     "sharedProduct": "Yasangije ibicuruzwa",
-    "startNewChat": "Tangiza ikiganiro gishya"
+    "startNewChat": "Tangiza ikiganiro gishya",
+    "uploadSignatureFailed": "Ntibishoboka kubona umukono wo kohereza",
+    "uploadReadFailed": "Ntibishoboka gusoma dosiye yatoranyijwe: {error}",
+    "uploadFailed": "Kohereza byanze: {error}",
+    "uploadFailedStatus": "Kohereza byanze ({status})"
   },
   "checkout": {
     "acceptTerms": "Nyamuneka wemere amategeko mbere yo kohereza ubuyoboze bwawe.",
@@ -226,7 +237,20 @@
     "couponOff": "{code}: {amount} kukururaho",
     "couponTitle": "Kode y'igabanyisho / kode y'amahirwe",
     "deliveringTo": "Ukohereza kuri {address}",
-    "delivery": "Ukohereza",
+    "delivery": {
+      "standard": {
+        "name": "Kohereza Bisanzwe",
+        "timing": "Iminsi 5-7 y'akazi"
+      },
+      "express": {
+        "name": "Kohereza byihuse",
+        "timing": "Iminsi 2-3 y'akazi"
+      },
+      "pickup": {
+        "name": "Aho Ukusanyira",
+        "timing": "Ihaboneka uyu munsi"
+      }
+    },
     "deliveryAddress": "Aderesi yo kugezaho",
     "deliveryFee": "Amafaranga yo kohereza",
     "deliveryMethod": "Uburyo bwo kohereza",
@@ -284,7 +308,33 @@
     "title": "Kwishyura",
     "txReference": "Indangantongo (ubushake)",
     "txReferenceHint": "urugero: MTN-123456, ref 998877",
-    "viewMyOrders": "Reba Amabuyoboze Yanjye"
+    "viewMyOrders": "Reba Amabuyoboze Yanjye",
+    "total": "Igiteranyo",
+    "googlePayNote": "Google Pay izakwishyuza ikarita yawe ibitswe iyo ushinze ikubitiro. Nta yindi ntambwe ikenewe.",
+    "momoPhoneField": "Nomero ya telefone ya MoMo",
+    "momoPhoneHint": "0788 123 456",
+    "momoStkHint": "Tuzohereza igisabe cyo kwishyura (STK push) kuri iyi nomero.",
+    "momoSubmittedNote": "Ikubitiro ryawe riguma ari \"Ubwishyu bwatanzwe\" kugeza ubwo provider yawe ya mobile money yemeza ubwishyu buhagarariwe yanditse. Ntabwo byandikwa ko byishyuwe mu buryo bwikora.",
+    "momoChargeNote": "Ikubitiro ryawe ryose rishyurwa inshimo imwe binyuze kuri MoMo. Tuzohereza STK push kuri nomero iri hejuru iyo ukandika kwishyura.",
+    "momoAwaitingConfirmation": "Kugerageza ko MoMo yemeje ubwishyu. Ikubitiro ryawe rizashimwa iyo provider yawe ya mobile money yemeje ubwishyu binyuze mu gisabe cyoherejwe kuri telefone yawe.",
+    "payment": {
+      "momo": {
+        "name": "Mobile Money",
+        "desc": "Shyura mu buryo butaziguye binyuze kuri MTN MoMo cyangwa Airtel Money"
+      },
+      "google": {
+        "name": "Google Pay",
+        "desc": "Shyura mu mutekano ukoresheje ikarita yawe ibitswe"
+      },
+      "bank": {
+        "name": "Kohereza ku Banki",
+        "desc": "Kubitsa mu buryo butaziguye cyangwa kohereza kuri interineti"
+      },
+      "cod": {
+        "name": "Kwishyura mu gihe cyo kugezwa",
+        "desc": "Shyura iyo ufite ikubitiro ryawe"
+      }
+    }
   },
   "city": {
     "chooseCity": "Hitamo igisagara cyawe",
@@ -295,12 +345,6 @@
     "searchWorldwide": "Shakisha imijyi ku isi hose",
     "searchWorldwideHint": "Shakisha abacuruzi n'uburyo bwo kohereza aho uri hose ku isi.",
     "searchingCities": "Kurondora imijyi..."
-  },
-  "currency": {
-    "changedToast": "Ifaranga ryahindutse kuri {currency}.",
-    "description": "Hitamo ifaranga rikoreshwa mu biciro byose muri porogaramu.",
-    "searchHint": "Shakisha ifaranga",
-    "title": "Ifaranga"
   },
   "common": {
     "aboutStore": "Ibitegezo by'idosiye",
@@ -409,7 +453,32 @@
     "view": "Reba",
     "viewShorts": "Reba shorts",
     "wishlistUpdateFailed": "Ntibyashobotse guhinduza urutonde rwawe rw'ibikunzwe",
-    "wizzoSeller": "Umucuruzi wa Wizzo"
+    "wizzoSeller": "Umucuruzi wa Wizzo",
+    "all": "Byose",
+    "sessionExpired": "Igihe cyawe cyarangiye. Banza winjireho bundi bushya.",
+    "timeoutError": "Icyifuzo cyarangiye. Reba umurongo wawe hanyuma ugerageze usubire.",
+    "networkError": "Ntibishoboka kugera kuri seriveri. Reba umurongo wawe.",
+    "genericError": "Hari ikitagenze neza ({status}). Gerageza usubire.",
+    "uploadImageFailed": "Igishushanyo ntikishoboye koherezwa ({status}). Gerageza usubire.",
+    "uploadVideoFailed": "Video ntiyashoboye koherezwa ({status}). Gerageza usubire.",
+    "uploadPrepareFailed": "Ntibishoboka gutegura koherezwa.",
+    "time": {
+      "now": "ubu",
+      "justNow": "Ubu ngubu",
+      "yesterday": "Ejo",
+      "minAgo": "{count} min ishize",
+      "hourAgo": "isaha {count} ishize",
+      "hoursAgo": "amasaha {count} ashize",
+      "dayAgo": "umunsi {count} ushize",
+      "daysAgo": "iminsi {count} ishize",
+      "lastSeen": "Bwa nyuma uboneka {time}"
+    }
+  },
+  "currency": {
+    "changedToast": "Ifaranga ryahindutse kuri {currency}.",
+    "description": "Hitamo ifaranga rikoreshwa mu biciro byose muri porogaramu.",
+    "searchHint": "Shakisha ifaranga",
+    "title": "Ifaranga"
   },
   "deals": {
     "all": "Amahirwe Yose",
@@ -586,7 +655,21 @@
     "title": "Amabuyoboze Yanjye",
     "tracking": "Gukurikirana Ubuyoboze",
     "verifiedSeller": "Umucuruzi wemewe",
-    "viewAll": "Reba byose"
+    "viewAll": "Reba byose",
+    "status": {
+      "placed": "Byatanzwe",
+      "seller_confirmed": "Umucuruzi yabyemeye",
+      "payment_submitted": "Ubwishyu bwoherejwe",
+      "payment_confirmed": "Ubwishyu bwemejwe",
+      "processing": "Irigukorwa",
+      "shipped": "Yoherejwe",
+      "out_for_delivery": "Yiri mu nzira yo gutangwa",
+      "delivered": "Yatanzwe",
+      "completed": "Yarangiye",
+      "cancelled": "Yahagaritswe",
+      "returned": "Yasubijwe",
+      "ready_for_pickup": "Yiteguye gufatwa"
+    }
   },
   "product": {
     "aboutTab": "Ibijyanye n'iki bicuruzwa",
@@ -619,14 +702,23 @@
     "submitReview": "Kohereza Igitekerezo",
     "viewsCount": "{count} ababirebye",
     "viewShop": "Reba Iduka",
-    "watchShort": "Reba Shorts"
+    "watchShort": "Reba Shorts",
+    "viewFullDetails": "Reba ibisobanuro byuzuye"
   },
   "reviews": {
     "empty": "Nta gitekerezo",
     "emptyHint": "Ibitekerezo usiga ku mabuyoboze bizagaragara hano.",
     "loadFailed": "Ntibyashobotse gupakira ibitekerezo",
     "placeholder": "Igitekerezo",
-    "title": "Ibitekerezo Byanjye"
+    "title": "Ibitekerezo Byanjye",
+    "posted": "Itekura ryashyizweho",
+    "postFailed": "Ntibishoboka kohereza isuzuma ryawe",
+    "commentsTitle": "Ibitekerezo n'isuzuma",
+    "viewerReviews": "Isuzuma ry'abareba",
+    "emptyShort": "Nta isuzuma riracyariho. Ba uwa mbere gusuzuma iyi video ngufi.",
+    "yourRating": "Igipimo cyawe",
+    "addHint": "Ongeraho isuzuma ryawe...",
+    "anonymous": "Uta zina"
   },
   "search": {
     "failed": "Gushakisha byanze",
@@ -924,6 +1016,11 @@
     "statRating": "Ishuguranya",
     "statResponse": "Igisubizo",
     "talkToSeller": "Vugana Umucuruzi"
+  },
+  "videos": {
+    "loadFailed": "Ntibishoboka gushyiraho videos ngufi.\n{error}",
+    "empty": "Nta videos ngufi zirahari",
+    "emptyHint": "Garuza ubundi cyangwa usure iduka ry'umucuruzi."
   },
   "wallet": {
     "addFunds": "Ongeraho Amafaranga",

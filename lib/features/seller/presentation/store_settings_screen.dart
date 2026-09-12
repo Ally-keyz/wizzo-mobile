@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/i18n/localization_helpers.dart';
 import '../../../core/widgets/w_async.dart';
 import '../../../core/widgets/w_widgets.dart';
 import '../data/seller_repository.dart';
@@ -77,10 +78,11 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _error = e.toString());
+        final localized = localizeException(context, e);
+        setState(() => _error = localized);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(localized)));
       }
     } finally {
       if (mounted) setState(() => _uploadingLogo = false);

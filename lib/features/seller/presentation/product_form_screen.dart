@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../core/i18n/localization_helpers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/w_async.dart';
@@ -113,9 +114,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (mounted) setState(() => _images.addAll(uploaded));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizeException(context, e))),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -141,9 +142,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (mounted) setState(() => _video = url);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizeException(context, e))),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);

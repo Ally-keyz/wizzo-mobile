@@ -142,7 +142,12 @@
       "title": "Créez votre compte",
       "tagline": "Rejoignez Wizzo Marketplace en quelques secondes",
       "orSignUpWithEmail": "ou inscrivez-vous avec votre e-mail"
-    }
+    },
+    "googleCancelled": "La connexion Google a été annulée.",
+    "googleNoToken": "La connexion Google n'a pas retourné de jeton d'authentification.",
+    "invalidServerResponse": "Le serveur a renvoyé une réponse invalide.",
+    "loginFailed": "Échec de la connexion. Veuillez réessayer.",
+    "sessionUpgradeFailed": "Votre session n'a pas pu être mise à niveau. Reconnectez-vous."
   },
   "browse": {
     "all": "Tout",
@@ -174,7 +179,9 @@
     "loadFailed": "Impossible de charger votre panier",
     "subtotal": "Sous-total",
     "summary": "Résumé",
-    "title": "Panier"
+    "title": "Panier",
+    "addFailed": "Impossible d'ajouter au panier",
+    "addedCount": "Ajouté au panier ({count})"
   },
   "chat": {
     "attachPhoto": "Joindre une photo",
@@ -202,7 +209,11 @@
     "searchChatsHint": "Rechercher des discussions…",
     "searchPeopleHint": "Rechercher vendeurs et utilisateurs…",
     "sharedProduct": "A partagé un produit",
-    "startNewChat": "Démarrer une nouvelle discussion"
+    "startNewChat": "Démarrer une nouvelle discussion",
+    "uploadSignatureFailed": "Impossible d'obtenir une signature de téléversement",
+    "uploadReadFailed": "Impossible de lire le fichier sélectionné : {error}",
+    "uploadFailed": "Échec du téléversement : {error}",
+    "uploadFailedStatus": "Échec du téléversement ({status})"
   },
   "checkout": {
     "acceptTerms": "Veuillez accepter les conditions avant de passer commande.",
@@ -226,7 +237,20 @@
     "couponOff": "{code} : {amount} de remise",
     "couponTitle": "Code promo / code de réduction",
     "deliveringTo": "Livraison à {address}",
-    "delivery": "Livraison",
+    "delivery": {
+      "standard": {
+        "name": "Livraison standard",
+        "timing": "5 à 7 jours ouvrés"
+      },
+      "express": {
+        "name": "Livraison express",
+        "timing": "2 à 3 jours ouvrés"
+      },
+      "pickup": {
+        "name": "Point de retrait",
+        "timing": "Disponible aujourd'hui"
+      }
+    },
     "deliveryAddress": "Adresse de livraison",
     "deliveryFee": "Frais de livraison",
     "deliveryMethod": "Mode de livraison",
@@ -284,7 +308,33 @@
     "title": "Paiement",
     "txReference": "Référence de transaction (facultatif)",
     "txReferenceHint": "ex. MTN-123456, réf. 998877",
-    "viewMyOrders": "Voir mes commandes"
+    "viewMyOrders": "Voir mes commandes",
+    "total": "Total",
+    "googlePayNote": "Google Pay débitera votre carte enregistrée lors du passage de la commande. Aucune étape supplémentaire n'est nécessaire.",
+    "momoPhoneField": "Numéro de téléphone MoMo",
+    "momoPhoneHint": "0788 123 456",
+    "momoStkHint": "Nous enverrons une demande de paiement (push STK) à ce numéro.",
+    "momoSubmittedNote": "Votre commande reste « Paiement soumis » jusqu'à ce que votre opérateur de mobile money confirme le paiement via la demande envoyée sur votre téléphone. Elle n'est pas automatiquement marquée comme payée.",
+    "momoChargeNote": "Votre commande entière est débitée une seule fois via MoMo. Nous enverrons un push STK au numéro ci-dessus lorsque vous tapotez sur Payer.",
+    "momoAwaitingConfirmation": "En attente de la confirmation du paiement MoMo. Votre commande sera confirmée une fois que votre opérateur de mobile money approuvera le paiement via la demande envoyée sur votre téléphone.",
+    "payment": {
+      "momo": {
+        "name": "Mobile Money",
+        "desc": "Payez directement via MTN MoMo ou Airtel Money"
+      },
+      "google": {
+        "name": "Google Pay",
+        "desc": "Payez en toute sécurité avec votre carte enregistrée"
+      },
+      "bank": {
+        "name": "Virement bancaire",
+        "desc": "Dépôt direct ou virement en ligne"
+      },
+      "cod": {
+        "name": "Paiement à la livraison",
+        "desc": "Payez à la réception de votre commande"
+      }
+    }
   },
   "city": {
     "chooseCity": "Choisissez votre ville",
@@ -295,12 +345,6 @@
     "searchWorldwide": "Rechercher des villes dans le monde",
     "searchWorldwideHint": "Trouvez des vendeurs et la livraison partout dans le monde.",
     "searchingCities": "Recherche de villes..."
-  },
-  "currency": {
-    "changedToast": "Devise définie sur {currency}.",
-    "description": "Choisissez la devise utilisée pour tous les prix dans l'application.",
-    "searchHint": "Rechercher une devise",
-    "title": "Devise"
   },
   "common": {
     "aboutStore": "À propos de votre boutique",
@@ -409,7 +453,32 @@
     "view": "Voir",
     "viewShorts": "Voir les vidéos",
     "wishlistUpdateFailed": "Impossible de mettre à jour votre liste de souhaits",
-    "wizzoSeller": "Vendeur Wizzo"
+    "wizzoSeller": "Vendeur Wizzo",
+    "all": "Tous",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "timeoutError": "La requête a expiré. Vérifiez votre connexion et réessayez.",
+    "networkError": "Impossible de joindre le serveur. Vérifiez votre connexion.",
+    "genericError": "Une erreur est survenue ({status}). Veuillez réessayer.",
+    "uploadImageFailed": "Échec du téléversement de l'image ({status}). Réessayez.",
+    "uploadVideoFailed": "Échec du téléversement de la vidéo ({status}). Réessayez.",
+    "uploadPrepareFailed": "Impossible de préparer le téléversement.",
+    "time": {
+      "now": "maintenant",
+      "justNow": "À l'instant",
+      "yesterday": "Hier",
+      "minAgo": "{count} min",
+      "hourAgo": "{count} heure",
+      "hoursAgo": "{count} heures",
+      "dayAgo": "{count} jour",
+      "daysAgo": "{count} jours",
+      "lastSeen": "Vu pour la dernière fois {time}"
+    }
+  },
+  "currency": {
+    "changedToast": "Devise définie sur {currency}.",
+    "description": "Choisissez la devise utilisée pour tous les prix dans l'application.",
+    "searchHint": "Rechercher une devise",
+    "title": "Devise"
   },
   "deals": {
     "all": "Toutes les offres",
@@ -586,7 +655,21 @@
     "title": "Mes commandes",
     "tracking": "Suivi de commande",
     "verifiedSeller": "Vendeur vérifié",
-    "viewAll": "Tout voir"
+    "viewAll": "Tout voir",
+    "status": {
+      "placed": "Passée",
+      "seller_confirmed": "Confirmé par le vendeur",
+      "payment_submitted": "Paiement soumis",
+      "payment_confirmed": "Paiement confirmé",
+      "processing": "En cours de traitement",
+      "shipped": "Expédiée",
+      "out_for_delivery": "En cours de livraison",
+      "delivered": "Livrée",
+      "completed": "Terminée",
+      "cancelled": "Annulée",
+      "returned": "Retournée",
+      "ready_for_pickup": "Prête pour retrait"
+    }
   },
   "product": {
     "aboutTab": "À propos de cet article",
@@ -619,14 +702,23 @@
     "submitReview": "Envoyer l'avis",
     "viewsCount": "{count} vues",
     "viewShop": "Voir la boutique",
-    "watchShort": "Regarder la vidéo"
+    "watchShort": "Regarder la vidéo",
+    "viewFullDetails": "Voir tous les détails"
   },
   "reviews": {
     "empty": "Aucun avis pour le moment",
     "emptyHint": "Les avis que vous laissez sur les commandes apparaîtront ici.",
     "loadFailed": "Impossible de charger les avis",
     "placeholder": "Avis",
-    "title": "Mes avis"
+    "title": "Mes avis",
+    "posted": "Avis publié",
+    "postFailed": "Impossible de publier votre avis",
+    "commentsTitle": "Commentaires et avis",
+    "viewerReviews": "Avis des spectateurs",
+    "emptyShort": "Pas encore d'avis. Soyez le premier à noter cette vidéo.",
+    "yourRating": "Votre note",
+    "addHint": "Ajoutez votre avis...",
+    "anonymous": "Anonyme"
   },
   "search": {
     "failed": "Échec de la recherche",
@@ -924,6 +1016,11 @@
     "statRating": "Note",
     "statResponse": "Réponse",
     "talkToSeller": "Discuter avec le vendeur"
+  },
+  "videos": {
+    "loadFailed": "Impossible de charger les vidéos courtes.\n{error}",
+    "empty": "Pas encore de vidéos courtes",
+    "emptyHint": "Repassez plus tard ou visitez la boutique d'un vendeur."
   },
   "wallet": {
     "addFunds": "Ajouter des fonds",

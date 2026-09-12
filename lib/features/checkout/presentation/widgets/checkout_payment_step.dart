@@ -10,6 +10,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/w_widgets.dart';
 import '../../../cart/models/cart.dart';
 import '../../models/checkout.dart';
+import 'checkout_shared.dart';
 
 const _googlePayConfig = {
   'provider': 'google_pay',
@@ -120,7 +121,7 @@ class PaymentStep extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'I agree to the Terms of Service and Privacy Policy',
+                    context.tr('checkout.termsAgreement'),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       height: 1.4,
@@ -152,7 +153,10 @@ class PaymentStep extends StatelessWidget {
                         strokeWidth: 2, color: Colors.black),
                   )
                 : Text(
-                    'Pay ${formatMoney(totalAmount)}',
+                    context.tr(
+                      'checkout.placeOrder',
+                      namedArgs: {'total': formatMoney(totalAmount)},
+                    ),
                     style: const TextStyle(
                         fontWeight: FontWeight.w700, fontSize: 16),
                   ),
@@ -241,10 +245,9 @@ class PaymentStep extends StatelessWidget {
                 keyboardType: TextInputType.phone,
                 style: theme.textTheme.bodyMedium,
                 decoration: InputDecoration(
-                  labelText: 'MoMo phone number',
-                  hintText: '0788 123 456',
-                  helperText:
-                      "We'll send a payment prompt (STK push) to this number.",
+                  labelText: context.tr('checkout.momoPhoneField'),
+                  hintText: context.tr('checkout.momoPhoneHint'),
+                  helperText: context.tr('checkout.momoStkHint'),
                   helperMaxLines: 2,
                   prefixIcon: Icon(Icons.phone_outlined,
                       size: 20, color: colors.gold),
@@ -283,7 +286,7 @@ class PaymentStep extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Your order stays \u201CPayment submitted\u201D until your MoMo provider confirms the payment from the prompt on your phone. It is NOT marked as paid automatically.',
+                      context.tr('checkout.momoSubmittedNote'),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         height: 1.4,
@@ -304,7 +307,7 @@ class PaymentStep extends StatelessWidget {
                 ),
                 paymentItems: [
                   pay.PaymentItem(
-                    label: 'Total',
+                    label: context.tr('checkout.total'),
                     amount: totalAmount.toInt().toString(),
                     status: pay.PaymentItemStatus.final_price,
                   ),
@@ -353,9 +356,7 @@ class PaymentStep extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Your whole order is charged once via MoMo. '
-                        'We\'ll send an STK push to the number above when '
-                        'you tap Pay.',
+                        context.tr('checkout.momoChargeNote'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.4,
@@ -412,13 +413,13 @@ class _PaymentMethodTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    option.label,
+                    paymentKindLabel(context, option.kind),
                     style: theme.textTheme.bodyMedium
                         ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    option.description,
+                    paymentKindDescription(context, option.kind),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 11,

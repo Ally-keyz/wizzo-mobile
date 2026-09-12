@@ -724,15 +724,15 @@ class _CategoriesRail extends ConsumerWidget {
             ),
           ),
         ),
-        GridView.count(
-          crossAxisCount: 4,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 0.82,
-          children: List.generate(cats.length.clamp(0, 8), (i) {
-            final cat = cats[i];
-            return _CategoryTile(category: cat);
-          }),
+        SizedBox(
+          height: 96,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            itemCount: cats.length.clamp(0, 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, i) => _CategoryTile(category: cats[i]),
+          ),
         ),
       ],
     );
@@ -789,22 +789,22 @@ class _ForYouSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feedAsync = ref.watch(homeFeedProvider);
-    const cardWidth = 170.0;
 
     if (feedAsync.isLoading && feedAsync.value == null) {
       return SliverToBoxAdapter(
-        child: SizedBox(
-          height: 300,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: List.generate(
-              4,
-              (_) => const Padding(
-                padding: EdgeInsets.only(right: 12),
-                child: ProductCardSkeleton(width: cardWidth),
-              ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.62,
             ),
+            itemCount: 4,
+            itemBuilder: (_, _) => const ProductCardSkeleton(),
           ),
         ),
       );
@@ -830,13 +830,17 @@ class _ForYouSection extends ConsumerWidget {
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate((context, i) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: ProductCard(product: products[i]),
-          );
-        }, childCount: products.length),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.62,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, i) => ProductCard(product: products[i]),
+          childCount: products.length,
+        ),
       ),
     );
   }

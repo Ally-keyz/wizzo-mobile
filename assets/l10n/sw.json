@@ -142,7 +142,12 @@
       "title": "Fungua akaunti yako",
       "tagline": "Jiunge na Wizzo Marketplace kwa sekunde chache",
       "orSignUpWithEmail": "au jisajili kwa barua pepe"
-    }
+    },
+    "googleCancelled": "Kuingia kwa Google kumefutwa.",
+    "googleNoToken": "Kuingia kwa Google hakurudisha tokoni ya kuthibitishwa.",
+    "invalidServerResponse": "Seva imerudisha jibu batilifu.",
+    "loginFailed": "Kuingia kumeshindwa. Tafadhali jaribu tena.",
+    "sessionUpgradeFailed": "Kipindi chako hakikuwezeshwa kusasishwa. Ingia tena."
   },
   "browse": {
     "all": "Zote",
@@ -174,7 +179,9 @@
     "loadFailed": "Imeshindwa kupakia kikapu chako",
     "subtotal": "Jumla ndogo",
     "summary": "Muhtasari",
-    "title": "Kikapu"
+    "title": "Kikapu",
+    "addFailed": "Imeshindwa kuongeza kwenye rukokoto",
+    "addedCount": "Imeongezwa kwenye rukokoto ({count})"
   },
   "chat": {
     "attachPhoto": "Ambatisha picha",
@@ -202,7 +209,11 @@
     "searchChatsHint": "Tafuta mazungumzo…",
     "searchPeopleHint": "Tafuta wauzaji na watumiaji…",
     "sharedProduct": "Ameshare bidhaa",
-    "startNewChat": "Anza mazungumzo mapya"
+    "startNewChat": "Anza mazungumzo mapya",
+    "uploadSignatureFailed": "Imeshindwa kupata saini ya upakiaji",
+    "uploadReadFailed": "Imeshindwa kusoma faili iliyochaguliwa: {error}",
+    "uploadFailed": "Upakiaji umeshindwa: {error}",
+    "uploadFailedStatus": "Upakiaji umeshindwa ({status})"
   },
   "checkout": {
     "acceptTerms": "Tafadhali kubali sheria kabla ya kuweka agizo lako.",
@@ -226,7 +237,20 @@
     "couponOff": "{code}: punguzo {amount}",
     "couponTitle": "Kodi ya punguzo / nambari ya ofa",
     "deliveringTo": "Kuvasilishwa kwa {address}",
-    "delivery": "Uwasilishaji",
+    "delivery": {
+      "standard": {
+        "name": "Uwasilishaji wa Kawaida",
+        "timing": "Siku 5-7 za kazi"
+      },
+      "express": {
+        "name": "Uwasilishaji wa Haraka",
+        "timing": "Siku 2-3 za kazi"
+      },
+      "pickup": {
+        "name": "Sehemu ya Kuchukua",
+        "timing": "Inapatikana leo"
+      }
+    },
     "deliveryAddress": "Anwani ya kuwasilishia",
     "deliveryFee": "Ada ya uwasilishaji",
     "deliveryMethod": "Njia ya uwasilishaji",
@@ -284,7 +308,33 @@
     "title": "Malipo",
     "txReference": "Kumbukumbu ya muamala (si lazima)",
     "txReferenceHint": "mf. MTN-123456, ref 998877",
-    "viewMyOrders": "Ona Aagizo Yangu"
+    "viewMyOrders": "Ona Aagizo Yangu",
+    "total": "Jumla",
+    "googlePayNote": "Google Pay itatozwa kadi yako iliyohifadhiwa unapoweka agizo. Hakuna hatua za ziada zinazohitajika.",
+    "momoPhoneField": "Nambari ya simu ya MoMo",
+    "momoPhoneHint": "0788 123 456",
+    "momoStkHint": "Tutakutumia arifa ya malipo (STK push) kwa nambari hii.",
+    "momoSubmittedNote": "Agizo lako linahifadhiwa kama \"Malipo yamewasilishwa\" hadi provider yako ya mobile money itakapothibitisha malipo kupitia arifa iliyotumwa kwenye simu yako. Halijawekwa kama yamelipwa kiotomatiki.",
+    "momoChargeNote": "Agizo lako lote linatozwa mara moja kupitia MoMo. Tutatumia STK push kwa nambari iliyo juu utakapogonga Lipa.",
+    "momoAwaitingConfirmation": "Inasubiri uthibitisho wa malipo ya MoMo. Agizo lako litathibitishwa mara provider yako ya mobile money itakapokubali malipo kupitia arifa iliyotumwa kwenye simu yako.",
+    "payment": {
+      "momo": {
+        "name": "Mobile Money",
+        "desc": "Lipa moja kwa moja kupitia MTN MoMo au Airtel Money"
+      },
+      "google": {
+        "name": "Google Pay",
+        "desc": "Lipa kwa usalama kwa kadi yako iliyohifadhiwa"
+      },
+      "bank": {
+        "name": "Uhamisho wa Benki",
+        "desc": "Weka moja kwa moja au uhamishe mtandaoni"
+      },
+      "cod": {
+        "name": "Malipo baada ya Kupokea",
+        "desc": "Lipa utakapopokea agizo lako"
+      }
+    }
   },
   "city": {
     "chooseCity": "Chagua jiji lako",
@@ -295,12 +345,6 @@
     "searchWorldwide": "Tafuta miji duniani kote",
     "searchWorldwideHint": "Pata wauzaji na usafirishaji popote duniani.",
     "searchingCities": "Inatafuta miji..."
-  },
-  "currency": {
-    "changedToast": "Sarafu imewekwa: {currency}.",
-    "description": "Chagua sarafu inayotumiwa kwa bei zote kwenye programu.",
-    "searchHint": "Tafuta sarafu",
-    "title": "Sarafu"
   },
   "common": {
     "aboutStore": "Kuhusu duka lako",
@@ -409,7 +453,32 @@
     "view": "Angalia",
     "viewShorts": "Angalia Shorts",
     "wishlistUpdateFailed": "Imeshindwa kusasisha orodha yako ya upendwa",
-    "wizzoSeller": "Muuza Wizzo"
+    "wizzoSeller": "Muuza Wizzo",
+    "all": "Zote",
+    "sessionExpired": "Kipindi chako kimeisha. Tafadhali ingia tena.",
+    "timeoutError": "Ombi limeisha muda. Angalia muunganisho wako ujaribu tena.",
+    "networkError": "Imeshindwa kufikia seva. Angalia muunganisho wako.",
+    "genericError": "Kuna hitilafu ({status}). Tafadhali jaribu tena.",
+    "uploadImageFailed": "Kupakia picha kumeshindwa ({status}). Jaribu tena.",
+    "uploadVideoFailed": "Kupakia video kumeshindwa ({status}). Jaribu tena.",
+    "uploadPrepareFailed": "Imeshindwa kuandaa upakiaji.",
+    "time": {
+      "now": "sasa",
+      "justNow": "Sasa hivi",
+      "yesterday": "Jana",
+      "minAgo": "dakika {count} zilizopita",
+      "hourAgo": "saa {count} iliyopita",
+      "hoursAgo": "masaa {count} yaliyopita",
+      "dayAgo": "siku {count} iliyopita",
+      "daysAgo": "siku {count} zilizopita",
+      "lastSeen": "Ilionekana mwisho {time}"
+    }
+  },
+  "currency": {
+    "changedToast": "Sarafu imewekwa: {currency}.",
+    "description": "Chagua sarafu inayotumiwa kwa bei zote kwenye programu.",
+    "searchHint": "Tafuta sarafu",
+    "title": "Sarafu"
   },
   "deals": {
     "all": "Ofa Zote",
@@ -586,7 +655,21 @@
     "title": "Agizo Langu",
     "tracking": "Ufuatiliaji wa Agizo",
     "verifiedSeller": "Muuza aliyethibitishwa",
-    "viewAll": "Ona zote"
+    "viewAll": "Ona zote",
+    "status": {
+      "placed": "Limewekwa",
+      "seller_confirmed": "Imathibitishwa na muuzaji",
+      "payment_submitted": "Malipo yamewasilishwa",
+      "payment_confirmed": "Malipo yamethibitishwa",
+      "processing": "Inachakatwa",
+      "shipped": "Imesafirishwa",
+      "out_for_delivery": "Nje ya utoaji",
+      "delivered": "Imewasilishwa",
+      "completed": "Imekamilika",
+      "cancelled": "Imesitishwa",
+      "returned": "Imerudishwa",
+      "ready_for_pickup": "Tayari kuchukuliwa"
+    }
   },
   "product": {
     "aboutTab": "Kuhusu bidhaa hii",
@@ -619,14 +702,23 @@
     "submitReview": "Tuma Maoni",
     "viewsCount": "{count} kutazamwa",
     "viewShop": "Ona Duka",
-    "watchShort": "Angalia Short"
+    "watchShort": "Angalia Short",
+    "viewFullDetails": "Angalia maelezo kamili"
   },
   "reviews": {
     "empty": "Bado hakuna maoni",
     "emptyHint": "Maoni unayotoa kwenye maagizo yataonekana hapa.",
     "loadFailed": "Imeshindwa kupakia maoni",
     "placeholder": "Maoni",
-    "title": "Maoni Yangu"
+    "title": "Maoni Yangu",
+    "posted": "Maoni yamechapishwa",
+    "postFailed": "Imeshindwa kuchapisha maoni yako",
+    "commentsTitle": "Maoni na uhakiki",
+    "viewerReviews": "Uhakiki wa watazamaji",
+    "emptyShort": "Hakuna uhakiki bado. Kuwa wa kwanza kuhakiki fupi hii.",
+    "yourRating": "Ukadiriaji wako",
+    "addHint": "Ongeza maoni yako...",
+    "anonymous": "Asiyejulikana"
   },
   "search": {
     "failed": "Utafutaji umeshindwa",
@@ -924,6 +1016,11 @@
     "statRating": "Ukadiriaji",
     "statResponse": "Jibu",
     "talkToSeller": "Ongea na Muuzaji"
+  },
+  "videos": {
+    "loadFailed": "Imeshindwa kupakia mafupi.\n{error}",
+    "empty": "Hakuna fupi bado",
+    "emptyHint": "Rudi baadaye au tembelea duka la muuzaji."
   },
   "wallet": {
     "addFunds": "Ongeza Fedha",

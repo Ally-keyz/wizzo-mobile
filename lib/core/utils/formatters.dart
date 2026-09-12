@@ -1,4 +1,5 @@
-import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/widgets.dart';
 
 import '../currency/currencies.dart';
 import '../currency/currency_controller.dart';
@@ -36,30 +37,38 @@ String formatDateTime(DateTime? date) {
 }
 
 /// Relative chat timestamp: `now`, `5m`, `3h`, `Yesterday` or a short date.
-String chatTime(DateTime? date) {
+String chatTime(BuildContext context, DateTime? date) {
   if (date == null) return '';
   final now = DateTime.now();
   final diff = now.difference(date);
-  if (diff.inSeconds < 60) return 'now';
+  if (diff.inSeconds < 60) return context.tr('common.time.now');
   if (diff.inMinutes < 60) return '${diff.inMinutes}m';
   if (diff.inHours < 24 && now.day == date.day) return '${diff.inHours}h';
-  if (diff.inHours < 48 && now.day - date.day == 1) return 'Yesterday';
+  if (diff.inHours < 48 && now.day - date.day == 1) {
+    return context.tr('common.time.yesterday');
+  }
   if (now.year == date.year) return DateFormat('MMM d').format(date);
   return DateFormat('MMM d, yyyy').format(date);
 }
 
 /// Relative long-form date helper for notification/order lists.
-String relativeDate(DateTime? date) {
+String relativeDate(BuildContext context, DateTime? date) {
   if (date == null) return '';
   final now = DateTime.now();
   final diff = now.difference(date);
-  if (diff.inSeconds < 60) return 'Just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+  if (diff.inSeconds < 60) return context.tr('common.time.justNow');
+  if (diff.inMinutes < 60) {
+    return context.tr('common.time.minAgo', namedArgs: {'count': '${diff.inMinutes}'});
+  }
   if (diff.inHours < 24) {
-    return '${diff.inHours} ${diff.inHours == 1 ? 'hour' : 'hours'} ago';
+    return diff.inHours == 1
+        ? context.tr('common.time.hourAgo', namedArgs: {'count': '${diff.inHours}'})
+        : context.tr('common.time.hoursAgo', namedArgs: {'count': '${diff.inHours}'});
   }
   if (diff.inDays < 7) {
-    return '${diff.inDays} ${diff.inDays == 1 ? 'day' : 'days'} ago';
+    return diff.inDays == 1
+        ? context.tr('common.time.dayAgo', namedArgs: {'count': '${diff.inDays}'})
+        : context.tr('common.time.daysAgo', namedArgs: {'count': '${diff.inDays}'});
   }
   return formatDate(date);
 }
@@ -79,9 +88,12 @@ String countdown(DateTime? endsAt) {
 }
 
 /// How long ago a seller's last seen was, e.g. `Last seen 2h ago`.
-String lastSeen(DateTime? date) {
+String lastSeen(BuildContext context, DateTime? date) {
   if (date == null) return '';
-  return 'Last seen ${relativeDate(date).toLowerCase()}';
+  return context.tr(
+    'common.time.lastSeen',
+    namedArgs: {'time': relativeDate(context, date).toLowerCase()},
+  );
 }
 
 /// Parses the many date formats the API may return.

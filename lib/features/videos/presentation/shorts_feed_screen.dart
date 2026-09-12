@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -116,7 +117,7 @@ class _ShortsFeedScreenState extends ConsumerState<ShortsFeedScreen>
           child: CircularProgressIndicator(color: Colors.white70),
         ),
         error: (e, _) => _ErrorState(
-          message: 'Could not load shorts.\n$e',
+          message: context.tr('videos.loadFailed', namedArgs: {'error': '$e'}),
           onRetry: () => ref.invalidate(videosFeedProvider(scope)),
         ),
         data: (page) {
@@ -185,7 +186,7 @@ class _EmptyState extends StatelessWidget {
             const Icon(Icons.videocam_off, color: Colors.white38, size: 64),
             const SizedBox(height: 16),
             Text(
-              'No shorts available yet',
+              context.tr('videos.empty'),
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,
@@ -194,7 +195,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Check back later or visit a seller shop.',
+              context.tr('videos.emptyHint'),
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white70),
             ),
@@ -227,7 +228,7 @@ class _ErrorState extends StatelessWidget {
                 style: const TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 16),
-              FilledButton(onPressed: onRetry, child: const Text('Retry')),
+              FilledButton(onPressed: onRetry, child: Text(context.tr('common.retry'))),
             ],
           ),
         ),

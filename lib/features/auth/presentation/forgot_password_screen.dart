@@ -61,7 +61,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = e.toString();
+          _error = localizeException(context, e);
         });
       }
     }
@@ -86,7 +86,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = e.toString();
+          _error = localizeException(context, e);
         });
       }
     }
@@ -143,7 +143,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = e.toString();
+          _error = localizeException(context, e);
         });
       }
     }

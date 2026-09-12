@@ -98,7 +98,7 @@ class ProductCard extends ConsumerWidget {
           children: [
             WImage(
               url: product.images.isNotEmpty ? product.images.first : null,
-              fit: BoxFit.contain,
+              fit: BoxFit.cover,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),

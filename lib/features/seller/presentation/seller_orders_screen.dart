@@ -154,7 +154,7 @@ class _SellerOrderCard extends StatelessWidget {
                           'seller.orderItemCount',
                           namedArgs: {
                             'count': '${order.items.length}',
-                            'date': relativeDate(order.createdAt),
+                            'date': relativeDate(context, order.createdAt),
                           },
                         ),
                         style: theme.textTheme.bodySmall?.copyWith(

@@ -357,13 +357,13 @@ class _ShippingStepState extends ConsumerState<ShippingStep> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    option.name,
+                    context.tr('checkout.delivery.${option.id.name}.name'),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
-                    option.timing,
+                    context.tr('checkout.delivery.${option.id.name}.timing'),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

@@ -142,7 +142,12 @@
       "title": "Create your account",
       "tagline": "Join Wizzo Marketplace in seconds",
       "orSignUpWithEmail": "or sign up with email"
-    }
+    },
+    "googleCancelled": "Google sign-in was cancelled.",
+    "googleNoToken": "Google sign-in didn't return an auth token.",
+    "invalidServerResponse": "The server returned an invalid response.",
+    "loginFailed": "Sign-in failed. Please try again.",
+    "sessionUpgradeFailed": "Your session could not be upgraded. Sign in again."
   },
   "browse": {
     "all": "All",
@@ -174,7 +179,9 @@
     "loadFailed": "Could not load your cart",
     "subtotal": "Subtotal",
     "summary": "Summary",
-    "title": "Cart"
+    "title": "Cart",
+    "addFailed": "Could not add to cart",
+    "addedCount": "Added to cart ({count})"
   },
   "chat": {
     "attachPhoto": "Attach a photo",
@@ -202,7 +209,11 @@
     "searchChatsHint": "Search chats…",
     "searchPeopleHint": "Search sellers and users…",
     "sharedProduct": "Shared a product",
-    "startNewChat": "Start a new chat"
+    "startNewChat": "Start a new chat",
+    "uploadSignatureFailed": "Could not get an upload signature",
+    "uploadReadFailed": "Could not read the selected file: {error}",
+    "uploadFailed": "Upload failed: {error}",
+    "uploadFailedStatus": "Upload failed ({status})"
   },
   "checkout": {
     "acceptTerms": "Please accept the terms before placing your order.",
@@ -226,7 +237,20 @@
     "couponOff": "{code}: {amount} off",
     "couponTitle": "Coupon / promo code",
     "deliveringTo": "Delivering to {address}",
-    "delivery": "Delivery",
+    "delivery": {
+      "standard": {
+        "name": "Standard Delivery",
+        "timing": "5-7 business days"
+      },
+      "express": {
+        "name": "Express Delivery",
+        "timing": "2-3 business days"
+      },
+      "pickup": {
+        "name": "Pickup Point",
+        "timing": "Available today"
+      }
+    },
     "deliveryAddress": "Delivery address",
     "deliveryFee": "Delivery fee",
     "deliveryMethod": "Delivery method",
@@ -284,7 +308,33 @@
     "title": "Checkout",
     "txReference": "Transaction reference (optional)",
     "txReferenceHint": "e.g. MTN-123456, ref 998877",
-    "viewMyOrders": "View My Orders"
+    "viewMyOrders": "View My Orders",
+    "total": "Total",
+    "googlePayNote": "Google Pay will charge your saved card when you place the order. No extra steps needed.",
+    "momoPhoneField": "MoMo phone number",
+    "momoPhoneHint": "0788 123 456",
+    "momoStkHint": "We'll send a payment prompt (STK push) to this number.",
+    "momoSubmittedNote": "Your order stays \"Payment submitted\" until your MoMo provider confirms the payment from the prompt on your phone. It is NOT marked as paid automatically.",
+    "momoChargeNote": "Your whole order is charged once via MoMo. We'll send an STK push to the number above when you tap Pay.",
+    "momoAwaitingConfirmation": "Awaiting MoMo payment confirmation. Your order will be confirmed once your mobile money provider approves the payment from the prompt sent to your phone.",
+    "payment": {
+      "momo": {
+        "name": "Mobile Money",
+        "desc": "Pay directly via MTN MoMo or Airtel Money"
+      },
+      "google": {
+        "name": "Google Pay",
+        "desc": "Pay securely with your saved card"
+      },
+      "bank": {
+        "name": "Bank Transfer",
+        "desc": "Direct deposit or online transfer"
+      },
+      "cod": {
+        "name": "Cash on Delivery",
+        "desc": "Pay when you receive your order"
+      }
+    }
   },
   "city": {
     "chooseCity": "Choose your city",
@@ -295,12 +345,6 @@
     "searchWorldwide": "Search cities worldwide",
     "searchWorldwideHint": "Find sellers and delivery anywhere in the world.",
     "searchingCities": "Searching cities..."
-  },
-  "currency": {
-    "changedToast": "Currency set to {currency}.",
-    "description": "Choose the currency used for every price across the app.",
-    "searchHint": "Search currency",
-    "title": "Currency"
   },
   "common": {
     "aboutStore": "About Your Store",
@@ -409,7 +453,32 @@
     "view": "View",
     "viewShorts": "View Shorts",
     "wishlistUpdateFailed": "Could not update your wishlist",
-    "wizzoSeller": "Wizzo Seller"
+    "wizzoSeller": "Wizzo Seller",
+    "all": "All",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "timeoutError": "The request timed out. Check your connection and try again.",
+    "networkError": "Could not reach the server. Check your connection.",
+    "genericError": "Something went wrong ({status}). Please try again.",
+    "uploadImageFailed": "Image upload failed ({status}). Try again.",
+    "uploadVideoFailed": "Video upload failed ({status}). Try again.",
+    "uploadPrepareFailed": "Could not prepare the upload.",
+    "time": {
+      "now": "now",
+      "justNow": "Just now",
+      "yesterday": "Yesterday",
+      "minAgo": "{count} min ago",
+      "hourAgo": "{count} hour ago",
+      "hoursAgo": "{count} hours ago",
+      "dayAgo": "{count} day ago",
+      "daysAgo": "{count} days ago",
+      "lastSeen": "Last seen {time}"
+    }
+  },
+  "currency": {
+    "changedToast": "Currency set to {currency}.",
+    "description": "Choose the currency used for every price across the app.",
+    "searchHint": "Search currency",
+    "title": "Currency"
   },
   "deals": {
     "all": "All Deals",
@@ -586,7 +655,21 @@
     "title": "My Orders",
     "tracking": "Order Tracking",
     "verifiedSeller": "Verified seller",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "status": {
+      "placed": "Placed",
+      "seller_confirmed": "Seller Confirmed",
+      "payment_submitted": "Payment Submitted",
+      "payment_confirmed": "Payment Confirmed",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "out_for_delivery": "Out for Delivery",
+      "delivered": "Delivered",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "returned": "Returned",
+      "ready_for_pickup": "Ready for Pickup"
+    }
   },
   "product": {
     "aboutTab": "About this item",
@@ -619,14 +702,23 @@
     "submitReview": "Submit Review",
     "viewsCount": "{count} views",
     "viewShop": "View Shop",
-    "watchShort": "Watch Short"
+    "watchShort": "Watch Short",
+    "viewFullDetails": "View Full Details"
   },
   "reviews": {
     "empty": "No reviews yet",
     "emptyHint": "Reviews you leave on orders will appear here.",
     "loadFailed": "Could not load reviews",
     "placeholder": "Review",
-    "title": "My Reviews"
+    "title": "My Reviews",
+    "posted": "Review posted",
+    "postFailed": "Could not post your review",
+    "commentsTitle": "Comments & Reviews",
+    "viewerReviews": "Viewer reviews",
+    "emptyShort": "No reviews yet. Be the first to review this short.",
+    "yourRating": "Your rating",
+    "addHint": "Add your review...",
+    "anonymous": "Anonymous"
   },
   "search": {
     "failed": "Search failed",
@@ -924,6 +1016,11 @@
     "statRating": "Rating",
     "statResponse": "Response",
     "talkToSeller": "Talk to seller"
+  },
+  "videos": {
+    "loadFailed": "Could not load shorts.\n{error}",
+    "empty": "No shorts available yet",
+    "emptyHint": "Check back later or visit a seller shop."
   },
   "wallet": {
     "addFunds": "Add Funds",

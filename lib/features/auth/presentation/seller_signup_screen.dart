@@ -113,7 +113,7 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = localizeException(context, e);
           _busy = false;
         });
       }
@@ -157,7 +157,7 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = e.toString();
+          _error = localizeException(context, e);
         });
       }
     }
@@ -185,7 +185,7 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = localizeException(context, e);
           _busy = false;
         });
       }

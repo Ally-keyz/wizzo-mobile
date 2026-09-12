@@ -142,7 +142,12 @@
       "title": "Erstelle dein Konto",
       "tagline": "Werde in Sekunden Teil von Wizzo Marketplace",
       "orSignUpWithEmail": "oder registriere dich mit E-Mail"
-    }
+    },
+    "googleCancelled": "Die Google-Anmeldung wurde abgebrochen.",
+    "googleNoToken": "Die Google-Anmeldung hat kein Anmelde-Token zurückgegeben.",
+    "invalidServerResponse": "Der Server hat eine ungültige Antwort zurückgegeben.",
+    "loginFailed": "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "sessionUpgradeFailed": "Ihre Sitzung konnte nicht aktualisiert werden. Melden Sie sich erneut an."
   },
   "browse": {
     "all": "Alle",
@@ -174,7 +179,9 @@
     "loadFailed": "Dein Warenkorb konnte nicht geladen werden",
     "subtotal": "Zwischensumme",
     "summary": "Zusammenfassung",
-    "title": "Warenkorb"
+    "title": "Warenkorb",
+    "addFailed": "Konnte nicht zum Warenkorb hinzugefügt werden",
+    "addedCount": "Zum Warenkorb hinzugefügt ({count})"
   },
   "chat": {
     "attachPhoto": "Foto anhängen",
@@ -202,7 +209,11 @@
     "searchChatsHint": "Unterhaltungen durchsuchen…",
     "searchPeopleHint": "Verkäufer und Nutzer suchen…",
     "sharedProduct": "Ein Produkt geteilt",
-    "startNewChat": "Neuen Chat starten"
+    "startNewChat": "Neuen Chat starten",
+    "uploadSignatureFailed": "Upload-Signatur konnte nicht abgerufen werden",
+    "uploadReadFailed": "Ausgewählte Datei konnte nicht gelesen werden: {error}",
+    "uploadFailed": "Upload fehlgeschlagen: {error}",
+    "uploadFailedStatus": "Upload fehlgeschlagen ({status})"
   },
   "checkout": {
     "acceptTerms": "Bitte akzeptiere die Bedingungen, bevor du deine Bestellung aufgibst.",
@@ -226,7 +237,20 @@
     "couponOff": "{code}: {amount} Rabatt",
     "couponTitle": "Gutschein / Aktionscode",
     "deliveringTo": "Lieferung an {address}",
-    "delivery": "Lieferung",
+    "delivery": {
+      "standard": {
+        "name": "Standardlieferung",
+        "timing": "5-7 Werktage"
+      },
+      "express": {
+        "name": "Expresslieferung",
+        "timing": "2-3 Werktage"
+      },
+      "pickup": {
+        "name": "Abholpunkt",
+        "timing": "Heute verfügbar"
+      }
+    },
     "deliveryAddress": "Lieferadresse",
     "deliveryFee": "Versandkosten",
     "deliveryMethod": "Lieferart",
@@ -284,7 +308,33 @@
     "title": "Zur Kasse",
     "txReference": "Transaktionsreferenz (optional)",
     "txReferenceHint": "z. B. MTN-123456, Ref. 998877",
-    "viewMyOrders": "Meine Bestellungen ansehen"
+    "viewMyOrders": "Meine Bestellungen ansehen",
+    "total": "Gesamt",
+    "googlePayNote": "Google Pay belastet Ihre gespeicherte Karte, sobald Sie die Bestellung aufgeben. Keine weiteren Schritte erforderlich.",
+    "momoPhoneField": "MoMo-Telefonnummer",
+    "momoPhoneHint": "0788 123 456",
+    "momoStkHint": "Wir senden eine Zahlungsaufforderung (STK-Push) an diese Nummer.",
+    "momoSubmittedNote": "Ihre Bestellung bleibt „Zahlung eingereicht“, bis Ihr Mobile-Money-Anbieter die Zahlung über die auf Ihrem Telefon gesendete Aufforderung bestätigt. Sie wird NICHT automatisch als bezahlt markiert.",
+    "momoChargeNote": "Ihre gesamte Bestellung wird einmalig über MoMo berechnet. Wir senden einen STK-Push an die obige Nummer, sobald Sie auf Bezahlen tippen.",
+    "momoAwaitingConfirmation": "Warten auf Bestätigung der MoMo-Zahlung. Ihre Bestellung wird bestätigt, sobald Ihr Mobile-Money-Anbieter die Zahlung über die auf Ihr Telefon gesendete Aufforderung genehmigt.",
+    "payment": {
+      "momo": {
+        "name": "Mobile Money",
+        "desc": "Direkt via MTN MoMo oder Airtel Money bezahlen"
+      },
+      "google": {
+        "name": "Google Pay",
+        "desc": "Sicher mit Ihrer gespeicherten Karte bezahlen"
+      },
+      "bank": {
+        "name": "Banküberweisung",
+        "desc": "Direkteinzahlung oder Online-Überweisung"
+      },
+      "cod": {
+        "name": "Barzahlung bei Lieferung",
+        "desc": "Zahlen Sie bei Erhalt Ihrer Bestellung"
+      }
+    }
   },
   "city": {
     "chooseCity": "Wähle deine Stadt",
@@ -295,12 +345,6 @@
     "searchWorldwide": "Städte weltweit suchen",
     "searchWorldwideHint": "Finde Verkäufer und Lieferung überall auf der Welt.",
     "searchingCities": "Städte werden gesucht..."
-  },
-  "currency": {
-    "changedToast": "Währung auf {currency} gesetzt.",
-    "description": "Wähle die Währung, die für alle Preise in der App verwendet wird.",
-    "searchHint": "Währung suchen",
-    "title": "Währung"
   },
   "common": {
     "aboutStore": "Über deinen Laden",
@@ -409,7 +453,32 @@
     "view": "Anzeigen",
     "viewShorts": "Shorts ansehen",
     "wishlistUpdateFailed": "Deine Wunschliste konnte nicht aktualisiert werden",
-    "wizzoSeller": "Wizzo-Verkäufer"
+    "wizzoSeller": "Wizzo-Verkäufer",
+    "all": "Alle",
+    "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+    "timeoutError": "Die Anfrage ist abgelaufen. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "networkError": "Server nicht erreichbar. Prüfen Sie Ihre Verbindung.",
+    "genericError": "Etwas ist schiefgelaufen ({status}). Bitte versuchen Sie es erneut.",
+    "uploadImageFailed": "Bild-Upload fehlgeschlagen ({status}). Versuchen Sie es erneut.",
+    "uploadVideoFailed": "Video-Upload fehlgeschlagen ({status}). Versuchen Sie es erneut.",
+    "uploadPrepareFailed": "Upload konnte nicht vorbereitet werden.",
+    "time": {
+      "now": "jetzt",
+      "justNow": "Gerade eben",
+      "yesterday": "Gestern",
+      "minAgo": "{count} Min. her",
+      "hourAgo": "{count} Stunde her",
+      "hoursAgo": "{count} Stunden her",
+      "dayAgo": "{count} Tag her",
+      "daysAgo": "{count} Tage her",
+      "lastSeen": "Zuletzt gesehen {time}"
+    }
+  },
+  "currency": {
+    "changedToast": "Währung auf {currency} gesetzt.",
+    "description": "Wähle die Währung, die für alle Preise in der App verwendet wird.",
+    "searchHint": "Währung suchen",
+    "title": "Währung"
   },
   "deals": {
     "all": "Alle Angebote",
@@ -586,7 +655,21 @@
     "title": "Meine Bestellungen",
     "tracking": "Bestellverfolgung",
     "verifiedSeller": "Verifizierter Verkäufer",
-    "viewAll": "Alle ansehen"
+    "viewAll": "Alle ansehen",
+    "status": {
+      "placed": "Aufgegeben",
+      "seller_confirmed": "Vom Verkäufer bestätigt",
+      "payment_submitted": "Zahlung übermittelt",
+      "payment_confirmed": "Zahlung bestätigt",
+      "processing": "In Bearbeitung",
+      "shipped": "Versendet",
+      "out_for_delivery": "In Zustellung",
+      "delivered": "Zugestellt",
+      "completed": "Abgeschlossen",
+      "cancelled": "Storniert",
+      "returned": "Zurückgegeben",
+      "ready_for_pickup": "Bereit zur Abholung"
+    }
   },
   "product": {
     "aboutTab": "Über diesen Artikel",
@@ -619,14 +702,23 @@
     "submitReview": "Bewertung senden",
     "viewsCount": "{count} Aufrufe",
     "viewShop": "Laden ansehen",
-    "watchShort": "Short ansehen"
+    "watchShort": "Short ansehen",
+    "viewFullDetails": "Alle Details ansehen"
   },
   "reviews": {
     "empty": "Noch keine Bewertungen",
     "emptyHint": "Bewertungen, die du zu Bestellungen abgibst, erscheinen hier.",
     "loadFailed": "Bewertungen konnten nicht geladen werden",
     "placeholder": "Bewertung",
-    "title": "Meine Bewertungen"
+    "title": "Meine Bewertungen",
+    "posted": "Bewertung veröffentlicht",
+    "postFailed": "Ihre Bewertung konnte nicht veröffentlicht werden",
+    "commentsTitle": "Kommentare & Bewertungen",
+    "viewerReviews": "Zuschauer-Bewertungen",
+    "emptyShort": "Noch keine Bewertungen. Bewerten Sie diesen Short zuerst.",
+    "yourRating": "Ihre Bewertung",
+    "addHint": "Fügen Sie Ihre Bewertung hinzu...",
+    "anonymous": "Anonym"
   },
   "search": {
     "failed": "Suche fehlgeschlagen",
@@ -924,6 +1016,11 @@
     "statRating": "Bewertung",
     "statResponse": "Antwort",
     "talkToSeller": "Mit Verkäufer chatten"
+  },
+  "videos": {
+    "loadFailed": "Shorts konnten nicht geladen werden.\n{error}",
+    "empty": "Noch keine Shorts verfügbar",
+    "emptyHint": "Schauen Sie später wieder vorbei oder besuchen Sie einen Verkäufer-Shop."
   },
   "wallet": {
     "addFunds": "Guthaben aufladen",

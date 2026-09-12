@@ -281,7 +281,7 @@ class _OrderHeader extends StatelessWidget {
 
   String _label(BuildContext context, String? status) {
     if (status == null) return context.tr('orders.statusPlacedUpper');
-    return status.replaceAll('_', ' ').toUpperCase();
+    return _orderStatusLabel(context, status);
   }
 
   Color _color(BuildContext context) {
@@ -336,8 +336,9 @@ class _TrackingCard extends StatelessWidget {
     final colors = context.appColors;
     final canceled = order.status?.toLowerCase().contains('cancel') == true ||
         order.status?.toLowerCase().contains('reject') == true;
-    final statusText = order.status?.replaceAll('_', ' ').toUpperCase() ??
-        context.tr('orders.statusPlacedUpper');
+    final statusText = order.status == null
+        ? context.tr('orders.statusPlacedUpper')
+        : _orderStatusLabel(context, order.status!);
 
     return _Card(
       child: Column(
@@ -649,4 +650,27 @@ class _Card extends StatelessWidget {
       child: child,
     );
   }
+}
+
+const _knownOrderStatuses = <String>{
+  'placed',
+  'seller_confirmed',
+  'payment_submitted',
+  'payment_confirmed',
+  'processing',
+  'shipped',
+  'out_for_delivery',
+  'delivered',
+  'completed',
+  'cancelled',
+  'returned',
+  'ready_for_pickup',
+};
+
+String _orderStatusLabel(BuildContext context, String status) {
+  final key = status.toLowerCase();
+  if (_knownOrderStatuses.contains(key)) {
+    return context.tr('orders.status.$key');
+  }
+  return status.replaceAll('_', ' ').toUpperCase();
 }

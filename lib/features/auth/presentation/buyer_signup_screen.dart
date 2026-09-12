@@ -50,7 +50,7 @@ class _BuyerSignUpScreenState extends ConsumerState<BuyerSignUpScreen> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = e.toString();
+          _error = localizeException(context, e);
         });
       }
     }
@@ -77,7 +77,7 @@ class _BuyerSignUpScreenState extends ConsumerState<BuyerSignUpScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = localizeException(context, e);
           _busy = false;
         });
       }
