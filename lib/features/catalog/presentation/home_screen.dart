@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
@@ -11,7 +12,6 @@ import '../../../core/widgets/city_picker_sheet.dart';
 import '../../../core/widgets/w_async.dart';
 import '../../../core/widgets/w_image.dart';
 import '../../../core/widgets/w_widgets.dart';
-import '../../../core/widgets/coming_soon_sheet.dart';
 import '../../../core/widgets/fly_to_cart.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../notifications/data/notification_repository.dart';
@@ -255,13 +255,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   label: context.tr('home.communityCta'),
                   subtitle: context.tr('home.communitySubtitle'),
                   icon: Icons.groups_outlined,
-                  onTap: () => ComingSoonSheet.show(
-                    context,
-                    title: context.tr('home.communitySheetTitle'),
-                    description: context.tr('home.communityDescription'),
-                    icon: Icons.groups_outlined,
-                    ctaLabel: context.tr('common.openTelegram'),
-                  ),
+                  onTap: () => _openWhatsAppCommunity(context),
                 ),
               ),
             ),
@@ -318,6 +312,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           );
       }
     }
+  }
+
+  /// Opens the Wizzo WhatsApp community group.
+  static const _whatsAppCommunityUrl =
+      'https://chat.whatsapp.com/HEeBCmTxFVKAXLNsU8hbZT?s=cl&p=i&mlu=4&ilr=4';
+
+  Future<void> _openWhatsAppCommunity(BuildContext context) async {
+    final launched = await launchUrl(
+      Uri.parse(_whatsAppCommunityUrl),
+      mode: LaunchMode.externalApplication,
+    );
+    if (launched || !context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text(context.tr('common.linkOpenError')),
+      ),
+    );
   }
 }
 
