@@ -122,11 +122,11 @@ class _OrderCard extends StatelessWidget {
                 if (firstItem != null)
                   Container(
                     width: 56,
-                    height: 56,
+                    height: 42,
                     clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: WImage(
                       url: firstItem.images.isNotEmpty ? firstItem.images.first : null,

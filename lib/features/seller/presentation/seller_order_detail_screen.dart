@@ -297,12 +297,12 @@ class _ItemsCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     child: SizedBox(
                       width: 44,
-                      height: 44,
+                      height: 33,
                       child: item.image != null
                           ? Image.network(
                               item.image!,
                               cacheWidth: 44,
-                              cacheHeight: 44,
+                              cacheHeight: 33,
                               fit: BoxFit.cover,
                               errorBuilder: (_, _, _) => Container(
                                 color: scheme.surfaceContainerHighest,

@@ -20,12 +20,14 @@ class ProductCard extends ConsumerWidget {
     this.onTap,
     this.width,
     this.priceStyle,
+    this.imageAspectRatio = 3 / 4,
   });
 
   final Product product;
   final VoidCallback? onTap;
   final double? width;
   final TextStyle? priceStyle;
+  final double imageAspectRatio;
 
   void _addToCart(BuildContext context, WidgetRef ref) {
     final box = context.findRenderObject();
@@ -35,7 +37,7 @@ class ProductCard extends ConsumerWidget {
         origin.dx,
         origin.dy,
         box.size.width,
-        box.size.width,
+        box.size.height,
       );
       flyToCartController.fly(
         context: context,
@@ -92,7 +94,7 @@ class ProductCard extends ConsumerWidget {
 
     Widget imageStack() => RepaintBoundary(
       child: AspectRatio(
-        aspectRatio: 1,
+        aspectRatio: imageAspectRatio,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -100,7 +102,7 @@ class ProductCard extends ConsumerWidget {
               url: product.images.isNotEmpty ? product.images.first : null,
               fit: BoxFit.cover,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
             ),
             if (product.discount > 0)
               Positioned(
@@ -438,7 +440,7 @@ class ProductCardSkeleton extends StatelessWidget {
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AspectRatio(aspectRatio: 1, child: WSkeleton(radius: 12)),
+          AspectRatio(aspectRatio: 3 / 4, child: WSkeleton(radius: 8)),
           SizedBox(height: 10),
           WSkeleton(width: 110, height: 18),
           SizedBox(height: 6),

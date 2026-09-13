@@ -285,15 +285,15 @@ class _ProductCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   child: SizedBox(
                     width: 64,
-                    height: 64,
+                    height: 48,
                     child: product.images.isNotEmpty
                         ? Image.network(
                             product.images.first,
                             cacheWidth: 64,
-                            cacheHeight: 64,
+                            cacheHeight: 48,
                             fit: BoxFit.cover,
                             errorBuilder: (_, _, _) => Container(
                               color: scheme.surfaceContainerHighest,

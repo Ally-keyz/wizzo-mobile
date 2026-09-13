@@ -272,19 +272,19 @@ class _ShortVideoPageState extends ConsumerState<ShortVideoPage> {
                           height: 32,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                      const SizedBox(width: 8),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 200),
-                        child: Text(
-                          seller?.displayName ?? context.tr('common.wizzoSeller'),
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
+const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  seller?.displayName ??
+                                      context.tr('common.wizzoSeller'),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
                       if (seller?.verified ?? false) ...[
                         const SizedBox(width: 6),
                         const Icon(
@@ -506,8 +506,7 @@ class _ProductChip extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             const SizedBox(width: 10),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 190),
+            Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,

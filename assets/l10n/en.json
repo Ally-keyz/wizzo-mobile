@@ -312,7 +312,7 @@
     "total": "Total",
     "googlePayNote": "Google Pay will charge your saved card when you place the order. No extra steps needed.",
     "momoPhoneField": "MoMo phone number",
-    "momoPhoneHint": "0788 123 456",
+    "momoPhoneHint": "788 123 456",
     "momoStkHint": "We'll send a payment prompt (STK push) to this number.",
     "momoSubmittedNote": "Your order stays \"Payment submitted\" until your MoMo provider confirms the payment from the prompt on your phone. It is NOT marked as paid automatically.",
     "momoChargeNote": "Your whole order is charged once via MoMo. We'll send an STK push to the number above when you tap Pay.",

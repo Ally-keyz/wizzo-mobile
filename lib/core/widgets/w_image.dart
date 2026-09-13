@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/media_utils.dart';
 
 /// Shared network-image with shimmer placeholder and a graceful error state.
 ///
@@ -35,14 +36,18 @@ class WImage extends StatelessWidget {
   final int? memCacheWidth;
   final int? memCacheHeight;
 
-  static int? _logicalPx(double? value) {
-    if (value == null || !value.isFinite || value <= 0) return null;
-    return value.round().clamp(16, 2048).toInt();
+  /// Converts a logical-pixel layout size into the physical-pixel decode size
+  /// the Flutter engine should use, so images are never decoded smaller than
+  /// what the screen actually needs (that is what made them soft/“stretched”).
+  static int? _targetPx(double? logical, double dpr) {
+    if (logical == null || !logical.isFinite || logical <= 0) return null;
+    return (logical * dpr).round().clamp(16, 2048).toInt();
   }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
     final safe = url == null || url!.isEmpty ? null : url;
     return ClipRRect(
       borderRadius: borderRadius ?? BorderRadius.zero,
@@ -52,23 +57,30 @@ class WImage extends StatelessWidget {
             ? _placeholder(scheme, errorIcon)
             : LayoutBuilder(
                 builder: (context, constraints) {
-                  final targetWidth =
-                      memCacheWidth ??
-                      _logicalPx(width) ??
+                  final layoutWidth =
+                      width ??
                       (constraints.hasBoundedWidth
-                          ? _logicalPx(constraints.maxWidth)
+                          ? constraints.maxWidth
                           : null);
-                  final targetHeight =
-                      memCacheHeight ??
-                      _logicalPx(height) ??
+                  final layoutHeight =
+                      height ??
                       (constraints.hasBoundedHeight
-                          ? _logicalPx(constraints.maxHeight)
+                          ? constraints.maxHeight
                           : null);
+                  final targetWidth =
+                      memCacheWidth ?? _targetPx(layoutWidth, dpr);
+                  final targetHeight =
+                      memCacheHeight ?? _targetPx(layoutHeight, dpr);
+                  final renditionWidth = (targetWidth ?? 800).clamp(200, 2048);
                   return CachedNetworkImage(
-                    imageUrl: safe,
+                    imageUrl: highQualityCloudinaryUrl(
+                      safe,
+                      width: renditionWidth,
+                    ),
                     width: width,
                     height: height,
                     fit: fit,
+                    filterQuality: FilterQuality.high,
                     memCacheWidth: targetWidth,
                     memCacheHeight: targetHeight,
                     placeholder: (_, _) =>

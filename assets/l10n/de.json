@@ -312,7 +312,7 @@
     "total": "Gesamt",
     "googlePayNote": "Google Pay belastet Ihre gespeicherte Karte, sobald Sie die Bestellung aufgeben. Keine weiteren Schritte erforderlich.",
     "momoPhoneField": "MoMo-Telefonnummer",
-    "momoPhoneHint": "0788 123 456",
+    "momoPhoneHint": "788 123 456",
     "momoStkHint": "Wir senden eine Zahlungsaufforderung (STK-Push) an diese Nummer.",
     "momoSubmittedNote": "Ihre Bestellung bleibt „Zahlung eingereicht“, bis Ihr Mobile-Money-Anbieter die Zahlung über die auf Ihrem Telefon gesendete Aufforderung bestätigt. Sie wird NICHT automatisch als bezahlt markiert.",
     "momoChargeNote": "Ihre gesamte Bestellung wird einmalig über MoMo berechnet. Wir senden einen STK-Push an die obige Nummer, sobald Sie auf Bezahlen tippen.",

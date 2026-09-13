@@ -121,15 +121,15 @@ class _SellerOrderCard extends StatelessWidget {
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   child: SizedBox(
                     width: 52,
-                    height: 52,
+                    height: 39,
                     child: remoteImage != null
                         ? Image.network(
                             remoteImage,
                             cacheWidth: 52,
-                            cacheHeight: 52,
+                            cacheHeight: 39,
                             fit: BoxFit.cover,
                             errorBuilder: (_, _, _) =>
                                 _placeholder(scheme, first?.name),

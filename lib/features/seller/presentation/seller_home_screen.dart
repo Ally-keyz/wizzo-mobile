@@ -614,15 +614,15 @@ class _OrderRow extends StatelessWidget {
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
                 child: SizedBox(
                   width: 48,
-                  height: 48,
+                  height: 36,
                   child: first?.image != null
                       ? Image.network(
                           first!.image!,
                           cacheWidth: 48,
-                          cacheHeight: 48,
+                          cacheHeight: 36,
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) => Container(
                             color: scheme.surfaceContainerHighest,

@@ -365,8 +365,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     final images = product.images.isNotEmpty
         ? product.images
         : const <String>[];
-    return SizedBox(
-      height: 320,
+    return AspectRatio(
+      aspectRatio: 3 / 4,
       child: Stack(
         children: [
           PageView.builder(
@@ -1010,7 +1010,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       builder: (context, ref, _) {
         final related = ref.watch(relatedProductsProvider(product.id));
         return SizedBox(
-          height: 260,
+          height: 330,
           child: related.when(
             data: (list) => list.isEmpty
                 ? const SizedBox()
@@ -1171,9 +1171,11 @@ class _DetailSkeleton extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        Container(
-          height: 320,
-          color: theme.colorScheme.surfaceContainerHighest,
+        AspectRatio(
+          aspectRatio: 3 / 4,
+          child: Container(
+            color: theme.colorScheme.surfaceContainerHighest,
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(16),

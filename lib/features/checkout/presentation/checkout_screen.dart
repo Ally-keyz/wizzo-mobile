@@ -125,6 +125,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   num _deliveryFee() =>
       DeliveryOption.all.firstWhere((o) => o.id == _delivery).price;
 
+  /// Normalizes the MoMo phone entry into the 9-digit local number
+  /// (without country code or leading 0): "0788 123 456" → "788123456",
+  /// "+250 788 123 456" → "788123456".
+  String _momoDigits() {
+    var digits = _momoPhone.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('250') && digits.length > 9) {
+      digits = digits.substring(3);
+    }
+    if (digits.startsWith('0')) digits = digits.substring(1);
+    if (digits.length > 9) digits = digits.substring(0, 9);
+    return digits;
+  }
+
   Future<void> _placeOrder(CartData cart) async {
     final address = _effectiveAddress(
         ref.read(addressesProvider).value ?? AddressBook());
@@ -146,7 +159,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return;
     }
 
-    if (isMomo && _momoPhone.trim().length < 9) {
+    if (isMomo && _momoDigits().length != 9) {
       _showError('Enter a valid MoMo phone number');
       return;
     }
@@ -170,12 +183,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final onlineMethod = (isGooglePay || isMomo)
           ? firstMethod.apiValue
           : null;
+      final momoDigits = _momoDigits();
       final Map<String, dynamic>? paymentDetails = isGooglePay
           ? {
               if (_googlePayToken != null) 'walletToken': _googlePayToken,
             }
-          : (isMomo && _momoPhone.trim().isNotEmpty
-              ? {'momoPhone': _momoPhone.trim()}
+          : (isMomo && momoDigits.isNotEmpty
+              ? {'momoPhone': '+250$momoDigits'}
               : null);
 
       final summary = await ref.read(checkoutRepositoryProvider).placeOrder(

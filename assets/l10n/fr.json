@@ -312,7 +312,7 @@
     "total": "Total",
     "googlePayNote": "Google Pay débitera votre carte enregistrée lors du passage de la commande. Aucune étape supplémentaire n'est nécessaire.",
     "momoPhoneField": "Numéro de téléphone MoMo",
-    "momoPhoneHint": "0788 123 456",
+    "momoPhoneHint": "788 123 456",
     "momoStkHint": "Nous enverrons une demande de paiement (push STK) à ce numéro.",
     "momoSubmittedNote": "Votre commande reste « Paiement soumis » jusqu'à ce que votre opérateur de mobile money confirme le paiement via la demande envoyée sur votre téléphone. Elle n'est pas automatiquement marquée comme payée.",
     "momoChargeNote": "Votre commande entière est débitée une seule fois via MoMo. Nous enverrons un push STK au numéro ci-dessus lorsque vous tapotez sur Payer.",

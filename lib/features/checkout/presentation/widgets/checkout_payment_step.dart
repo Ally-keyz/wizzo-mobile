@@ -2,6 +2,7 @@
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pay/pay.dart' as pay;
 
 import '../../../../core/config/app_config.dart';
@@ -12,7 +13,11 @@ import '../../../cart/models/cart.dart';
 import '../../models/checkout.dart';
 import 'checkout_shared.dart';
 
-const _googlePayConfig = {
+/// Mirrors the Stripe key mode so the Google Pay environment follows the
+/// build: pk_live_ → PRODUCTION, anything else → TEST.
+final bool _gpayIsLive = AppConfig.stripePublishableKey.startsWith('pk_live_');
+
+final _googlePayConfig = {
   'provider': 'google_pay',
   'data': {
     'apiVersion': 2,
@@ -42,7 +47,7 @@ const _googlePayConfig = {
       'currencyCode': AppConfig.currencyCode,
       'totalPriceStatus': 'FINAL',
     },
-    'environment': 'TEST',
+    'environment': _gpayIsLive ? 'PRODUCTION' : 'TEST',
   },
 };
 
@@ -244,9 +249,14 @@ class PaymentStep extends StatelessWidget {
               child: TextField(
                 keyboardType: TextInputType.phone,
                 style: theme.textTheme.bodyMedium,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(12),
+                ],
                 decoration: InputDecoration(
                   labelText: context.tr('checkout.momoPhoneField'),
                   hintText: context.tr('checkout.momoPhoneHint'),
+                  prefixText: '+250 ',
                   helperText: context.tr('checkout.momoStkHint'),
                   helperMaxLines: 2,
                   prefixIcon: Icon(Icons.phone_outlined,
@@ -312,6 +322,12 @@ class PaymentStep extends StatelessWidget {
                     status: pay.PaymentItemStatus.final_price,
                   ),
                 ],
+                // Google Pay brand rule: the button face must contrast its
+                // background. Inverts with the app theme — dark panel needs
+                // the light (white) button and vice versa.
+                theme: Theme.of(context).brightness == Brightness.dark
+                    ? pay.GooglePayButtonTheme.light
+                    : pay.GooglePayButtonTheme.dark,
                 type: pay.GooglePayButtonType.pay,
                 margin: EdgeInsets.zero,
                 onPaymentResult: (result) {

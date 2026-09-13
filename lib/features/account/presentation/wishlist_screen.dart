@@ -42,7 +42,7 @@ class WishlistScreen extends ConsumerWidget {
               crossAxisCount: 2,
               mainAxisSpacing: 16,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.62,
+              childAspectRatio: 0.51,
             ),
             itemCount: products.length,
             itemBuilder: (_, i) => ProductCard(product: products[i]),

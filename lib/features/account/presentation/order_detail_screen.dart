@@ -508,11 +508,11 @@ class _ItemTile extends StatelessWidget {
         children: [
           Container(
             width: 60,
-            height: 60,
+            height: 45,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: WImage(
               url: product.images.isNotEmpty ? product.images.first : null,

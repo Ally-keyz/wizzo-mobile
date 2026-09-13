@@ -801,7 +801,7 @@ class _ForYouSection extends ConsumerWidget {
               crossAxisCount: 2,
               mainAxisSpacing: 16,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.62,
+              childAspectRatio: 0.51,
             ),
             itemCount: 4,
             itemBuilder: (_, _) => const ProductCardSkeleton(),
@@ -835,7 +835,7 @@ class _ForYouSection extends ConsumerWidget {
           crossAxisCount: 2,
           mainAxisSpacing: 16,
           crossAxisSpacing: 12,
-          childAspectRatio: 0.62,
+          childAspectRatio: 0.51,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, i) => ProductCard(product: products[i]),
