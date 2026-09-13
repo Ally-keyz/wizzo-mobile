@@ -263,14 +263,18 @@ class PaymentStep extends StatelessWidget {
                       size: 20, color: colors.gold),
                   filled: true,
                   fillColor: theme.colorScheme.surfaceContainerHighest
-                      .withValues(alpha: 0.3),
+                      .withValues(alpha: 0.45),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
