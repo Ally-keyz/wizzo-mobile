@@ -81,7 +81,13 @@ class _OrderConfirmationScreenState
               ? s.sellerOrders.fold<num>(0, (acc, o) => acc + o.subtotal)
               : s.total);
     final grandTotal = s?.grandTotal ?? s?.total;
-    final isMomoPending = s?.paymentKind == PaymentKind.momo;
+    // MoMo is async — the order is placed as "submitted" and only becomes
+    // "confirmed" when PawaPay settles the payment. Blank (null) status on an
+    // old server response should keep the pending banner so buyers are never
+    // told the payment is done before it is.
+    final isMomoPending =
+        s?.paymentKind == PaymentKind.momo &&
+        s?.paymentStatus != PaymentStatus.confirmed;
 
     return Scaffold(
       appBar: AppBar(

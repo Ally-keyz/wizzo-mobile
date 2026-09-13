@@ -190,7 +190,24 @@ PaymentKind? _kindFrom(String? raw) {
   if (v.contains('momo')) return PaymentKind.momo;
   if (v.contains('bank')) return PaymentKind.bank;
   if (v.contains('cash')) return PaymentKind.cashOnDelivery;
-  if (v.contains('google_pay') || v.contains('googlepay')) return PaymentKind.googlePay;
+  if (v.contains('google_pay') || v.contains('googlepay') || v.contains('google')) return PaymentKind.googlePay;
+  return null;
+}
+
+/// Lifecycle of an online gateway charge at placement time.
+enum PaymentStatus {
+  /// Payment initiated but NOT yet settled (MoMo async — awaiting USSD/PIN).
+  submitted,
+
+  /// Payment settled — money moved.
+  confirmed,
+}
+
+PaymentStatus? _statusFrom(String? raw) {
+  if (raw == null) return null;
+  final v = raw.toLowerCase();
+  if (v.contains('confirm')) return PaymentStatus.confirmed;
+  if (v.contains('submit')) return PaymentStatus.submitted;
   return null;
 }
 
@@ -201,6 +218,7 @@ class PlacementSummary {
     this.total,
     this.grandTotal,
     this.paymentKind,
+    this.paymentStatus,
     this.email,
     this.deliveryAddress,
     this.sellerOrders = const [],
@@ -214,7 +232,14 @@ class PlacementSummary {
 
   /// Grand total for the whole group (all seller orders + delivery).
   final num? grandTotal;
+
+  /// How the buyer paid (momo / google_pay / ...) — derived from the server's
+  /// `paymentKind` or the per-seller `paymentMethod` when absent.
   final PaymentKind? paymentKind;
+
+  /// Whether the placed order is still awaiting settlement (`submitted`) or
+  /// already settled (`confirmed`). Null for manual methods (bank / COD).
+  final PaymentStatus? paymentStatus;
   final String? email;
   final Address? deliveryAddress;
 
@@ -228,17 +253,16 @@ class PlacementSummary {
     final order = json['order'] is Map<String, dynamic>
         ? json['order'] as Map<String, dynamic>
         : json;
-    final kindRaw = (json['paymentKind'] ?? order['paymentMethod'])?.toString() ?? '';
-    final kind = kindRaw.contains('momo')
-        ? PaymentKind.momo
-        : kindRaw.contains('bank')
-            ? PaymentKind.bank
-            : kindRaw.contains('cash')
-                ? PaymentKind.cashOnDelivery
-                : kindRaw.contains('google')
-                    ? PaymentKind.googlePay
-                    : null;
     final rawSellers = json['sellerOrders'] ?? order['sellerOrders'];
+    final sellerOrders = rawSellers is List
+        ? rawSellers.map(SellerOrderReceipt.fromApi).toList()
+        : const <SellerOrderReceipt>[];
+    final kindRaw =
+        (json['paymentKind'] ?? order['paymentMethod'])?.toString() ?? '';
+    final kind = _kindFrom(kindRaw) ??
+        sellerOrders.map((o) => o.paymentMethod).firstOrNull;
+    final statusRaw = (json['paymentStatus'] ?? order['paymentStatus'] ?? order['status'])
+        ?.toString();
     return PlacementSummary(
       orderId: (json['orderId'] ?? order['id'] ?? order['_id'])?.toString() ?? '',
       orderNumber: (json['orderNumber'] ?? order['orderNumber'])?.toString(),
@@ -249,13 +273,12 @@ class PlacementSummary {
           ? (json['grandTotal'] ?? order['grandTotal']) as num
           : null,
       paymentKind: kind,
+      paymentStatus: _statusFrom(statusRaw),
       email: json['email']?.toString(),
       deliveryAddress: json['deliveryAddress'] is Map<String, dynamic>
           ? Address.fromApi(json['deliveryAddress'])
           : null,
-      sellerOrders: rawSellers is List
-          ? rawSellers.map(SellerOrderReceipt.fromApi).toList()
-          : const [],
+      sellerOrders: sellerOrders,
     );
   }
 }
