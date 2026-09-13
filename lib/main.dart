@@ -10,12 +10,11 @@ import 'core/storage/app_prefs.dart';
 import 'core/utils/crash_logger.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
   // Catches uncaught errors (zone, Flutter framework, platform dispatcher)
   // and writes them to <documents>/wizzo_crash.log for production diagnosis.
   await runZonedGuarded(
     () async {
+      WidgetsFlutterBinding.ensureInitialized();
       CrashLogger.init();
       final langCode = await AppPrefs.language();
       await currencyController.init();
