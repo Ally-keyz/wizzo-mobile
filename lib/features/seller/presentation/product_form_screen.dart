@@ -45,6 +45,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   String _condition = 'new';
   DateTime? _discountEndsAt;
   final List<String> _sizeOptions = [];
+  final List<ColorPhotoDraft> _colorPhotos = [];
+  bool _uploadingColor = false;
   final List<String> _images = [];
   String? _video;
   bool _busy = false;
@@ -76,6 +78,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           : null;
       _images.addAll(p.images);
       _sizeOptions.addAll(p.sizeOptions);
+      for (final v in p.colorVariants) {
+        _colorPhotos.add(ColorPhotoDraft(name: v.name, image: v.image));
+      }
       if (p.video != null && p.video!.isNotEmpty) _video = p.video;
     }
   }
@@ -89,6 +94,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _brand.dispose();
     _size.dispose();
     _description.dispose();
+    for (final c in _colorPhotos) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -121,6 +129,37 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _pickColorPhoto(int index) async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1280,
+      maxHeight: 1280,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() => _uploadingColor = true);
+    try {
+      final url = await ref
+          .read(sellerRepositoryProvider)
+          .uploadImage(picked.path, folder: 'wizzo/products');
+      if (mounted) setState(() => _colorPhotos[index].image = url);
+    } catch (e) {
+      if (mounted) _toast(localizeException(context, e));
+    } finally {
+      if (mounted) setState(() => _uploadingColor = false);
+    }
+  }
+
+  void _addColorPhoto() {
+    setState(() => _colorPhotos.add(ColorPhotoDraft()));
+  }
+
+  void _removeColorPhoto(int index) {
+    final draft = _colorPhotos.removeAt(index);
+    draft.dispose();
+    setState(() {});
   }
 
   Future<void> _pickVideo() async {
@@ -233,6 +272,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       _error = null;
     });
     final discount = num.tryParse(_discountPrice.text.trim());
+    final photos = _colorPhotos
+        .where((c) => c.name.text.trim().isNotEmpty)
+        .toList();
     final input = ProductInput(
       name: _name.text,
       categoryId: _categoryId!,
@@ -246,6 +288,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       brand: _brand.text,
       condition: _condition,
       sizeOptions: _sizeOptions,
+      colorOptions: photos.map((c) => c.name.text.trim()).toList(),
+      colorVariants: photos
+          .where((c) => c.image.isNotEmpty)
+          .map((c) => ColorPhotoInput(name: c.name.text.trim(), image: c.image))
+          .toList(),
       deliveryOptions: const [],
       tags: const [],
       video: _video,
@@ -668,6 +715,92 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 ),
               ],
               const SizedBox(height: 20),
+              _section(theme, scheme, context.tr('seller.colorPhotos')),
+              Text(
+                context.tr('seller.colorPhotosHint'),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: _uploadingColor ? null : _addColorPhoto,
+                icon: const Icon(Icons.palette_outlined, size: 18),
+                label: Text(context.tr('seller.addColor')),
+              ),
+              if (_colorPhotos.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text(
+                    context.tr('seller.colorPhotosEmpty'),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              for (var i = 0; i < _colorPhotos.length; i++) ...[
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      onTap: _uploadingColor ? null : () => _pickColorPhoto(i),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: scheme.outlineVariant),
+                          color: scheme.surfaceContainerHighest,
+                        ),
+                        child: _uploadingColor
+                            ? Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: scheme.primary,
+                                ),
+                              )
+                            : _colorPhotos[i].image.isEmpty
+                                ? Icon(
+                                    Icons.add_a_photo_outlined,
+                                    size: 22,
+                                    color: scheme.onSurfaceVariant,
+                                  )
+                                : Image.network(
+                                    _colorPhotos[i].image,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 22,
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _colorPhotos[i].name,
+                        decoration: InputDecoration(
+                          labelText: context.tr('seller.colorName'),
+                          hintText: context.tr('seller.colorNameHint'),
+                          prefixIcon: const Icon(Icons.colorize_outlined),
+                          isDense: true,
+                          border: const OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _removeColorPhoto(i),
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 20),
               WTextField(
                 controller: _description,
                 label: context.tr('product.description'),
@@ -870,4 +1003,15 @@ class _CategoryPickerShellState extends ConsumerState<_CategoryPickerShell> {
       },
     );
   }
+}
+
+/// Draft state for one seller color photo row (name + uploaded image URL).
+class ColorPhotoDraft {
+  ColorPhotoDraft({String name = '', this.image = ''})
+      : name = TextEditingController(text: name);
+
+  final TextEditingController name;
+  String image;
+
+  void dispose() => name.dispose();
 }

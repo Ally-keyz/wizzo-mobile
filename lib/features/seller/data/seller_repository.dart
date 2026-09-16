@@ -9,6 +9,15 @@ import '../models/seller_order.dart';
 import '../models/store.dart';
 import 'upload_service.dart';
 
+/// A color option paired with its own product photo, sent with product
+/// create/update ([ProductInput.colorVariants]).
+class ColorPhotoInput {
+  const ColorPhotoInput({required this.name, required this.image});
+
+  final String name;
+  final String image;
+}
+
 /// Input payload for the seller's product create/update endpoints.
 class ProductInput {
   const ProductInput({
@@ -24,6 +33,8 @@ class ProductInput {
     this.brand,
     this.condition = 'new',
     this.sizeOptions = const [],
+    this.colorOptions = const [],
+    this.colorVariants = const [],
     this.deliveryOptions = const [],
     this.tags = const [],
     this.video,
@@ -41,6 +52,8 @@ class ProductInput {
   final String? brand;
   final String condition;
   final List<String> sizeOptions;
+  final List<String> colorOptions;
+  final List<ColorPhotoInput> colorVariants;
   final List<String> deliveryOptions;
   final List<String> tags;
   final String? video;
@@ -60,7 +73,12 @@ class ProductInput {
         'images': images,
         if (brand != null && brand!.trim().isNotEmpty) 'brand': brand!.trim(),
         'condition': condition,
-        if (sizeOptions.isNotEmpty) 'sizeOptions': sizeOptions,
+        if (isUpdate || sizeOptions.isNotEmpty) 'sizeOptions': sizeOptions,
+        if (isUpdate || colorOptions.isNotEmpty) 'colorOptions': colorOptions,
+        if (isUpdate || colorVariants.isNotEmpty)
+          'colorVariants': colorVariants
+              .map((c) => {'name': c.name.trim(), 'image': c.image})
+              .toList(),
         if (deliveryOptions.isNotEmpty) 'deliveryOptions': deliveryOptions,
         if (tags.isNotEmpty) 'tags': tags,
         if (video != null && video!.trim().isNotEmpty) 'video': video!.trim(),

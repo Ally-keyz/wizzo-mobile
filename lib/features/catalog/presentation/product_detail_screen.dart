@@ -28,6 +28,7 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
+  final PageController _pageController = PageController();
   int _imageIndex = 0;
   String? _size;
   String? _color;
@@ -41,6 +42,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   @override
   void dispose() {
+    _pageController.dispose();
     _reviewController.dispose();
     super.dispose();
   }
@@ -77,6 +79,16 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   Widget _buildProduct(BuildContext context, ThemeData theme, Product product) {
     final inWishlist = ref.watch(wishlistIdsProvider).contains(product.id);
+    final gallery = _galleryFor(product);
+    if (_imageIndex >= gallery.length && gallery.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _imageIndex < gallery.length) return;
+        setState(() => _imageIndex = 0);
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(0);
+        }
+      });
+    }
     return Stack(
       children: [
         // Scrollable content
@@ -275,7 +287,22 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       title: context.tr('product.selectColor'),
                       options: product.colorOptions,
                       value: _color,
-                      onSelect: (v) => setState(() => _color = v),
+                      onSelect: (v) {
+                        setState(() => _color = v);
+                        ColorPhoto? photo;
+                        for (final c in product.colorVariants) {
+                          if (c.name == v) photo = c;
+                        }
+                        if (photo != null) {
+                          final idx = gallery.indexOf(photo.image);
+                          if (idx >= 0) {
+                            setState(() => _imageIndex = idx);
+                            if (_pageController.hasClients) {
+                              _pageController.jumpToPage(idx);
+                            }
+                          }
+                        }
+                      },
                     ),
                   ],
 
@@ -362,16 +389,22 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   Widget _imageCarousel(BuildContext context, Product product) {
-    final images = product.images.isNotEmpty
-        ? product.images
-        : const <String>[];
+    final images = _galleryFor(product);
+    final activeColor = _colorAt(product, _imageIndex);
     return AspectRatio(
       aspectRatio: 3 / 4,
       child: Stack(
         children: [
           PageView.builder(
+            controller: _pageController,
             itemCount: images.length,
-            onPageChanged: (i) => setState(() => _imageIndex = i),
+            onPageChanged: (i) {
+              setState(() => _imageIndex = i);
+              final color = _colorAt(product, i);
+              if (color != null && _color != color) {
+                setState(() => _color = color);
+              }
+            },
             itemBuilder: (_, i) => WImage(
               url: images[i],
               fit: BoxFit.cover,
@@ -400,9 +433,52 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 }),
               ),
             ),
+          if (product.colorVariants.isNotEmpty)
+            Positioned(
+              right: 12,
+              bottom: 46,
+              child: _ColorGalleryGrid(
+                variants: product.colorVariants,
+                activeColor: activeColor,
+                onSelect: (name) {
+                  ColorPhoto? photo;
+                  for (final c in product.colorVariants) {
+                    if (c.name == name) photo = c;
+                  }
+                  setState(() => _color = name);
+                  if (photo == null) return;
+                  final idx = images.indexOf(photo.image);
+                  if (idx >= 0) {
+                    setState(() => _imageIndex = idx);
+                    if (_pageController.hasClients) {
+                      _pageController.jumpToPage(idx);
+                    }
+                  }
+                },
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  /// Main images plus every color-variant photo (deduped).
+  List<String> _galleryFor(Product product) {
+    final slides = <String>[...product.images];
+    for (final v in product.colorVariants) {
+      if (!slides.contains(v.image)) slides.add(v.image);
+    }
+    return slides;
+  }
+
+  /// Name of the color that owns [index]'s image, if any.
+  String? _colorAt(Product product, int index) {
+    final images = _galleryFor(product);
+    if (index < 0 || index >= images.length) return null;
+    for (final v in product.colorVariants) {
+      if (v.image == images[index]) return v.name;
+    }
+    return null;
   }
 
   Widget _sellerCard(BuildContext context, Product product) {
@@ -1196,6 +1272,104 @@ class _DetailSkeleton extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Bottom-right color selector on the product gallery. Only the selected
+/// color's photo is fully focused; the others stay dimmed.
+class _ColorGalleryGrid extends StatelessWidget {
+  const _ColorGalleryGrid({
+    required this.variants,
+    required this.activeColor,
+    required this.onSelect,
+  });
+
+  final List<ColorPhoto> variants;
+  final String? activeColor;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      constraints: const BoxConstraints(maxWidth: 156),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            context.tr('product.colorsLabel'),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final v in variants)
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: () => onSelect(v.name),
+                      child: AnimatedScale(
+                        scale: activeColor == v.name ? 1.0 : 0.92,
+                        duration: const Duration(milliseconds: 150),
+                        child: AnimatedOpacity(
+                          opacity: activeColor == v.name ? 1 : 0.62,
+                          duration: const Duration(milliseconds: 150),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            clipBehavior: Clip.antiAlias,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(9),
+                              border: Border.all(
+                                color: activeColor == v.name
+                                    ? Colors.white
+                                    : Colors.white38,
+                                width: activeColor == v.name ? 2 : 1,
+                              ),
+                            ),
+                            child: WImage(url: v.image, fit: BoxFit.cover),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        v.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: activeColor == v.name
+                              ? Colors.white
+                              : Colors.white70,
+                          fontSize: 9.5,
+                          fontWeight: activeColor == v.name
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

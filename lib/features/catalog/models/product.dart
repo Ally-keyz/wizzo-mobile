@@ -117,6 +117,29 @@ class ProductSpec {
   }
 }
 
+/// A color option paired with its own product photo (`colorVariants`).
+class ColorPhoto {
+  const ColorPhoto({required this.name, required this.image});
+
+  final String name;
+  final String image;
+
+  /// Accepts `{name, image}` entries (the server shape). Entries without a
+  /// both a name and a usable image URL are dropped.
+  static List<ColorPhoto> fromApiList(dynamic json) {
+    if (json is! List) return const [];
+    final result = <ColorPhoto>[];
+    for (final e in json) {
+      if (e is! Map<String, dynamic>) continue;
+      final name = (e['name'] ?? e['color'] ?? '').toString().trim();
+      final image = (e['image'] ?? e['imageUrl'] ?? e['url'] ?? '').toString().trim();
+      if (name.isEmpty || image.isEmpty) continue;
+      result.add(ColorPhoto(name: name, image: image));
+    }
+    return result;
+  }
+}
+
 class Product {
   const Product({
     required this.id,
@@ -145,6 +168,7 @@ class Product {
     this.specs = const [],
     this.sizeOptions = const [],
     this.colorOptions = const [],
+    this.colorVariants = const [],
     this.sellerLocationLabel,
   });
 
@@ -174,6 +198,9 @@ class Product {
   final List<ProductSpec> specs;
   final List<String> sizeOptions;
   final List<String> colorOptions;
+  /// Per-color photos: each color has its own product image. Buyers switch
+  /// between them in the gallery; empty when the seller only set text colors.
+  final List<ColorPhoto> colorVariants;
   final String? sellerLocationLabel;
 
   bool get isNew => condition.toLowerCase() == 'new';
@@ -243,6 +270,7 @@ class Product {
       specs: ProductSpec.fromApi(json['specifications'] ?? json['specs']),
       sizeOptions: _stringList(json['sizeOptions']),
       colorOptions: _stringList(json['colorOptions']),
+      colorVariants: ColorPhoto.fromApiList(json['colorVariants']),
       sellerLocationLabel: json['sellerLocation']?.toString(),
     );
   }
