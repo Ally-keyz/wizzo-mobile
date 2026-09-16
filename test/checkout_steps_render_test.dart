@@ -103,7 +103,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Payment'), findsWidgets);
     expect(find.text('Mobile Money'), findsOneWidget);
-    expect(find.text('Google Pay'), findsWidgets);
+    expect(find.text('Card / Stripe'), findsOneWidget);
     expect(find.textContaining('Pay '), findsWidgets);
   });
 }
