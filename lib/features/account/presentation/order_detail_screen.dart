@@ -534,6 +534,20 @@ class _ItemTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
+                if (item.variantColor != null || item.variantSize != null) ...[
+                  Text(
+                    [
+                      item.variantColor,
+                      item.variantSize,
+                    ].where((e) => e != null && e.isNotEmpty).join(' • '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
                 Text(
                   context.tr('orders.qty', namedArgs: {'count': '${item.quantity}'}),
                   style: theme.textTheme.labelSmall?.copyWith(

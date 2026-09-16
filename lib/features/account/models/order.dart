@@ -88,11 +88,19 @@ class Order {
 }
 
 class OrderItem {
-  const OrderItem({required this.product, this.quantity = 1, this.lineTotal});
+  const OrderItem({
+    required this.product,
+    this.quantity = 1,
+    this.lineTotal,
+    this.variantColor,
+    this.variantSize,
+  });
 
   final Product product;
   final int quantity;
   final num? lineTotal;
+  final String? variantColor;
+  final String? variantSize;
 
   factory OrderItem.fromApi(dynamic json) {
     if (json is! Map<String, dynamic>) throw const FormatException('Invalid order item');
@@ -119,7 +127,15 @@ class OrderItem {
         json['total'] ??
         (json['priceAtPurchase'] as num?)?.toDouble() ??
         (json['price'] as num?)?.toDouble();
-    return OrderItem(product: product, quantity: quantity, lineTotal: lineTotal is num ? lineTotal : null);
+    return OrderItem(
+      product: product,
+      quantity: quantity,
+      lineTotal: lineTotal is num ? lineTotal : null,
+      variantColor: json['selectedColor']?.toString() ??
+          json['variantColor']?.toString(),
+      variantSize: json['selectedSize']?.toString() ??
+          json['variantSize']?.toString(),
+    );
   }
 }
 
