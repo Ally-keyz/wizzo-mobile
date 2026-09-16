@@ -55,13 +55,13 @@ enum PaymentKind {
   momo,
   bank,
   cashOnDelivery,
-  googlePay;
+  card;
 
   String get apiValue => switch (this) {
         PaymentKind.momo => 'momo',
         PaymentKind.bank => 'bank',
         PaymentKind.cashOnDelivery => 'cash_on_delivery',
-        PaymentKind.googlePay => 'google_pay',
+        PaymentKind.card => 'card',
       };
 }
 
@@ -82,7 +82,7 @@ class PaymentOption {
         PaymentKind.momo => 'momo',
         PaymentKind.bank => 'bank',
         PaymentKind.cashOnDelivery => 'cash_on_delivery',
-        PaymentKind.googlePay => 'google_pay',
+        PaymentKind.card => 'card',
       };
 
   static const List<PaymentOption> all = [
@@ -93,10 +93,10 @@ class PaymentOption {
       providers: ['MTN MoMo', 'Airtel Money'],
     ),
     PaymentOption(
-      kind: PaymentKind.googlePay,
-      label: 'Google Pay',
-      description: 'Pay securely with your saved card',
-      providers: ['Google Pay'],
+      kind: PaymentKind.card,
+      label: 'Card / Stripe',
+      description: 'Pay securely by debit or credit card',
+      providers: ['Card', 'Google Pay', 'Apple Pay'],
     ),
   ];
 }
@@ -190,7 +190,15 @@ PaymentKind? _kindFrom(String? raw) {
   if (v.contains('momo')) return PaymentKind.momo;
   if (v.contains('bank')) return PaymentKind.bank;
   if (v.contains('cash')) return PaymentKind.cashOnDelivery;
-  if (v.contains('google_pay') || v.contains('googlepay') || v.contains('google')) return PaymentKind.googlePay;
+  // Cards are paid via the Stripe-hosted checkout page (replaces Google Pay);
+  // legacy orders still report 'google_pay'.
+  if (v.contains('card') ||
+      v.contains('stripe') ||
+      v.contains('google_pay') ||
+      v.contains('googlepay') ||
+      v.contains('google')) {
+    return PaymentKind.card;
+  }
   return null;
 }
 
@@ -279,6 +287,54 @@ class PlacementSummary {
           ? Address.fromApi(json['deliveryAddress'])
           : null,
       sellerOrders: sellerOrders,
+    );
+  }
+}
+
+/// Server response for `POST /orders/stripe/checkout-session` — the hosted
+/// Stripe Checkout page to open plus the intent id used to poll status.
+class StripeCheckoutResult {
+  const StripeCheckoutResult({required this.url, required this.intentId});
+
+  final String url;
+  final String intentId;
+
+  factory StripeCheckoutResult.fromApi(dynamic json) {
+    if (json is! Map<String, dynamic>) {
+      throw const FormatException('Invalid Stripe checkout response');
+    }
+    return StripeCheckoutResult(
+      url: json['url']?.toString() ?? '',
+      intentId: json['intentId']?.toString() ?? '',
+    );
+  }
+}
+
+/// Result of polling `GET /orders/stripe/checkout/status/:intentId`.
+class StripeCheckoutStatusResult {
+  const StripeCheckoutStatusResult({
+    required this.status,
+    this.summary,
+  });
+
+  /// open | processing | paid | expired
+  final String status;
+
+  /// Present once the webhook has confirmed the payment and created the order.
+  final PlacementSummary? summary;
+
+  bool get isPaid => status == 'paid';
+  bool get isExpired => status == 'expired';
+
+  factory StripeCheckoutStatusResult.fromApi(dynamic json) {
+    if (json is! Map<String, dynamic>) {
+      return const StripeCheckoutStatusResult(status: 'open');
+    }
+    final summary =
+        json['status'] == 'paid' ? PlacementSummary.fromApi(json) : null;
+    return StripeCheckoutStatusResult(
+      status: json['status']?.toString() ?? 'open',
+      summary: summary,
     );
   }
 }

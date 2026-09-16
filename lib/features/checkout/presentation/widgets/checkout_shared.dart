@@ -12,7 +12,7 @@ String paymentKindLabel(BuildContext context, PaymentKind kind) => switch (kind)
       PaymentKind.momo => context.tr('checkout.payment.momo.name'),
       PaymentKind.bank => context.tr('checkout.payment.bank.name'),
       PaymentKind.cashOnDelivery => context.tr('checkout.payment.cod.name'),
-      PaymentKind.googlePay => context.tr('checkout.payment.google.name'),
+      PaymentKind.card => context.tr('checkout.payment.card.name'),
     };
 
 /// Localized one-line description for a payment method.
@@ -21,7 +21,7 @@ String paymentKindDescription(BuildContext context, PaymentKind kind) =>
       PaymentKind.momo => context.tr('checkout.payment.momo.desc'),
       PaymentKind.bank => context.tr('checkout.payment.bank.desc'),
       PaymentKind.cashOnDelivery => context.tr('checkout.payment.cod.desc'),
-      PaymentKind.googlePay => context.tr('checkout.payment.google.desc'),
+      PaymentKind.card => context.tr('checkout.payment.card.desc'),
     };
 
 /// Shows the seller's pay-in details for a manual payment — the mobile
@@ -43,7 +43,7 @@ class PaymentInstructionsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = context.appColors;
 
-    if (method == PaymentKind.googlePay) {
+    if (method == PaymentKind.card) {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -53,11 +53,11 @@ class PaymentInstructionsCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.account_balance_wallet_outlined, size: 18, color: colors.info),
+            Icon(Icons.credit_card_outlined, size: 18, color: colors.info),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                context.tr('checkout.googlePayNote'),
+                context.tr('checkout.stripePaidNote'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   height: 1.4,
@@ -460,7 +460,7 @@ class CheckoutPaymentTile extends StatelessWidget {
             Icon(
               switch (option.kind) {
                 PaymentKind.momo => Icons.phone_android_outlined,
-                PaymentKind.googlePay => Icons.account_balance_wallet_outlined,
+                PaymentKind.card => Icons.credit_card_outlined,
                 PaymentKind.bank => Icons.account_balance_outlined,
                 PaymentKind.cashOnDelivery => Icons.payments_outlined,
               },

@@ -310,7 +310,12 @@
     "txReferenceHint": "e.g. MTN-123456, ref 998877",
     "viewMyOrders": "View My Orders",
     "total": "Total",
-    "googlePayNote": "Google Pay will charge your saved card when you place the order. No extra steps needed.",
+    "stripeCardNote": "You'll be taken to Stripe's secure checkout page to pay by debit or credit card, Google Pay or Apple Pay. Your cart is only charged once you complete the payment.",
+    "stripePaidNote": "Paid securely via Stripe — no further action needed.",
+    "stripeWaitingTitle": "Waiting for payment confirmation",
+    "stripeWaitingBody": "Complete the payment in the page that just opened. Once Stripe confirms it, your order is placed automatically.",
+    "stripeOpenFailed": "Could not open the payment page. Cart not charged — please try again.",
+    "stripeNotConfirmed": "Payment was not confirmed. Your card was not charged and your cart is unchanged.",
     "momoPhoneField": "MoMo phone number",
     "momoPhoneHint": "788 123 456",
     "momoStkHint": "We'll send a payment prompt (STK push) to this number.",
@@ -322,9 +327,9 @@
         "name": "Mobile Money",
         "desc": "Pay directly via MTN MoMo or Airtel Money"
       },
-      "google": {
-        "name": "Google Pay",
-        "desc": "Pay securely with your saved card"
+      "card": {
+        "name": "Card / Stripe",
+        "desc": "Pay securely by debit or credit card"
       },
       "bank": {
         "name": "Bank Transfer",

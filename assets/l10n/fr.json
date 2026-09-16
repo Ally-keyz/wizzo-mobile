@@ -310,7 +310,12 @@
     "txReferenceHint": "ex. MTN-123456, réf. 998877",
     "viewMyOrders": "Voir mes commandes",
     "total": "Total",
-    "googlePayNote": "Google Pay débitera votre carte enregistrée lors du passage de la commande. Aucune étape supplémentaire n'est nécessaire.",
+    "stripeCardNote": "Vous serez redirigé(e) vers la page de paiement sécurisée de Stripe pour payer par carte de débit ou de crédit, Google Pay ou Apple Pay. Votre carte n'est débitée qu'une fois le paiement terminé.",
+    "stripePaidNote": "Payé en toute sécurité via Stripe — aucune autre étape nécessaire.",
+    "stripeWaitingTitle": "En attente de la confirmation du paiement",
+    "stripeWaitingBody": "Terminez le paiement dans la page qui vient de s'ouvrir. Dès que Stripe le confirme, votre commande est passée automatiquement.",
+    "stripeOpenFailed": "Impossible d'ouvrir la page de paiement. Carte non débitée — veuillez réessayer.",
+    "stripeNotConfirmed": "Le paiement n'a pas été confirmé. Votre carte n'a pas été débitée et votre panier est inchangé.",
     "momoPhoneField": "Numéro de téléphone MoMo",
     "momoPhoneHint": "788 123 456",
     "momoStkHint": "Nous enverrons une demande de paiement (push STK) à ce numéro.",
@@ -322,9 +327,9 @@
         "name": "Mobile Money",
         "desc": "Payez directement via MTN MoMo ou Airtel Money"
       },
-      "google": {
-        "name": "Google Pay",
-        "desc": "Payez en toute sécurité avec votre carte enregistrée"
+      "card": {
+        "name": "Carte / Stripe",
+        "desc": "Payez en toute sécurité par carte de débit ou de crédit"
       },
       "bank": {
         "name": "Virement bancaire",

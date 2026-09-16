@@ -1,55 +1,13 @@
-﻿import 'dart:convert';
-
-import 'package:easy_localization/easy_localization.dart';
+﻿import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pay/pay.dart' as pay;
 
-import '../../../../core/config/app_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/w_widgets.dart';
 import '../../../cart/models/cart.dart';
 import '../../models/checkout.dart';
 import 'checkout_shared.dart';
-
-/// Mirrors the Stripe key mode so the Google Pay environment follows the
-/// build: pk_live_ → PRODUCTION, anything else → TEST.
-final bool _gpayIsLive = AppConfig.stripePublishableKey.startsWith('pk_live_');
-
-final _googlePayConfig = {
-  'provider': 'google_pay',
-  'data': {
-    'apiVersion': 2,
-    'apiVersionMinor': 0,
-    'allowedPaymentMethods': [
-      {
-        'type': 'CARD',
-        'parameters': {
-          'allowedCardNetworks': ['MASTERCARD', 'VISA'],
-          'allowedAuthMethods': ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-        },
-        'tokenizationSpecification': {
-          'type': 'PAYMENT_GATEWAY',
-          'parameters': {
-            'gateway': 'stripe',
-            'stripe:version': '2024-12-18',
-            'stripe:publishableKey': AppConfig.stripePublishableKey,
-          },
-        },
-      },
-    ],
-    'merchantInfo': {'merchantName': 'Wizzo'},
-    // Required by pay_android: it does `getJSONObject("transactionInfo")`
-    // while building the PaymentDataRequest. totalPrice/status are
-    // overwritten from the PaymentItem, but the key must exist.
-    'transactionInfo': {
-      'currencyCode': AppConfig.currencyCode,
-      'totalPriceStatus': 'FINAL',
-    },
-    'environment': _gpayIsLive ? 'PRODUCTION' : 'TEST',
-  },
-};
 
 class PaymentStep extends StatelessWidget {
   const PaymentStep({
@@ -64,7 +22,6 @@ class PaymentStep extends StatelessWidget {
     required this.onMethodSelected,
     required this.onMomoPhoneChanged,
     required this.onToggleTerms,
-    required this.onGooglePayResult,
     required this.onPayNow,
   });
 
@@ -78,7 +35,6 @@ class PaymentStep extends StatelessWidget {
   final void Function(String sellerId, PaymentKind kind) onMethodSelected;
   final void Function(String phone) onMomoPhoneChanged;
   final VoidCallback onToggleTerms;
-  final void Function(Map<String, dynamic> result) onGooglePayResult;
   final VoidCallback onPayNow;
 
   @override
@@ -190,7 +146,6 @@ class PaymentStep extends StatelessWidget {
   Widget _sellerCard(
       BuildContext context, ThemeData theme, CartSellerGroup group) {
     final method = methods[group.sellerId] ?? PaymentKind.momo;
-    final isOnlineMethod = method == PaymentKind.googlePay;
     final needsPhone = method == PaymentKind.momo;
     final colors = context.appColors;
 
@@ -311,50 +266,31 @@ class PaymentStep extends StatelessWidget {
               ),
             ),
           ],
-          if (isOnlineMethod) ...[
+          if (method == PaymentKind.card) ...[
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: pay.GooglePayButton(
-                paymentConfiguration:
-                    pay.PaymentConfiguration.fromJsonString(
-                  jsonEncode(_googlePayConfig),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.infoContainer.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                paymentItems: [
-                  pay.PaymentItem(
-                    label: context.tr('checkout.total'),
-                    amount: totalAmount.toInt().toString(),
-                    status: pay.PaymentItemStatus.final_price,
-                  ),
-                ],
-                // Google Pay brand rule: the button face must contrast its
-                // background. Inverts with the app theme — dark panel needs
-                // the light (white) button and vice versa.
-                theme: Theme.of(context).brightness == Brightness.dark
-                    ? pay.GooglePayButtonTheme.light
-                    : pay.GooglePayButtonTheme.dark,
-                type: pay.GooglePayButtonType.pay,
-                margin: EdgeInsets.zero,
-                onPaymentResult: (result) {
-                  if (result is Map<String, dynamic>) {
-                    onGooglePayResult(result);
-                  }
-                },
-                onError: (error) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Google Pay: $error',
-                        style: const TextStyle(fontSize: 13),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.credit_card_outlined,
+                        size: 18, color: colors.info),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        context.tr('checkout.stripeCardNote'),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
                       ),
-                      backgroundColor: theme.colorScheme.error,
                     ),
-                  );
-                },
-                loadingIndicator: const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  ],
                 ),
               ),
             ),
@@ -482,22 +418,19 @@ class _PaymentIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (kind == PaymentKind.googlePay) {
+    if (kind == PaymentKind.card) {
       return Container(
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(10),
         ),
         alignment: Alignment.center,
-        child: const Text(
-          'G',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF4285F4),
-          ),
+        child: const Icon(
+          Icons.credit_card_outlined,
+          size: 20,
+          color: Color(0xFF635BFF),
         ),
       );
     }

@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/w_widgets.dart';
 import '../../account/data/account_repository.dart';
 import '../../account/models/profile.dart';
@@ -37,7 +39,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   DeliveryKind _delivery = DeliveryKind.standard;
   final Map<String, PaymentKind> _methods = {};
   String _momoPhone = '';
-  String? _googlePayToken;
   String? _error;
 
   Future<void> _createAddress(Address draft) async {
@@ -151,11 +152,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
 
     final firstMethod = _methods.values.firstOrNull ?? PaymentKind.momo;
-    final isGooglePay = firstMethod == PaymentKind.googlePay;
     final isMomo = firstMethod == PaymentKind.momo;
+    final isCard = firstMethod == PaymentKind.card;
 
-    if (isGooglePay && _googlePayToken == null) {
-      _showError('Tap the Google Pay button to authorize payment');
+    if (isCard) {
+      await _payWithCard(cart);
       return;
     }
 
@@ -180,17 +181,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           },
       ];
 
-      final onlineMethod = (isGooglePay || isMomo)
-          ? firstMethod.apiValue
-          : null;
+      final onlineMethod = isMomo ? firstMethod.apiValue : null;
       final momoDigits = _momoDigits();
-      final Map<String, dynamic>? paymentDetails = isGooglePay
-          ? {
-              if (_googlePayToken != null) 'walletToken': _googlePayToken,
-            }
-          : (isMomo && momoDigits.isNotEmpty
+      final Map<String, dynamic>? paymentDetails =
+          isMomo && momoDigits.isNotEmpty
               ? {'momoPhone': '+250$momoDigits'}
-              : null);
+              : null;
 
       final summary = await ref.read(checkoutRepositoryProvider).placeOrder(
             sellerPayments: selection,
@@ -200,6 +196,84 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             paymentMethod: onlineMethod,
             paymentDetails: paymentDetails,
           );
+      await ref.read(cartProvider.notifier).clear();
+      ref.invalidate(cartProvider);
+      if (!mounted) return;
+      context.pushReplacement('/order-confirmation', extra: summary);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _placing = false;
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
+  /// Card payments go through Stripe's hosted Checkout page. The backend
+  /// creates a session for the whole cart; the Stripe webhook places the
+  /// order once the buyer pays. When they come back we poll the intent
+  /// status, then clear the cart and open the confirmation page.
+  Future<void> _payWithCard(CartData cart) async {
+    final address = _effectiveAddress(
+        ref.read(addressesProvider).value ?? AddressBook());
+    if (address == null) {
+      _showError(context.tr('checkout.selectAddressFirst'));
+      return;
+    }
+    if (!_termsAccepted) {
+      _showError(context.tr('checkout.acceptTerms'));
+      return;
+    }
+
+    setState(() {
+      _placing = true;
+      _error = null;
+    });
+    try {
+      final deliveryOption = _delivery.apiValue;
+      final selection = [
+        for (final g in cart.groups)
+          {
+            'sellerId': g.sellerId,
+            'paymentMethod':
+                (_methods[g.sellerId] ?? PaymentKind.card).apiValue,
+          },
+      ];
+
+      final session = await ref
+          .read(checkoutRepositoryProvider)
+          .createStripeCheckout(
+            sellerPayments: selection,
+            deliveryOption: deliveryOption,
+            deliveryAddressId:
+                _delivery == DeliveryKind.pickup ? null : address.id,
+          );
+      if (!mounted) return;
+
+      final opened = await launchUrl(
+        Uri.parse(session.url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened) {
+        throw Exception(context.tr('checkout.stripeOpenFailed'));
+      }
+
+      final summary = await showModalBottomSheet<PlacementSummary>(
+        context: context,
+        isDismissible: true,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        showDragHandle: true,
+        builder: (_) => _StripePaymentSheet(intentId: session.intentId),
+      );
+
+      if (!mounted) return;
+      if (summary == null) {
+        // Dismissed, expired or failed — the cart was never touched.
+        setState(() => _placing = false);
+        _showError(context.tr('checkout.stripeNotConfirmed'));
+        return;
+      }
       await ref.read(cartProvider.notifier).clear();
       ref.invalidate(cartProvider);
       if (!mounted) return;
@@ -291,15 +365,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           setState(() => _momoPhone = phone),
                       onToggleTerms: () => setState(
                           () => _termsAccepted = !_termsAccepted),
-                      onGooglePayResult: (result) {
-                        final tokenData = result['tokenizationData'];
-                        if (tokenData is Map &&
-                            tokenData['token'] != null) {
-                          setState(() => _googlePayToken =
-                              tokenData['token'] as String);
-                          _placeOrder(cart);
-                        }
-                      },
                       onPayNow: () => _placeOrder(cart),
                     ),
                 ],
@@ -353,6 +418,102 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Shown after the buyer is sent to Stripe's hosted Checkout page. Polls the
+/// checkout intent until the webhook has placed the order (pops with the
+/// [PlacementSummary]) or the session expires (pops with null).
+class _StripePaymentSheet extends ConsumerStatefulWidget {
+  const _StripePaymentSheet({required this.intentId});
+
+  final String intentId;
+
+  @override
+  ConsumerState<_StripePaymentSheet> createState() => _StripePaymentSheetState();
+}
+
+class _StripePaymentSheetState extends ConsumerState<_StripePaymentSheet> {
+  static const _interval = Duration(seconds: 3);
+  static const _maxPolls = 60;
+  bool _done = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _poll(0);
+  }
+
+  Future<void> _poll(int attempt) async {
+    if (_done) return;
+    try {
+      final result = await ref
+          .read(checkoutRepositoryProvider)
+          .getStripeCheckoutStatus(widget.intentId);
+      if (!mounted || _done) return;
+      if (result.isPaid && result.summary != null) {
+        _done = true;
+        Navigator.of(context).pop(result.summary);
+        return;
+      }
+      if (result.isExpired) {
+        _done = true;
+        Navigator.of(context).pop(null);
+        return;
+      }
+    } catch (_) {
+      // Transient network error — keep polling.
+    }
+    if (attempt >= _maxPolls) return;
+    await Future<void>.delayed(_interval);
+    if (!mounted || _done) return;
+    _poll(attempt + 1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = context.appColors;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 20),
+            Text(
+              context.tr('checkout.stripeWaitingTitle'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              context.tr('checkout.stripeWaitingBody'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: _done
+                  ? null
+                  : () {
+                      _done = true;
+                      Navigator.of(context).pop(null);
+                    },
+              icon: Icon(Icons.close, size: 16, color: colors.warning),
+              label: Text(context.tr('common.close')),
+            ),
+            const SizedBox(height: 4),
+          ],
+        ),
+      ),
     );
   }
 }

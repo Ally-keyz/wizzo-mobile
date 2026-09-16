@@ -1,6 +1,4 @@
-﻿import 'dart:io';
-
-import 'package:easy_localization/easy_localization.dart';
+﻿import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -131,19 +129,10 @@ class WalletScreen extends ConsumerWidget {
 
   List<PaymentMethod> _combinedPaymentMethods(BuildContext context, WidgetRef ref) {
     // Server-configured methods first (falls back to the app's defaults when
-    // the provider has not loaded yet), then the device wallet methods that
-    // only exist on the platform this app is running on.
-    final existing = ref.watch(paymentMethodsProvider).value ?? PaymentMethod.defaults;
-    final combined = <PaymentMethod>[...existing];
-    if (Platform.isAndroid) {
-      combined.removeWhere((m) => m.id == 'google_pay');
-      combined.insert(0, PaymentMethod(
-        id: 'google_pay',
-        name: context.tr('wallet.googlePay'),
-        description: context.tr('wallet.googlePayDescription'),
-      ));
-    }
-    return combined;
+    // the provider has not loaded yet). Card payments now run through the
+    // Stripe-hosted checkout (with Google Pay / Apple Pay as options inside
+    // it), so the method list is whatever the backend reports.
+    return ref.watch(paymentMethodsProvider).value ?? PaymentMethod.defaults;
   }
 
   List<Widget> _paymentMethodTiles(BuildContext context, List<PaymentMethod> methods) {

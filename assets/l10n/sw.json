@@ -310,7 +310,12 @@
     "txReferenceHint": "mf. MTN-123456, ref 998877",
     "viewMyOrders": "Ona Aagizo Yangu",
     "total": "Jumla",
-    "googlePayNote": "Google Pay itatozwa kadi yako iliyohifadhiwa unapoweka agizo. Hakuna hatua za ziada zinazohitajika.",
+    "stripeCardNote": "Utapelekwa kwenye ukurasa salama wa malipo wa Stripe kulipa kwa kadi ya benki au ya mkopo, Google Pay au Apple Pay. Kadi yako hito zwiw mara tu utakapomaliza malipo.",
+    "stripePaidNote": "Imelipwa kwa usalama kupitia Stripe — hakuna hatua za ziada zinahitajika.",
+    "stripeWaitingTitle": "Inasubiri uthibitisho wa malipo",
+    "stripeWaitingBody": "Maliza malipo kwenye ukurasa ambao umefunguliwa hivi punde. Mara Stripe itakapothibitisha, agizo lako litawekwa kiotomatiki.",
+    "stripeOpenFailed": "Haikuwezekana kufungua ukurasa wa malipo. Kadi haikuto zwiwa — tafadhali jaribu tena.",
+    "stripeNotConfirmed": "Malipo hayakuthibitishwa. Kadi yako haikuto zwiwa na toroli lako halijabadilika.",
     "momoPhoneField": "Nambari ya simu ya MoMo",
     "momoPhoneHint": "788 123 456",
     "momoStkHint": "Tutakutumia arifa ya malipo (STK push) kwa nambari hii.",
@@ -322,9 +327,9 @@
         "name": "Mobile Money",
         "desc": "Lipa moja kwa moja kupitia MTN MoMo au Airtel Money"
       },
-      "google": {
-        "name": "Google Pay",
-        "desc": "Lipa kwa usalama kwa kadi yako iliyohifadhiwa"
+      "card": {
+        "name": "Kadi / Stripe",
+        "desc": "Lipa kwa usalama kwa kadi ya benki au ya mkopo"
       },
       "bank": {
         "name": "Uhamisho wa Benki",

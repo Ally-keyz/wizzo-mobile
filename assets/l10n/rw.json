@@ -310,7 +310,12 @@
     "txReferenceHint": "urugero: MTN-123456, ref 998877",
     "viewMyOrders": "Reba Amabuyoboze Yanjye",
     "total": "Igiteranyo",
-    "googlePayNote": "Google Pay izakwishyuza ikarita yawe ibitswe iyo ushinze ikubitiro. Nta yindi ntambwe ikenewe.",
+    "stripeCardNote": "Uzakwanwa ku rupapuro rwi kanzu rwa Stripe rwubatswe neza kugira ngo wishyure ukoresheje ikarita ya banki cyangwa y'inguzanyo, Google Pay cyangwa Apple Pay. Ik pe name ribakana icyo u wishyuye.",
+    "stripePaidNote": "Yishyuwe mu mutekano binyuze kuri Stripe — nta yindi ntambwe ikenewe.",
+    "stripeWaitingTitle": "Kureba niba ubwishyu bwemejwe",
+    "stripeWaitingBody": "Sheshangire ubwishyu ku rupapuro rwaguye ubu. Iyo Stripe imaze kubyemeza, ikubitiro ryawe rishyirwa mu rubuga ku buryo bukora.",
+    "stripeOpenFailed": "Ntibyashobotse gufungura urupapuro rwo kwishyura. Ik pe name nta cyishyuwe — gerageza ukundi.",
+    "stripeNotConfirmed": "Ubwishyu ntwabwemeza. Ik pe name nta cyishyuwe kandi ikubitiro ryawe ntiryahindutse.",
     "momoPhoneField": "Nomero ya telefone ya MoMo",
     "momoPhoneHint": "788 123 456",
     "momoStkHint": "Tuzohereza igisabe cyo kwishyura (STK push) kuri iyi nomero.",
@@ -322,9 +327,9 @@
         "name": "Mobile Money",
         "desc": "Shyura mu buryo butaziguye binyuze kuri MTN MoMo cyangwa Airtel Money"
       },
-      "google": {
-        "name": "Google Pay",
-        "desc": "Shyura mu mutekano ukoresheje ikarita yawe ibitswe"
+      "card": {
+        "name": "Ikarita / Stripe",
+        "desc": "Shyura mu mutekano ukoresheje ikarita ya banki cyangwa y'inguzanyo"
       },
       "bank": {
         "name": "Kohereza ku Banki",

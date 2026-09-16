@@ -44,6 +44,35 @@ class CheckoutRepository {
     final items = data is List ? data : const <dynamic>[];
     return items.map(SellerPaymentInfo.fromApi).toList();
   }
+
+  /// Starts a Stripe-hosted Checkout session for the whole cart and returns
+  /// the page to open. Nothing is charged until the buyer pays on Stripe's
+  /// page; the webhook then places the order automatically.
+  Future<StripeCheckoutResult> createStripeCheckout({
+    required List<Map<String, dynamic>> sellerPayments,
+    String deliveryOption = 'delivery',
+    String? deliveryAddressId,
+  }) async {
+    final data = await _api.post('/orders/stripe/checkout-session', body: {
+      'sellerPaymentSelection': sellerPayments,
+      'deliveryOption': deliveryOption,
+      if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
+        'deliveryAddressId': deliveryAddressId,
+    });
+    return StripeCheckoutResult.fromApi(data);
+  }
+
+  /// Polls the checkout intent after the buyer returns from Stripe. `paid`
+  /// carries the completed [PlacementSummary] once the webhook has placed
+  /// the order.
+  Future<StripeCheckoutStatusResult> getStripeCheckoutStatus(
+    String intentId,
+  ) async {
+    final data = await _api.get(
+      '/orders/stripe/checkout/status/$intentId',
+    );
+    return StripeCheckoutStatusResult.fromApi(data);
+  }
 }
 
 final checkoutRepositoryProvider = Provider<CheckoutRepository>((ref) {
