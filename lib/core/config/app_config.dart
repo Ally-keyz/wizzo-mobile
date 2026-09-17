@@ -25,7 +25,7 @@ class AppConfig {
   /// build time with `--dart-define=MAPTILER_KEY=...`.
   ///
   /// Style ids you can try: streets-v2, basic-v2, hybrid, satellite,
-  /// dark, light, outdoor-v2.
+  /// streets-v2-dark, dataviz-dark, outdoor-v2, topo-v2.
   static const String mapTilerKey = String.fromEnvironment(
     'MAPTILER_KEY',
     defaultValue: 'hTz3U55btgygUtQVsRAC',
@@ -36,7 +36,7 @@ class AppConfig {
   );
   static const String mapTilerDarkStyle = String.fromEnvironment(
     'MAPTILER_DARK_STYLE',
-    defaultValue: 'dark',
+    defaultValue: 'streets-v2-dark',
   );
 
   /// Default region context (Kigali, Rwanda).
