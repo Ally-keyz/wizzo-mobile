@@ -11,6 +11,7 @@ import '../../account/models/profile.dart';
 import '../../account/presentation/addresses_screen.dart';
 import '../../cart/models/cart.dart';
 import '../../cart/providers/cart_provider.dart';
+import '../../messages/providers/chat_providers.dart';
 import '../data/checkout_repository.dart';
 import '../models/checkout.dart';
 import 'widgets/checkout_payment_step.dart';
@@ -37,7 +38,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   bool _termsAccepted = false;
   String? _selectedAddressId;
   DeliveryKind _delivery = DeliveryKind.standard;
-  final Map<String, PaymentKind> _methods = {};
+  PaymentKind _method = PaymentKind.momo;
   String _momoPhone = '';
   String? _error;
 
@@ -151,9 +152,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return;
     }
 
-    final firstMethod = _methods.values.firstOrNull ?? PaymentKind.momo;
-    final isMomo = firstMethod == PaymentKind.momo;
-    final isCard = firstMethod == PaymentKind.card;
+    final method = _method;
+    final isMomo = method == PaymentKind.momo;
+    final isCard = method == PaymentKind.card;
 
     if (isCard) {
       await _payWithCard(cart);
@@ -172,16 +173,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     try {
       final deliveryOption = _delivery.apiValue;
 
+      // The buyer pays the platform once; we record the same method on every
+      // seller order so each seller's share is scheduled for payout.
       final selection = [
         for (final g in cart.groups)
-          {
-            'sellerId': g.sellerId,
-            'paymentMethod':
-                (_methods[g.sellerId] ?? PaymentKind.momo).apiValue,
-          },
+          {'sellerId': g.sellerId, 'paymentMethod': method.apiValue},
       ];
 
-      final onlineMethod = isMomo ? firstMethod.apiValue : null;
+      final onlineMethod = isMomo ? method.apiValue : null;
       final momoDigits = _momoDigits();
       final Map<String, dynamic>? paymentDetails =
           isMomo && momoDigits.isNotEmpty
@@ -234,11 +233,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final deliveryOption = _delivery.apiValue;
       final selection = [
         for (final g in cart.groups)
-          {
-            'sellerId': g.sellerId,
-            'paymentMethod':
-                (_methods[g.sellerId] ?? PaymentKind.card).apiValue,
-          },
+          {'sellerId': g.sellerId, 'paymentMethod': PaymentKind.card.apiValue},
       ];
 
       final session = await ref
@@ -284,6 +279,32 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           _placing = false;
           _error = e.toString();
         });
+      }
+    }
+  }
+
+  /// Lets the buyer pick a store from the cart and opens a chat with that
+  /// seller — the single "Chat with sellers" affordance on the payment step.
+  Future<void> _showSellerChatSheet(CartData cart) async {
+    final selected = await showModalBottomSheet<CartSellerGroup>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (_) => _SellerChatSheet(groups: cart.groups),
+    );
+    if (selected == null || !mounted) return;
+    try {
+      final conversation =
+          await ref.read(chatRepositoryProvider).start(selected.sellerId);
+      if (!mounted) return;
+      if (conversation.id.isEmpty) {
+        throw Exception(context.tr('orders.noSellerToChat'));
+      }
+      context.push('/conversation/${conversation.id}');
+    } catch (e) {
+      if (mounted) {
+        _showError(
+            context.tr('orders.chatFailed', namedArgs: {'error': '$e'}));
       }
     }
   }
@@ -353,16 +374,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   else
                     PaymentStep(
                       cart: cart,
-                      methods: _methods,
+                      method: _method,
                       momoPhone: _momoPhone,
                       totalAmount: total,
                       termsAccepted: _termsAccepted,
                       error: _placing ? null : _error,
                       placing: _placing,
-                      onMethodSelected: (sellerId, kind) =>
-                          setState(() => _methods[sellerId] = kind),
+                      onMethodSelected: (kind) =>
+                          setState(() => _method = kind),
                       onMomoPhoneChanged: (phone) =>
                           setState(() => _momoPhone = phone),
+                      onChatWithSellers: () => _showSellerChatSheet(cart),
                       onToggleTerms: () => setState(
                           () => _termsAccepted = !_termsAccepted),
                       onPayNow: () => _placeOrder(cart),
@@ -418,6 +440,87 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Bottom sheet listing the stores in the cart so the buyer can pick who to
+/// chat with. Pops with the selected [CartSellerGroup] (or null).
+class _SellerChatSheet extends StatelessWidget {
+  const _SellerChatSheet({required this.groups});
+
+  final List<CartSellerGroup> groups;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              context.tr('checkout.chatSheetTitle'),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              context.tr('checkout.chatSheetHint'),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: groups.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, i) {
+                  final group = groups[i];
+                  final name = group.sellerName?.trim().isNotEmpty == true
+                      ? group.sellerName!.trim()
+                      : context.tr('common.seller');
+                  return ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    tileColor: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.35),
+                    leading: CircleAvatar(
+                      backgroundColor: Palette.gold,
+                      foregroundColor: Colors.black,
+                      child: Text(
+                        name.substring(0, 1).toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    title: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(
+                      context.tr('checkout.storeItemCount',
+                          namedArgs: {'count': '${group.items.length}'}),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                    trailing: const Icon(Icons.forum_outlined, size: 20),
+                    onTap: () => Navigator.of(context).pop(group),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

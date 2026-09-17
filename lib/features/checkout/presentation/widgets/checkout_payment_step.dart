@@ -13,7 +13,7 @@ class PaymentStep extends StatelessWidget {
   const PaymentStep({
     super.key,
     required this.cart,
-    required this.methods,
+    required this.method,
     required this.momoPhone,
     required this.totalAmount,
     required this.termsAccepted,
@@ -21,19 +21,24 @@ class PaymentStep extends StatelessWidget {
     this.placing = false,
     required this.onMethodSelected,
     required this.onMomoPhoneChanged,
+    required this.onChatWithSellers,
     required this.onToggleTerms,
     required this.onPayNow,
   });
 
   final CartData cart;
-  final Map<String, PaymentKind> methods;
+
+  /// One payment method for the whole order — the platform collects the total
+  /// once and settles each seller's share afterwards.
+  final PaymentKind method;
   final String momoPhone;
   final num totalAmount;
   final bool termsAccepted;
   final String? error;
   final bool placing;
-  final void Function(String sellerId, PaymentKind kind) onMethodSelected;
+  final void Function(PaymentKind kind) onMethodSelected;
   final void Function(String phone) onMomoPhoneChanged;
+  final VoidCallback onChatWithSellers;
   final VoidCallback onToggleTerms;
   final VoidCallback onPayNow;
 
@@ -41,14 +46,160 @@ class PaymentStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = context.appColors;
+    final subtotal = cart.groups.fold<num>(0, (sum, g) => sum + g.subtotal);
+    final delivery = totalAmount - subtotal;
+    final needsPhone = method == PaymentKind.momo;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         WPageTitle(context.tr('checkout.paymentTitle'),
             subtitle: context.tr('checkout.paymentHint')),
         const SizedBox(height: 16),
-        for (final group in cart.groups) _sellerCard(context, theme, group),
+
+        // ── Combined total for the whole order ───────────────────────────
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              CheckoutSummaryRow(
+                label: context.tr('checkout.itemsTotal'),
+                value: formatMoney(subtotal),
+              ),
+              CheckoutSummaryRow(
+                label: context.tr('checkout.deliveryFee'),
+                value: delivery <= 0
+                    ? context.tr('checkout.freeDelivery')
+                    : formatMoney(delivery),
+              ),
+              const Divider(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      context.tr('checkout.totalToPay'),
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  Text(
+                    formatMoney(totalAmount),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: Palette.gold,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // ── Single payment method for the whole order ────────────────────
+        Text(
+          context.tr('checkout.paymentMethod'),
+          style: theme.textTheme.titleSmall
+              ?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 10),
+        for (final option in PaymentOption.all)
+          _PaymentMethodTile(
+            option: option,
+            selected: method == option.kind,
+            onTap: () => onMethodSelected(option.kind),
+          ),
+        if (needsPhone) ...[
+          const SizedBox(height: 4),
+          TextField(
+            keyboardType: TextInputType.phone,
+            style: theme.textTheme.bodyMedium,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(12),
+            ],
+            decoration: InputDecoration(
+              labelText: context.tr('checkout.momoPhoneField'),
+              hintText: context.tr('checkout.momoPhoneHint'),
+              prefixText: '+250 ',
+              helperText: context.tr('checkout.momoStkHint'),
+              helperMaxLines: 2,
+              prefixIcon:
+                  Icon(Icons.phone_outlined, size: 20, color: colors.gold),
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.45),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: theme.colorScheme.outline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: theme.colorScheme.outline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Palette.gold, width: 1.5),
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+            onChanged: onMomoPhoneChanged,
+          ),
+          const SizedBox(height: 10),
+          _Note(
+            icon: Icons.schedule_outlined,
+            color: colors.warning,
+            text: context.tr('checkout.momoSubmittedNote'),
+          ),
+        ],
+        if (method == PaymentKind.card) ...[
+          const SizedBox(height: 4),
+          _Note(
+            icon: Icons.credit_card_outlined,
+            color: colors.info,
+            text: context.tr('checkout.stripeCardNote'),
+          ),
+        ],
+        if (method == PaymentKind.momo) ...[
+          const SizedBox(height: 4),
+          _Note(
+            icon: Icons.phone_android_outlined,
+            color: colors.info,
+            text: context.tr('checkout.momoChargeNote'),
+          ),
+        ],
         const SizedBox(height: 12),
+
+        // ── How the money is handled ─────────────────────────────────────
+        _Note(
+          icon: Icons.account_balance_wallet_outlined,
+          color: colors.success,
+          text: context.tr('checkout.wizzoCollectsNote'),
+        ),
+        const SizedBox(height: 16),
+
+        // ── Chat with the sellers ────────────────────────────────────────
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: placing ? null : onChatWithSellers,
+            icon: const Icon(Icons.forum_outlined, size: 18),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            label: Text(context.tr('checkout.chatWithSellers')),
+          ),
+        ),
+        const SizedBox(height: 16),
+
         if (error != null)
           Container(
             width: double.infinity,
@@ -142,188 +293,39 @@ class PaymentStep extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _sellerCard(
-      BuildContext context, ThemeData theme, CartSellerGroup group) {
-    final method = methods[group.sellerId] ?? PaymentKind.momo;
-    final needsPhone = method == PaymentKind.momo;
-    final colors = context.appColors;
+class _Note extends StatelessWidget {
+  const _Note({required this.icon, required this.color, required this.text});
 
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    group.sellerName ?? context.tr('common.seller'),
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                Text(
-                  formatMoney(group.subtotal),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: Palette.gold,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
             ),
           ),
-          Container(
-            height: 1,
-            color: theme.colorScheme.surfaceContainerHighest
-                .withValues(alpha: 0.5),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: Column(
-              children: [
-                for (final option in PaymentOption.all)
-                  _PaymentMethodTile(
-                    option: option,
-                    selected: method == option.kind,
-                    onTap: () =>
-                        onMethodSelected(group.sellerId, option.kind),
-                  ),
-              ],
-            ),
-          ),
-          if (needsPhone) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: TextField(
-                keyboardType: TextInputType.phone,
-                style: theme.textTheme.bodyMedium,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(12),
-                ],
-                decoration: InputDecoration(
-                  labelText: context.tr('checkout.momoPhoneField'),
-                  hintText: context.tr('checkout.momoPhoneHint'),
-                  prefixText: '+250 ',
-                  helperText: context.tr('checkout.momoStkHint'),
-                  helperMaxLines: 2,
-                  prefixIcon: Icon(Icons.phone_outlined,
-                      size: 20, color: colors.gold),
-                  filled: true,
-                  fillColor: theme.colorScheme.surfaceContainerHighest
-                      .withValues(alpha: 0.45),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: theme.colorScheme.outline,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: theme.colorScheme.outline,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: Palette.gold, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                ),
-                onChanged: onMomoPhoneChanged,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.schedule_outlined,
-                    size: 16,
-                    color: colors.warning,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      context.tr('checkout.momoSubmittedNote'),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          if (method == PaymentKind.card) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colors.infoContainer.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.credit_card_outlined,
-                        size: 18, color: colors.info),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        context.tr('checkout.stripeCardNote'),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if (method == PaymentKind.momo) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colors.infoContainer.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.phone_android_outlined,
-                        size: 18, color: colors.info),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        context.tr('checkout.momoChargeNote'),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -351,8 +353,7 @@ class _PaymentMethodTile extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 8),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: selected
               ? colors.goldSoft.withValues(alpha: 0.6)
@@ -391,14 +392,12 @@ class _PaymentMethodTile extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: selected ? Palette.gold : Colors.transparent,
                 border: Border.all(
-                  color:
-                      selected ? Palette.gold : theme.colorScheme.outline,
+                  color: selected ? Palette.gold : theme.colorScheme.outline,
                   width: 2,
                 ),
               ),
               child: selected
-                  ? const Icon(Icons.check,
-                      size: 14, color: Colors.white)
+                  ? const Icon(Icons.check, size: 14, color: Colors.white)
                   : null,
             ),
           ],
