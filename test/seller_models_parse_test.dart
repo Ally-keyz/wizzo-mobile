@@ -4,6 +4,7 @@ import 'package:wizzo_market/features/seller/data/seller_repository.dart';
 import 'package:wizzo_market/features/seller/models/payment_account.dart';
 import 'package:wizzo_market/features/seller/models/seller_order.dart';
 import 'package:wizzo_market/features/seller/models/store.dart';
+import 'package:wizzo_market/features/seller/models/store_payout.dart';
 
 /// Mirrors the real `GET /sellers/me` payload: `_id` (lean docs never rename
 /// it to `id`), a populated `userId`, `verifiedBadge` and `paymentAccounts`
@@ -36,6 +37,12 @@ const storePayload = {
       'accountNumber': 'N/A',
     },
   ],
+  'payout': {
+    'method': 'momo',
+    'provider': 'MTN MoMo',
+    'accountName': 'GreenGrocer Owner',
+    'accountNumber': '0788123456',
+  },
   'ratingAvg': 4.5,
   'ratingCount': 12,
   'productsCount': 3,
@@ -114,6 +121,23 @@ void main() {
       final parsed = json.map(PaymentAccount.fromApi).toList();
       expect(parsed.first.toJson()['method'], 'momo');
       expect(parsed.last.toJson()['method'], 'cash_on_delivery');
+    });
+
+    test('parses the payout destination and round-trips it', () {
+      final store = MyStore.fromApi(storePayload);
+      expect(store.payout, isNotNull);
+      expect(store.payout!.method, SellerPayoutMethod.mobileMoney);
+      expect(store.payout!.accountNumber, '0788123456');
+      expect(store.payout!.toJson()['method'], 'momo');
+      expect(store.payout!.toJson()['accountName'], 'GreenGrocer Owner');
+    });
+
+    test('a store without payout details parses to null', () {
+      final store = MyStore.fromApi({
+        ...storePayload,
+        'payout': null,
+      });
+      expect(store.payout, isNull);
     });
   });
 

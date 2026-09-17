@@ -9,6 +9,7 @@ import '../../../core/widgets/w_async.dart';
 import '../../../core/widgets/w_widgets.dart';
 import '../data/seller_repository.dart';
 import '../models/store.dart';
+import '../models/store_payout.dart';
 import '../providers/seller_providers.dart';
 
 class StoreSettingsScreen extends ConsumerStatefulWidget {
@@ -25,7 +26,11 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
   final _country = TextEditingController();
   final _district = TextEditingController();
   final _city = TextEditingController();
+  final _payoutProvider = TextEditingController();
+  final _payoutAccountName = TextEditingController();
+  final _payoutAccountNumber = TextEditingController();
 
+  SellerPayoutMethod _payoutMethod = SellerPayoutMethod.mobileMoney;
   String? _logoUrl;
   bool _uploadingLogo = false;
   bool _dirty = false;
@@ -39,6 +44,9 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
     _country.dispose();
     _district.dispose();
     _city.dispose();
+    _payoutProvider.dispose();
+    _payoutAccountName.dispose();
+    _payoutAccountNumber.dispose();
     super.dispose();
   }
 
@@ -49,6 +57,10 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
     _district.text = store.district ?? '';
     _city.text = store.city ?? '';
     _logoUrl = store.logoUrl;
+    _payoutMethod = store.payout?.method ?? SellerPayoutMethod.mobileMoney;
+    _payoutProvider.text = store.payout?.provider ?? '';
+    _payoutAccountName.text = store.payout?.accountName ?? '';
+    _payoutAccountNumber.text = store.payout?.accountNumber ?? '';
   }
 
   void _markDirty() => setState(() => _dirty = true);
@@ -100,15 +112,28 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
       _error = null;
     });
     try {
-      await ref.read(sellerRepositoryProvider).updateStore(store.id, {
-        'storeName': _storeName.text.trim(),
-        if (_aboutStore.text.trim().isNotEmpty)
-          'aboutStore': _aboutStore.text.trim(),
-        if (_logoUrl != null) 'logoUrl': _logoUrl,
-        if (_country.text.trim().isNotEmpty) 'country': _country.text.trim(),
-        if (_district.text.trim().isNotEmpty) 'district': _district.text.trim(),
-        if (_city.text.trim().isNotEmpty) 'city': _city.text.trim(),
-      });
+final body = <String, dynamic>{
+      'storeName': _storeName.text.trim(),
+      if (_aboutStore.text.trim().isNotEmpty)
+        'aboutStore': _aboutStore.text.trim(),
+      if (_logoUrl != null) 'logoUrl': _logoUrl,
+      if (_country.text.trim().isNotEmpty) 'country': _country.text.trim(),
+      if (_district.text.trim().isNotEmpty) 'district': _district.text.trim(),
+      if (_city.text.trim().isNotEmpty) 'city': _city.text.trim(),
+    };
+    final hasPayout =
+        _payoutAccountName.text.trim().isNotEmpty &&
+        _payoutAccountNumber.text.trim().isNotEmpty;
+    if (hasPayout) {
+      body['payout'] = {
+        'method': _payoutMethod.apiValue,
+        if (_payoutProvider.text.trim().isNotEmpty)
+          'provider': _payoutProvider.text.trim(),
+        'accountName': _payoutAccountName.text.trim(),
+        'accountNumber': _payoutAccountNumber.text.trim(),
+      };
+    }
+    await ref.read(sellerRepositoryProvider).updateStore(store.id, body);
       if (mounted) {
         ref.invalidate(myStoreProvider);
         setState(() {
@@ -296,6 +321,94 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
                 textCapitalization: TextCapitalization.words,
                 onChanged: (_) => _markDirty(),
               ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerLow,
+                  border: Border.all(color: scheme.outlineVariant),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.account_balance_wallet_outlined,
+                          size: 18,
+                          color: scheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            context.tr('seller.payout.title'),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      context.tr('seller.payout.settingsSubtitle'),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _methodChip(
+                            scheme,
+                            SellerPayoutMethod.mobileMoney,
+                            Icons.phone_android,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _methodChip(
+                            scheme,
+                            SellerPayoutMethod.card,
+                            Icons.credit_card,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_payoutMethod == SellerPayoutMethod.mobileMoney) ...[
+                      const SizedBox(height: 16),
+                      WTextField(
+                        controller: _payoutProvider,
+                        label: context.tr('seller.payout.provider'),
+                        hint: context.tr('seller.payout.providerHint'),
+                        prefixIcon: Icons.verified_user_outlined,
+                        textCapitalization: TextCapitalization.words,
+                        onChanged: (_) => _markDirty(),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    WTextField(
+                      controller: _payoutAccountName,
+                      label: context.tr('seller.payout.accountName'),
+                      hint: context.tr('seller.payout.accountNameHint'),
+                      prefixIcon: Icons.person_outline,
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: (_) => _markDirty(),
+                    ),
+                    const SizedBox(height: 16),
+                    WTextField(
+                      controller: _payoutAccountNumber,
+                      label: context.tr('seller.payout.accountNumber'),
+                      hint: context.tr('seller.payout.accountNumberHint'),
+                      prefixIcon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                      onChanged: (_) => _markDirty(),
+                    ),
+                  ],
+                ),
+              ),
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -338,6 +451,54 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
   }
 
   bool _hydratedOnce = false;
+
+  Widget _methodChip(
+    ColorScheme scheme,
+    SellerPayoutMethod method,
+    IconData icon,
+  ) {
+    final selected = _payoutMethod == method;
+    return InkWell(
+      onTap: () => setState(() {
+        _payoutMethod = method;
+        _dirty = true;
+      }),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: selected ? scheme.primaryContainer : scheme.surface,
+          border: Border.all(
+            color: selected ? scheme.primary : scheme.outlineVariant,
+            width: 1.5,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: selected
+                  ? scheme.onPrimaryContainer
+                  : scheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              method.label(context),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: selected
+                        ? scheme.onPrimaryContainer
+                        : scheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _banner(ColorScheme scheme, IconData icon, String text) {
     return Container(

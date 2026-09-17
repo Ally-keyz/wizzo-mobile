@@ -1,5 +1,6 @@
 import '../../../core/utils/formatters.dart';
 import 'payment_account.dart';
+import 'store_payout.dart';
 
 /// The signed-in user's own store (GET /sellers/me and /sellers/register).
 class MyStore {
@@ -24,6 +25,7 @@ class MyStore {
     this.deliveryOptions = const [],
     this.paymentMethodsAccepted = const [],
     this.paymentAccounts = const [],
+    this.payout,
   });
 
   final String id;
@@ -46,6 +48,7 @@ class MyStore {
   final List<String> deliveryOptions;
   final List<String> paymentMethodsAccepted;
   final List<PaymentAccount> paymentAccounts;
+  final StorePayout? payout;
 
   bool get isSuspended => status == 'suspended';
   bool get isVerified => verified || verificationStatus == 'verified';
@@ -89,6 +92,9 @@ class MyStore {
       paymentAccounts: rawAcc is List
           ? rawAcc.map(PaymentAccount.fromApi).toList()
           : const [],
+      payout: json['payout'] == null
+          ? null
+          : StorePayout.fromApi(json['payout']),
     );
   }
 
@@ -116,6 +122,7 @@ class MyStore {
     List<String>? deliveryOptions,
     List<String>? paymentMethodsAccepted,
     List<PaymentAccount>? paymentAccounts,
+    StorePayout? payout,
   }) {
     return MyStore(
       id: id,
@@ -139,6 +146,7 @@ class MyStore {
       paymentMethodsAccepted:
           paymentMethodsAccepted ?? this.paymentMethodsAccepted,
       paymentAccounts: paymentAccounts ?? this.paymentAccounts,
+      payout: payout ?? this.payout,
     );
   }
 }

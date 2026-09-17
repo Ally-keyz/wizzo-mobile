@@ -9,6 +9,7 @@ import '../../../core/widgets/w_async.dart';
 import '../../../core/widgets/w_widgets.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/seller_repository.dart';
+import '../models/store_payout.dart';
 import '../providers/seller_providers.dart';
 
 /// Become-a-seller wizard for an existing buyer account: stores logo + details,
@@ -21,14 +22,18 @@ class CreateStoreScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
-  static const _stepCount = 4;
+  static const _stepCount = 5;
 
   final _storeName = TextEditingController();
   final _aboutStore = TextEditingController();
   final _country = TextEditingController();
   final _district = TextEditingController();
   final _city = TextEditingController();
+  final _payoutProvider = TextEditingController();
+  final _payoutAccountName = TextEditingController();
+  final _payoutAccountNumber = TextEditingController();
 
+  SellerPayoutMethod _payoutMethod = SellerPayoutMethod.mobileMoney;
   int _step = 0;
   bool _busy = false;
   bool _uploading = false;
@@ -42,6 +47,9 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
     _country.dispose();
     _district.dispose();
     _city.dispose();
+    _payoutProvider.dispose();
+    _payoutAccountName.dispose();
+    _payoutAccountNumber.dispose();
     super.dispose();
   }
 
@@ -72,6 +80,16 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
             'common.errors.isRequired',
             namedArgs: {'label': context.tr('seller.city')},
           );
+        }
+        return null;
+      case 3:
+        final hasName = _payoutAccountName.text.trim().isNotEmpty;
+        final hasNumber = _payoutAccountNumber.text.trim().isNotEmpty;
+        if (hasNumber && !hasName) {
+          return context.tr('seller.payout.accountNameRequired');
+        }
+        if (hasName && !hasNumber) {
+          return context.tr('seller.payout.accountNumberRequired');
         }
         return null;
       default:
@@ -121,6 +139,17 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
             country: _country.text,
             district: _district.text,
             city: _city.text,
+            payout: _payoutAccountName.text.trim().isNotEmpty &&
+                    _payoutAccountNumber.text.trim().isNotEmpty
+                ? StorePayout(
+                    method: _payoutMethod,
+                    provider: _payoutProvider.text.trim().isEmpty
+                        ? null
+                        : _payoutProvider.text.trim(),
+                    accountName: _payoutAccountName.text.trim(),
+                    accountNumber: _payoutAccountNumber.text.trim(),
+                  )
+                : null,
           );
       if (!mounted) return;
       ref.invalidate(myStoreProvider);
@@ -154,6 +183,49 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
     } else {
       context.pop();
     }
+  }
+
+  Widget _methodCard(
+    ColorScheme scheme,
+    SellerPayoutMethod method,
+    IconData icon,
+  ) {
+    final selected = _payoutMethod == method;
+    return InkWell(
+      onTap: () => setState(() => _payoutMethod = method),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: selected ? scheme.primaryContainer : scheme.surface,
+          border: Border.all(
+            color: selected ? scheme.primary : scheme.outlineVariant,
+            width: 1.5,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: selected ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              method.label(context),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: selected
+                        ? scheme.onPrimaryContainer
+                        : scheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -312,6 +384,97 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
                       prefixIcon: Icons.location_city,
                       textCapitalization: TextCapitalization.words,
                       textInputAction: TextInputAction.done,
+                    ),
+                  ] else if (_step == 3) ...[
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.account_balance_wallet_outlined,
+                                size: 18,
+                                color: scheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  context.tr('seller.payout.title'),
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            context.tr('seller.payout.subtitle'),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            context.tr('seller.payout.methodLabel'),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _methodCard(
+                                  scheme,
+                                  SellerPayoutMethod.mobileMoney,
+                                  Icons.phone_android,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _methodCard(
+                                  scheme,
+                                  SellerPayoutMethod.card,
+                                  Icons.credit_card,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_payoutMethod == SellerPayoutMethod.mobileMoney) ...[
+                            const SizedBox(height: 16),
+                            WTextField(
+                              controller: _payoutProvider,
+                              label: context.tr('seller.payout.provider'),
+                              hint: context.tr('seller.payout.providerHint'),
+                              prefixIcon: Icons.verified_user_outlined,
+                              textCapitalization: TextCapitalization.words,
+                            ),
+                          ],
+                          const SizedBox(height: 16),
+                          WTextField(
+                            controller: _payoutAccountName,
+                            label: context.tr('seller.payout.accountName'),
+                            hint: context.tr('seller.payout.accountNameHint'),
+                            prefixIcon: Icons.person_outline,
+                            textCapitalization: TextCapitalization.words,
+                          ),
+                          const SizedBox(height: 16),
+                          WTextField(
+                            controller: _payoutAccountNumber,
+                            label: context.tr('seller.payout.accountNumber'),
+                            hint: context.tr('seller.payout.accountNumberHint'),
+                            prefixIcon: Icons.phone_outlined,
+                            keyboardType: TextInputType.phone,
+                          ),
+                        ],
+                      ),
                     ),
                   ] else ...[
                     _StoreSummary(

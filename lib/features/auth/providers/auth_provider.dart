@@ -6,6 +6,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/network/api_providers.dart';
 import '../../../core/storage/app_prefs.dart';
 import '../../seller/data/seller_repository.dart';
+import '../../seller/models/store_payout.dart';
 import '../../seller/providers/seller_providers.dart';
 import '../data/auth_repository.dart';
 import '../models/user.dart';
@@ -111,6 +112,7 @@ class AuthController extends Notifier<AuthState> {
     String? city,
     double? longitude,
     double? latitude,
+    StorePayout? payout,
   }) async {
     await ref.read(sellerRepositoryProvider).registerStore(
           storeName: storeName,
@@ -121,6 +123,7 @@ class AuthController extends Notifier<AuthState> {
           city: city,
           longitude: longitude,
           latitude: latitude,
+          payout: payout,
         );
 
     return _refreshRoleAndUser();

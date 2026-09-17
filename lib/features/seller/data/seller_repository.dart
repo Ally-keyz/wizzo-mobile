@@ -7,6 +7,7 @@ import '../../catalog/models/product.dart';
 import '../models/payment_account.dart';
 import '../models/seller_order.dart';
 import '../models/store.dart';
+import '../models/store_payout.dart';
 import 'upload_service.dart';
 
 /// A color option paired with its own product photo, sent with product
@@ -102,7 +103,9 @@ class SellerRepository {
     String? city,
     double? longitude,
     double? latitude,
+    StorePayout? payout,
   }) async {
+    final hasPayout = payout?.hasDetails == true;
     final data = await _api.post('/sellers/register', body: {
       'storeName': storeName.trim(),
       if (aboutStore != null && aboutStore.trim().isNotEmpty)
@@ -115,6 +118,7 @@ class SellerRepository {
       if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
       if (longitude != null) 'longitude': longitude,
       if (latitude != null) 'latitude': latitude,
+      if (hasPayout) 'payout': payout!.toJson(),
     });
     return MyStore.fromApi(_unwrap(data));
   }
