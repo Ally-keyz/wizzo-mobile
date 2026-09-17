@@ -18,12 +18,17 @@ class AppConfig {
   /// MapTiler raster tiles (realistic street/satellite maps). Leave empty to
   /// fall back to CARTO light/dark tiles.
   ///
-  /// Get a free key at https://cloud.maptiler.com (create account -> keys).
+  /// The key is a client-side public key (like the Stripe publishable key
+  /// below) — it must ship inside the app — and is restricted on the MapTiler
+  /// dashboard to the User-Agent substring `wizzo` (the map requests send
+  /// `flutter_map (app.wizzo.wizzo_market)`). It can still be overridden at
+  /// build time with `--dart-define=MAPTILER_KEY=...`.
+  ///
   /// Style ids you can try: streets-v2, basic-v2, hybrid, satellite,
   /// dark, light, outdoor-v2.
   static const String mapTilerKey = String.fromEnvironment(
     'MAPTILER_KEY',
-    defaultValue: '',
+    defaultValue: 'hTz3U55btgygUtQVsRAC',
   );
   static const String mapTilerLightStyle = String.fromEnvironment(
     'MAPTILER_LIGHT_STYLE',
