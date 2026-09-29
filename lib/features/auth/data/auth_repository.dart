@@ -123,14 +123,17 @@ class AuthRepository {
     } on ApiException {
       rethrow;
     } catch (e) {
-      // Surface the real Google error (e.g. "10: DEVELOPER_ERROR" for an
+      // Surface the real Google error (e.g. 12500 DEVELOPER_ERROR for an
       // unregistered signing fingerprint) and record it for diagnosis.
       CrashLogger.record('auth/google', e);
       final detail = e.toString().trim();
-      final hint = detail.contains('10:')
-          ? ' (the app signing key is not registered with Google Cloud — '
-                'add the SHA-1 fingerprint of this build\'s signing key to '
-                'the Android OAuth client.)'
+      // Play Services reports 12500, not the legacy "10:". Matching on "10:"
+      // only meant this hint never fired for the exact case it was written for,
+      // so the failure surfaced as an opaque status with no explanation.
+      final hint = _isDeveloperError(detail)
+          ? ' (this build\'s signing key is not registered with Google — '
+                'add the SHA-1 fingerprint of the key that signed this build '
+                'to the Android OAuth client.)'
           : '';
       throw ApiException(
         status: 0,
@@ -141,6 +144,13 @@ class AuthRepository {
       );
     }
   }
+
+  /// True when [detail] is Play Services' developer-error status, in either the
+  /// modern (`12500`) or legacy (`10:`) rendering. That status means Google
+  /// could not match this build's package name + signing certificate to an
+  /// Android OAuth client, which is a console setup task, not a code fault.
+  static bool _isDeveloperError(String detail) =>
+      detail.contains('12500') || detail.contains('10:');
 
   /// Refreshes tokens; returns the new access token or null on failure.
   Future<String?> refresh() async {
