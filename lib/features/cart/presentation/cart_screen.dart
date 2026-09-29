@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/bottom_nav.dart';
 import '../../../core/widgets/w_image.dart';
 import '../../../core/widgets/w_widgets.dart';
 import '../models/cart.dart';
@@ -98,7 +99,7 @@ class _SummarryBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 8 + kSellButtonOverhang),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(

@@ -108,6 +108,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           await Future.wait([
             ref.refresh(homeFeedProvider.future),
             ref.refresh(homeDealsProvider.future),
+            ref.refresh(promotedProductsProvider.future),
             ref.refresh(topSellersProvider.future),
           ]);
         },
@@ -427,6 +428,18 @@ class _DealsSectionState extends ConsumerState<_DealsSection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dealsAsync = ref.watch(homeDealsProvider);
+    final promotedAsync = ref.watch(promotedProductsProvider);
+
+    // Deal banners are the richer presentation, so keep them when we have any.
+    final deals = dealsAsync.value ?? const <Deal>[];
+    final promoted = promotedAsync.value ?? const <Product>[];
+
+    // Nothing on promotion at all: drop the heading too, rather than leaving
+    // an "Exclusive Deals" title with an empty gap underneath it.
+    if (deals.isEmpty && promoted.isEmpty && !dealsAsync.isLoading && !promotedAsync.isLoading) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
       padding: const EdgeInsets.only(top: 24),
       child: Column(
@@ -468,75 +481,106 @@ class _DealsSectionState extends ConsumerState<_DealsSection> {
             ),
           ),
           const SizedBox(height: 12),
-          dealsAsync.when(
-            data: (deals) {
-              if (deals.isEmpty) return const SizedBox.shrink();
-              return Column(
-                children: [
-                  SizedBox(
-                    height: 180,
-                    child: PageView.builder(
-                      controller: _controller,
-                      onPageChanged: (i) => setState(() => _current = i),
-                      itemCount: deals.length,
-                      itemBuilder: (_, i) => Padding(
-                        padding: EdgeInsets.only(
-                          left: 16,
-                          right: i < deals.length - 1 ? 0 : 16,
-                        ),
-                        child: _DealCarouselCard(
-                          deal: deals[i],
-                          onTap: widget.onSeeAll,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (deals.length > 1) ...[
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(deals.length, (i) {
-                        final active = i == _current;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: active ? 20 : 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                            color: active
-                                ? Palette.gold
-                                : theme.colorScheme.outlineVariant,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-                ],
-              );
-            },
-            loading: () => SizedBox(
-              height: 180,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            error: (_, _) => const SizedBox.shrink(),
-          ),
+          if (deals.isNotEmpty)
+            _dealsCarousel(context, deals)
+          else
+            _promotedStrip(context, promoted, promotedAsync.isLoading),
         ],
       ),
     );
   }
+
+  /// Banner carousel, shown whenever at least one deal is active.
+  Widget _dealsCarousel(BuildContext context, List<Deal> deals) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            controller: _controller,
+            onPageChanged: (i) => setState(() => _current = i),
+            itemCount: deals.length,
+            itemBuilder: (_, i) => Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: i < deals.length - 1 ? 0 : 16,
+              ),
+              child: _DealCarouselCard(
+                deal: deals[i],
+                onTap: widget.onSeeAll,
+              ),
+            ),
+          ),
+        ),
+        if (deals.length > 1) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(deals.length, (i) {
+              final active = i == _current;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: active ? 20 : 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color:
+                      active ? Palette.gold : theme.colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Fallback shown when no deal banner is active: every discounted product,
+  /// so the section still surfaces real promotions instead of going blank.
+  Widget _promotedStrip(
+    BuildContext context,
+    List<Product> products,
+    bool loading,
+  ) {
+    if (products.isEmpty) {
+      if (loading) {
+        return SizedBox(
+          height: 180,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      height: 268,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: products.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, i) => SizedBox(
+          width: 168,
+          child: ProductCard(product: products[i]),
+        ),
+      ),
+    );
+  }
 }
+
 
 /// Full-bleed banner card for one deal inside the auto-advancing carousel.
 class _DealCarouselCard extends StatelessWidget {

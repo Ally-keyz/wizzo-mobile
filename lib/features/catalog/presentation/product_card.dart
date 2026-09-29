@@ -53,7 +53,7 @@ class ProductCard extends ConsumerWidget {
 
   Future<void> _commitAdd(WidgetRef ref) async {
     try {
-      await ref.read(cartProvider.notifier).addItem(productId: product.id);
+      await ref.read(cartProvider.notifier).addItem(product: product);
     } catch (_) {
       // The badge stays honest thanks to the optimistic rollback in the
       // cart controller; failures are best-effort here.

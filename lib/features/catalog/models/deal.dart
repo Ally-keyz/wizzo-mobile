@@ -48,8 +48,14 @@ class Deal {
                 ? DealType.limited
                 : DealType.clearance;
 
+    // The API serialises deals with Mongoose's `_id` and (unlike products) does
+    // not emit the `id` virtual. Falling back to the deal type here used to give
+    // every flash deal the id "flash" and every today deal "today", so deduping
+    // by id collapsed the whole rail to at most two cards.
+    final rawId = json['id']?.toString() ?? json['_id']?.toString() ?? '';
+
     return Deal(
-      id: json['id']?.toString() ?? typeRaw,
+      id: rawId.isNotEmpty ? rawId : typeRaw,
       type: type,
       title: resolveString(json['title'], fallback: 'Deal'),
       subtitle: _nullString(json['subtitle'] ?? json['description']),

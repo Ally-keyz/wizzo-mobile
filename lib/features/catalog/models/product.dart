@@ -239,8 +239,13 @@ class Product {
     final num? apiOriginal = _numOrNull(json['originalPrice']);
     final bool onSale = apiDiscount != null && apiDiscount > 0 && apiDiscount < basePrice;
 
+    // Tolerate payloads that only carry Mongoose's `_id`; a bare
+    // `json['id'].toString()` yields the literal "null" for those, which is
+    // non-empty and silently collapses dedupe to a single product.
+    final rawId = json['id']?.toString() ?? json['_id']?.toString() ?? '';
+
     return Product(
-      id: json['id'].toString(),
+      id: rawId,
       name: resolveString(json['name'], fallback: 'Product'),
       slug: json['slug']?.toString() ?? '',
       images: imgList,

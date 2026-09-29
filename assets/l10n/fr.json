@@ -311,6 +311,8 @@
     "viewMyOrders": "Voir mes commandes",
     "total": "Total",
     "stripeCardNote": "Vous serez redirigé(e) vers la page de paiement sécurisée de Stripe pour payer par carte de débit ou de crédit, Google Pay ou Apple Pay. Votre carte n'est débitée qu'une fois le paiement terminé.",
+    "stripeGooglePayNote": "Vous serez redirige vers la page de paiement securisee de Stripe pour confirmer votre paiement Google Pay.",
+    "stripeApplePayNote": "Vous serez redirige vers la page de paiement securisee de Stripe pour confirmer votre paiement Apple Pay.",
     "stripePaidNote": "Payé en toute sécurité via Stripe — aucune autre étape nécessaire.",
     "stripeWaitingTitle": "En attente de la confirmation du paiement",
     "stripeWaitingBody": "Terminez le paiement dans la page qui vient de s'ouvrir. Dès que Stripe le confirme, votre commande est passée automatiquement.",
@@ -318,6 +320,7 @@
     "stripeNotConfirmed": "Le paiement n'a pas été confirmé. Votre carte n'a pas été débitée et votre panier est inchangé.",
     "momoPhoneField": "Numéro de téléphone MoMo",
     "momoPhoneHint": "788 123 456",
+    "momoPhoneInvalid": "Saisissez un numero MoMo valide",
     "momoStkHint": "Nous enverrons une demande de paiement (push STK) à ce numéro.",
     "momoSubmittedNote": "Votre commande reste « Paiement soumis » jusqu'à ce que votre opérateur de mobile money confirme le paiement via la demande envoyée sur votre téléphone. Elle n'est pas automatiquement marquée comme payée.",
     "momoChargeNote": "Votre commande entière est débitée une seule fois via MoMo. Nous enverrons un push STK au numéro ci-dessus lorsque vous tapotez sur Payer.",
@@ -338,6 +341,14 @@
       "cod": {
         "name": "Paiement à la livraison",
         "desc": "Payez à la réception de votre commande"
+      },
+      "googlePay": {
+        "name": "Google Pay",
+        "desc": "Payez avec votre compte Google"
+      },
+      "applePay": {
+        "name": "Apple Pay",
+        "desc": "Payez avec Face ID ou Touch ID"
       }
     },
     "totalToPay": "Total à payer",
@@ -489,6 +500,7 @@
   "currency": {
     "changedToast": "Devise définie sur {currency}.",
     "description": "Choisissez la devise utilisée pour tous les prix dans l'application.",
+    "noResults": "Aucune devise trouvée",
     "searchHint": "Rechercher une devise",
     "title": "Devise"
   },
@@ -709,7 +721,8 @@
     "selectSize": "Choisir la taille",
     "selectSizeFirst": "Veuillez d'abord choisir une taille.",
     "share": "Partager",
-    "shareComingSoon": "Le partage de liens arrive bientôt. Copiez le nom du produit pour l'instant !",
+    "shareFailed": "Impossible d'ouvrir le partage. Veuillez réessayer.",
+    "shareText": "Découvrez {name} sur {app}",
     "soldCount": "{count} vendus",
     "specifications": "Spécifications",
     "submitReview": "Envoyer l'avis",
@@ -828,6 +841,7 @@
     "createCouponCTA": "Créer un coupon",
     "createStore": "Créer la boutique",
     "createStorePrompt": "Créez votre boutique pour gérer les paramètres.",
+    "currency": "Devise",
     "deactivate": "Désactiver",
     "dealEnds": "Fin de l'offre",
     "deleteCouponBody": "Le code {code} sera supprimé et cessera de fonctionner.",
@@ -961,6 +975,9 @@
     "placedAt": "Passée le {date}",
     "price": "Prix (RWF)",
     "priceHint": "ex. 25000",
+    "priceHintIn": "ex. {amount}",
+    "priceIn": "Prix ({currency})",
+    "priceStoredAs": "Les acheteurs voient ce prix dans leur devise. Enregistré sous {amount}.",
     "pricingStock": "Prix et stock",
     "productNameHint": "ex. Casque Bluetooth sans fil",
     "promotionsTitle": "Promotions",
@@ -978,6 +995,7 @@
     "reviewRejectedBanner": "Votre profil de boutique a été rejeté. Mettez à jour les informations ci-dessous et enregistrez pour soumettre à nouveau.",
     "reviewStore": "Vérifiez votre boutique",
     "salePrice": "Prix soldé",
+    "salePriceIn": "Prix soldé ({currency})",
     "saveAccount": "Enregistrer le compte",
     "saveAsDraft": "Enregistrer comme brouillon",
     "saving": "Enregistrement...",

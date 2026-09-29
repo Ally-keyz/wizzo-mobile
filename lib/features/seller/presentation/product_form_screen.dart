@@ -7,6 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../core/currency/currencies.dart';
+import '../../../core/currency/currency_controller.dart';
+import '../../../core/currency/currency_service.dart';
 import '../../../core/i18n/localization_helpers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/validators.dart';
@@ -38,11 +41,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _size = TextEditingController();
   final _description = TextEditingController();
 
+  /// Live "this is what gets stored" preview under the price fields.
+  final _pricePreview = ValueNotifier<String?>(null);
+
   String? _categoryId;
   String? _subcategoryId;
   String? _categoryName;
   String? _subcategoryName;
   String _condition = 'new';
+  String _priceCurrency = kBaseCurrency;
   DateTime? _discountEndsAt;
   final List<String> _sizeOptions = [];
   final List<ColorPhotoDraft> _colorPhotos = [];
@@ -58,6 +65,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     super.initState();
     final p = widget.product;
     if (p != null) {
+      // Existing listings already hold a base-RWF price, so the amount shown
+      // while editing is RWF — pre-selecting the app display currency here
+      // would silently re-convert an already-converted number on save.
+      _priceCurrency = kBaseCurrency;
       _name.text = p.name;
       _price.text = p.isOnSale
           ? p.originalPrice!.toString()
@@ -82,11 +93,22 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _colorPhotos.add(ColorPhotoDraft(name: v.name, image: v.image));
       }
       if (p.video != null && p.video!.isNotEmpty) _video = p.video;
+    } else {
+      // A brand new listing should default to the currency the seller already
+      // browses prices in, so the amount they type needs no mental conversion.
+      final display = currencyController.value.code;
+      _priceCurrency = isSupportedCurrency(display) ? display : kBaseCurrency;
     }
+    _price.addListener(_refreshPricePreview);
+    _discountPrice.addListener(_refreshPricePreview);
+    _refreshPricePreview();
   }
 
   @override
   void dispose() {
+    _price.removeListener(_refreshPricePreview);
+    _discountPrice.removeListener(_refreshPricePreview);
+    _pricePreview.dispose();
     _name.dispose();
     _price.dispose();
     _discountPrice.dispose();
@@ -229,6 +251,82 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     });
   }
 
+  void _pickPriceCurrency() {
+    showModalBottomSheet<CurrencyDef>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => const FractionallySizedBox(
+        heightFactor: 0.8,
+        child: _CurrencyPickerShell(),
+      ),
+    ).then((def) {
+      if (def != null) _setPriceCurrency(def.code);
+    });
+  }
+
+  /// Switching currency must not change what the listing is worth, so any
+  /// amount already typed is re-expressed in the new currency rather than
+  /// reinterpreted.
+  void _setPriceCurrency(String next) {
+    if (next == _priceCurrency) return;
+    final rates = currencyController.value.rates;
+    setState(() {
+      _rebaseAmount(_price, _priceCurrency, next, rates);
+      _rebaseAmount(_discountPrice, _priceCurrency, next, rates);
+      _priceCurrency = next;
+    });
+    _refreshPricePreview();
+  }
+
+  void _refreshPricePreview() {
+    final base = _basePriceOf(_price);
+    _pricePreview.value = base == null || base <= 0
+        ? null
+        : formatFromBase(base, kBaseCurrency, currencyController.value.rates);
+  }
+
+  void _rebaseAmount(
+    TextEditingController controller,
+    String from,
+    String to,
+    Map<String, double>? rates,
+  ) {
+    final current = num.tryParse(controller.text.trim());
+    if (current == null) return;
+    final inBase = convertToBase(current, from, rates);
+    controller.text = _plainAmount(
+      convertFromBase(inBase, to, rates),
+      currencyDef(to).decimals,
+    );
+  }
+
+  /// Base-RWF figure the API will store for whatever is currently typed.
+  num? _basePriceOf(TextEditingController controller) {
+    final typed = num.tryParse(controller.text.trim());
+    if (typed == null) return null;
+    return convertToBase(
+      typed,
+      _priceCurrency,
+      currencyController.value.rates,
+    ).round();
+  }
+
+  /// Trims a converted amount for the text field: `25000`, `24.5`, `$0.00`.
+  String _plainAmount(double value, int decimals) {
+    if (decimals == 0) return value.round().toString();
+    var text = value.toStringAsFixed(decimals);
+    if (text.contains('.')) {
+      text = text.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+    }
+    return text;
+  }
+
+  String _priceExample() {
+    final def = currencyDef(_priceCurrency);
+    return _plainAmount(convertFromBase(25000, def.code, currencyController.value.rates), def.decimals);
+  }
+
   bool _validate() {
     if (Validators.required(
           _name.text,
@@ -244,6 +342,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
     final price = num.tryParse(_price.text.trim());
     if (price == null || price <= 0) {
+      _toast(context.tr('seller.errorValidPrice'));
+      return false;
+    }
+    final basePrice = _basePriceOf(_price);
+    if (basePrice == null || basePrice <= 0) {
       _toast(context.tr('seller.errorValidPrice'));
       return false;
     }
@@ -272,6 +375,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       _error = null;
     });
     final discount = num.tryParse(_discountPrice.text.trim());
+    final baseDiscount = discount == null ? null : _basePriceOf(_discountPrice);
     final photos = _colorPhotos
         .where((c) => c.name.text.trim().isNotEmpty)
         .toList();
@@ -280,9 +384,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       categoryId: _categoryId!,
       subcategoryId: _subcategoryId,
       description: _description.text,
-      price: num.parse(_price.text.trim()),
-      discountPrice: discount,
-      discountEndsAt: discount != null && discount > 0 ? _discountEndsAt : null,
+      price: _basePriceOf(_price)!,
+      discountPrice: baseDiscount,
+      discountEndsAt: discount != null && baseDiscount != null && baseDiscount > 0
+          ? _discountEndsAt
+          : null,
       stock: int.parse(_stock.text.trim()),
       images: _images,
       brand: _brand.text,
@@ -608,16 +714,26 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ),
               const SizedBox(height: 20),
               _section(theme, scheme, context.tr('seller.pricingStock')),
+              _priceCurrencyField(theme, scheme),
+              const SizedBox(height: 16),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: WTextField(
                       controller: _price,
-                      label: context.tr('seller.price'),
-                      hint: context.tr('seller.priceHint'),
-                      prefixIcon: Icons.currency_franc,
-                      keyboardType: TextInputType.number,
+                      label: context.tr(
+                        'seller.priceIn',
+                        namedArgs: {'currency': _priceCurrency},
+                      ),
+                      hint: context.tr(
+                        'seller.priceHintIn',
+                        namedArgs: {'amount': _priceExample()},
+                      ),
+                      prefixIcon: Icons.attach_money,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       textInputAction: TextInputAction.next,
                     ),
                   ),
@@ -625,14 +741,37 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   Expanded(
                     child: WTextField(
                       controller: _discountPrice,
-                      label: context.tr('seller.salePrice'),
+                      label: context.tr(
+                        'seller.salePriceIn',
+                        namedArgs: {'currency': _priceCurrency},
+                      ),
                       hint: context.tr('common.optional'),
                       prefixIcon: Icons.percent,
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       textInputAction: TextInputAction.done,
                     ),
                   ),
                 ],
+              ),
+              ValueListenableBuilder<String?>(
+                valueListenable: _pricePreview,
+                builder: (context, stored, _) {
+                  if (stored == null) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      context.tr(
+                        'seller.priceStoredAs',
+                        namedArgs: {'amount': stored},
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 12),
               Row(
@@ -881,6 +1020,39 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
+  Widget _priceCurrencyField(ThemeData theme, ColorScheme scheme) {
+    final def = currencyDef(_priceCurrency);
+    return InkWell(
+      onTap: _pickPriceCurrency,
+      borderRadius: BorderRadius.circular(14),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: context.tr('seller.currency'),
+          prefixIcon: const Icon(Icons.payments_outlined),
+          suffixIcon: const Icon(Icons.chevron_right),
+          border: const OutlineInputBorder(),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                def.name,
+                style: theme.textTheme.bodyMedium,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              '${def.code} · ${def.symbol}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _conditionSelector(ThemeData theme, ColorScheme scheme) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -1001,6 +1173,111 @@ class _CategoryPickerShellState extends ConsumerState<_CategoryPickerShell> {
           ],
         );
       },
+    );
+  }
+}
+
+/// Bottom-sheet currency picker used when composing a listing price.
+/// Returns the chosen [CurrencyDef], or null when dismissed.
+class _CurrencyPickerShell extends StatefulWidget {
+  const _CurrencyPickerShell();
+
+  @override
+  State<_CurrencyPickerShell> createState() => _CurrencyPickerShellState();
+}
+
+class _CurrencyPickerShellState extends State<_CurrencyPickerShell> {
+  String _query = '';
+
+  List<CurrencyDef> get _filtered {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return kCurrencies;
+    return kCurrencies
+        .where(
+          (c) =>
+              c.code.toLowerCase().contains(q) ||
+              c.name.toLowerCase().contains(q) ||
+              c.symbol.toLowerCase().contains(q),
+        )
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return ValueListenableBuilder<CurrencyState>(
+      valueListenable: currencyController,
+      builder: (context, state, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+            child: Text(
+              context.tr('currency.title'),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: TextField(
+              autofocus: true,
+              onChanged: (v) => setState(() => _query = v),
+              decoration: InputDecoration(
+                hintText: context.tr('currency.searchHint'),
+                prefixIcon: const Icon(Icons.search),
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 24),
+              children: [
+                for (final def in _filtered)
+                  ListTile(
+                    selected: def.code == state.code,
+                    selectedTileColor: scheme.primaryContainer,
+                    leading: def.code == state.code
+                        ? Icon(Icons.check_circle, color: scheme.primary)
+                        : const Icon(Icons.payments_outlined),
+                    title: Text(
+                      def.name,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text('${def.code} · ${def.symbol}'),
+                    trailing: Text(
+                      formatFromBase(25000, def.code, state.rates),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    onTap: () => Navigator.of(context).pop(def),
+                  ),
+                if (_filtered.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(
+                      child: Text(
+                        context.tr('currency.noResults'),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

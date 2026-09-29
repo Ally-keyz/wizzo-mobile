@@ -311,6 +311,8 @@
     "viewMyOrders": "Reba Amabuyoboze Yanjye",
     "total": "Igiteranyo",
     "stripeCardNote": "Uzakwanwa ku rupapuro rwi kanzu rwa Stripe rwubatswe neza kugira ngo wishyure ukoresheje ikarita ya banki cyangwa y'inguzanyo, Google Pay cyangwa Apple Pay. Ik pe name ribakana icyo u wishyuye.",
+    "stripeGooglePayNote": "Uzakwanwa ku ipaji y'ishyura ya Stripe kugira ngo wemeze kwishyuza ryawe rya Google Pay.",
+    "stripeApplePayNote": "Uzakwanwa ku ipaji y'ishyura ya Stripe kugira ngo wemeze kwishyuza ryawe rya Apple Pay.",
     "stripePaidNote": "Yishyuwe mu mutekano binyuze kuri Stripe — nta yindi ntambwe ikenewe.",
     "stripeWaitingTitle": "Kureba niba ubwishyu bwemejwe",
     "stripeWaitingBody": "Sheshangire ubwishyu ku rupapuro rwaguye ubu. Iyo Stripe imaze kubyemeza, ikubitiro ryawe rishyirwa mu rubuga ku buryo bukora.",
@@ -318,6 +320,7 @@
     "stripeNotConfirmed": "Ubwishyu ntwabwemeza. Ik pe name nta cyishyuwe kandi ikubitiro ryawe ntiryahindutse.",
     "momoPhoneField": "Nomero ya telefone ya MoMo",
     "momoPhoneHint": "788 123 456",
+    "momoPhoneInvalid": "Injiza nimero ya MoMo ihuye",
     "momoStkHint": "Tuzohereza igisabe cyo kwishyura (STK push) kuri iyi nomero.",
     "momoSubmittedNote": "Ikubitiro ryawe riguma ari \"Ubwishyu bwatanzwe\" kugeza ubwo provider yawe ya mobile money yemeza ubwishyu buhagarariwe yanditse. Ntabwo byandikwa ko byishyuwe mu buryo bwikora.",
     "momoChargeNote": "Ikubitiro ryawe ryose rishyurwa inshimo imwe binyuze kuri MoMo. Tuzohereza STK push kuri nomero iri hejuru iyo ukandika kwishyura.",
@@ -338,6 +341,14 @@
       "cod": {
         "name": "Kwishyura mu gihe cyo kugezwa",
         "desc": "Shyura iyo ufite ikubitiro ryawe"
+      },
+      "googlePay": {
+        "name": "Google Pay",
+        "desc": "Paya ukoresheje k'akaunti kawe k'Google"
+      },
+      "applePay": {
+        "name": "Apple Pay",
+        "desc": "Paya ukoresheje Face ID cyangwa Touch ID"
       }
     },
     "totalToPay": "Igiteranyo cyo kwishyura",
@@ -489,6 +500,7 @@
   "currency": {
     "changedToast": "Ifaranga ryahindutse kuri {currency}.",
     "description": "Hitamo ifaranga rikoreshwa mu biciro byose muri porogaramu.",
+    "noResults": "Nta ifaranga ibonereye",
     "searchHint": "Shakisha ifaranga",
     "title": "Ifaranga"
   },
@@ -709,7 +721,8 @@
     "selectSize": "Hitamo Ingano",
     "selectSizeFirst": "Hitamo ingano mbere.",
     "share": "Sangira",
-    "shareComingSoon": "Gusangira ibikorwa biraza vuba. Komeza wandike izina ry'igicuruzwa!",
+    "shareFailed": "Byashobora gufungura urwandiko rw'ugusangira. Oza ukagerageza.",
+    "shareText": "Reba {name} kuri {app}",
     "soldCount": "{count} bigurishijwe",
     "specifications": "Ibiranga",
     "submitReview": "Kohereza Igitekerezo",
@@ -828,6 +841,7 @@
     "createCouponCTA": "Kora coupon",
     "createStore": "Shyira ahantu",
     "createStorePrompt": "Kora iduka ryawe kugira ngo ucunge amagenamigambi.",
+    "currency": "Ifaranga",
     "deactivate": "Hagarika",
     "dealEnds": "Iherezo ry'igiciro",
     "deleteCouponBody": "Kode {code} izasibwa ntiyongere gukora.",
@@ -961,6 +975,9 @@
     "placedAt": "Yashyizwe ku {date}",
     "price": "Igiciro (RWF)",
     "priceHint": "urugero: 25000",
+    "priceHintIn": "urugero: {amount}",
+    "priceIn": "Igiciro ({currency})",
+    "priceStoredAs": "Ababiri bazasura iki giciro mu ifaranga yabo. Byabitswa nk' {amount}.",
     "pricingStock": "Igiciro n'ibihari",
     "productNameHint": "urugero: Inkoranya ya Bluetooth",
     "promotionsTitle": "Kwamamaza",
@@ -978,6 +995,7 @@
     "reviewRejectedBanner": "Urupapuro rw'iduka ryawe rwaranzwe. Hindura amakuru ahagana hasi ubike kugira ngo rwongere rusuzumwe.",
     "reviewStore": "Subiramo ibirimo ahantu",
     "salePrice": "Igiciro cya salo",
+    "salePriceIn": "Igiciro cya salo ({currency})",
     "saveAccount": "Bika konti",
     "saveAsDraft": "Bika nk'urubobora",
     "saving": "Bibika...",

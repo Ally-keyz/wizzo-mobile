@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/w_widgets.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../data/notification_repository.dart';
 import '../models/notification.dart';
 
@@ -60,11 +64,7 @@ class NotificationsScreen extends ConsumerWidget {
                 final n = list[i];
                 return _NotificationTile(
                   notification: n,
-                  onTap: !n.read
-                      ? () => ref
-                            .read(notificationsProvider.notifier)
-                            .markRead(n.id)
-                      : null,
+                  onTap: () => _open(context, ref, n),
                 );
               },
             ),
@@ -72,6 +72,38 @@ class NotificationsScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  /// Opens whatever the notification is about, then marks it read.
+  ///
+  /// Navigation happens first and the read receipt is fired off in the
+  /// background — tapping a notice should move immediately, not wait on the
+  /// network. Notices with no target (announcements, system pings) still get
+  /// their unread dot cleared.
+  void _open(BuildContext context, WidgetRef ref, AppNotification n) {
+    if (!n.read) {
+      unawaited(
+        ref.read(notificationsProvider.notifier).markRead(n.id).catchError((_) {}),
+      );
+    }
+
+    final target = n.target;
+    if (target == null) return;
+
+    // Sellers get their own order screen; the buyer one 403s on someone
+    // else's order.
+    final isSeller = ref.read(authControllerProvider).user?.isSeller ?? false;
+
+    switch (target.kind) {
+      case NotificationTargetKind.conversation:
+        context.push('/conversation/${target.id}');
+      case NotificationTargetKind.order:
+        context.push(isSeller ? '/seller/order/${target.id}' : '/order/${target.id}');
+      case NotificationTargetKind.store:
+        context.push('/shop/${target.id}');
+      case NotificationTargetKind.product:
+        context.push('/product/${target.id}');
+    }
   }
 }
 
@@ -90,9 +122,11 @@ class _NotificationTile extends StatelessWidget {
       NotificationType.promo => Icons.local_offer_outlined,
       NotificationType.system => Icons.notifications_outlined,
     };
+    final hasTarget = notification.target != null;
 
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
@@ -153,7 +187,16 @@ class _NotificationTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (!notification.read)
+            if (hasTarget)
+              Padding(
+                padding: const EdgeInsets.only(left: 8, top: 10),
+                child: Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: theme.colorScheme.outline,
+                ),
+              )
+            else if (!notification.read)
               Container(
                 width: 8,
                 height: 8,

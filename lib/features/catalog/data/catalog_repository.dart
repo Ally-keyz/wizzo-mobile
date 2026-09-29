@@ -51,6 +51,19 @@ class CatalogRepository {
     return Product.fromApi(data);
   }
 
+  /// Every product that is currently discounted (`discountPrice > 0` with an
+  /// unexpired `discountEndsAt`), regardless of whether a deal banner wraps
+  /// it. This is the same endpoint the web storefront uses for its deals page
+  /// and is the fallback that keeps the home deals rail populated when no
+  /// active deal banner exists.
+  Future<List<Product>> discountedProducts({int limit = 50}) async {
+    final data = await _api.get(
+      '/products',
+      query: {'limit': limit, 'page': 1, 'discount': 'true'},
+    );
+    return _productList(data);
+  }
+
   Future<List<Product>> related(String id, {int limit = 10}) async {
     final data = await _api.get(
       '/products/$id/related',
@@ -160,6 +173,37 @@ class CatalogRepository {
   Future<List<Deal>> todayDeals() async {
     final data = await _api.get('/deals/today');
     return _dealList(data);
+  }
+
+  /// Every public deal type, merged. Each endpoint is fetched independently and
+  /// a failure (or maintenance 503) in one of them degrades to an empty list
+  /// instead of failing the whole rail — the previous `Future.wait` made the
+  /// section vanish whenever a single endpoint errored.
+  Future<List<Deal>> allActiveDeals() async {
+    final batches = await Future.wait([
+      _safeDeals('/deals/flash'),
+      _safeDeals('/deals/today'),
+      _safeDeals('/deals/type/limited'),
+      _safeDeals('/deals/type/clearance'),
+    ]);
+
+    final seen = <String>{};
+    final merged = <Deal>[];
+    for (final batch in batches) {
+      for (final deal in batch) {
+        if (seen.add(deal.id)) merged.add(deal);
+      }
+    }
+    return merged;
+  }
+
+  Future<List<Deal>> _safeDeals(String path) async {
+    try {
+      final data = await _api.get(path);
+      return _dealList(data);
+    } catch (_) {
+      return const [];
+    }
   }
 
   // -- Helpers ---------------------------------------------------------------

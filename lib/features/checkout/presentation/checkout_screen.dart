@@ -35,7 +35,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   int _step = 0;
   bool _creating = false;
   bool _placing = false;
-  bool _termsAccepted = false;
   String? _selectedAddressId;
   DeliveryKind _delivery = DeliveryKind.standard;
   PaymentKind _method = PaymentKind.momo;
@@ -147,22 +146,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _showError(context.tr('checkout.selectAddressFirst'));
       return;
     }
-    if (!_termsAccepted) {
-      _showError(context.tr('checkout.acceptTerms'));
-      return;
-    }
-
     final method = _method;
     final isMomo = method == PaymentKind.momo;
-    final isCard = method == PaymentKind.card;
 
-    if (isCard) {
+    // Card, Google Pay and Apple Pay all settle on Stripe's hosted checkout
+    // page — the wallet is presented there and the webhook places the order.
+    if (method.isStripe) {
       await _payWithCard(cart);
       return;
     }
 
     if (isMomo && _momoDigits().length != 9) {
-      _showError('Enter a valid MoMo phone number');
+      _showError(context.tr('checkout.momoPhoneInvalid'));
       return;
     }
 
@@ -220,10 +215,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _showError(context.tr('checkout.selectAddressFirst'));
       return;
     }
-    if (!_termsAccepted) {
-      _showError(context.tr('checkout.acceptTerms'));
-      return;
-    }
 
     setState(() {
       _placing = true;
@@ -233,7 +224,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final deliveryOption = _delivery.apiValue;
       final selection = [
         for (final g in cart.groups)
-          {'sellerId': g.sellerId, 'paymentMethod': PaymentKind.card.apiValue},
+          {'sellerId': g.sellerId, 'paymentMethod': _method.apiValue},
       ];
 
       final session = await ref
@@ -377,7 +368,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       method: _method,
                       momoPhone: _momoPhone,
                       totalAmount: total,
-                      termsAccepted: _termsAccepted,
                       error: _placing ? null : _error,
                       placing: _placing,
                       onMethodSelected: (kind) =>
@@ -385,8 +375,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       onMomoPhoneChanged: (phone) =>
                           setState(() => _momoPhone = phone),
                       onChatWithSellers: () => _showSellerChatSheet(cart),
-                      onToggleTerms: () => setState(
-                          () => _termsAccepted = !_termsAccepted),
                       onPayNow: () => _placeOrder(cart),
                     ),
                 ],

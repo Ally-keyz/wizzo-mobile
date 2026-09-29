@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/bottom_nav.dart';
 import '../../../../core/widgets/w_image.dart';
 import '../../../cart/models/cart.dart';
 import '../../models/checkout.dart';
@@ -13,6 +16,8 @@ String paymentKindLabel(BuildContext context, PaymentKind kind) => switch (kind)
       PaymentKind.bank => context.tr('checkout.payment.bank.name'),
       PaymentKind.cashOnDelivery => context.tr('checkout.payment.cod.name'),
       PaymentKind.card => context.tr('checkout.payment.card.name'),
+      PaymentKind.googlePay => context.tr('checkout.payment.googlePay.name'),
+      PaymentKind.applePay => context.tr('checkout.payment.applePay.name'),
     };
 
 /// Localized one-line description for a payment method.
@@ -22,7 +27,20 @@ String paymentKindDescription(BuildContext context, PaymentKind kind) =>
       PaymentKind.bank => context.tr('checkout.payment.bank.desc'),
       PaymentKind.cashOnDelivery => context.tr('checkout.payment.cod.desc'),
       PaymentKind.card => context.tr('checkout.payment.card.desc'),
+      PaymentKind.googlePay => context.tr('checkout.payment.googlePay.desc'),
+      PaymentKind.applePay => context.tr('checkout.payment.applePay.desc'),
     };
+
+/// The wallet options that make sense on this device.
+///
+/// Google Pay is Android/Chrome only and Apple Pay is iOS/Safari only — a
+/// TECNO phone can never complete an Apple Pay sheet, so offering it there is
+/// a dead tile that only costs the user a failed tap.
+List<PaymentKind> availableWallets() {
+  if (Platform.isAndroid) return const [PaymentKind.googlePay];
+  if (Platform.isIOS) return const [PaymentKind.applePay];
+  return const [];
+}
 
 /// Shows the seller's pay-in details for a manual payment — the mobile
 /// equivalent of the web checkout `PaymentInstructions` component.
@@ -43,7 +61,7 @@ class PaymentInstructionsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = context.appColors;
 
-    if (method == PaymentKind.card) {
+    if (method.isStripe) {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -493,6 +511,8 @@ class CheckoutPaymentTile extends StatelessWidget {
                 PaymentKind.card => Icons.credit_card_outlined,
                 PaymentKind.bank => Icons.account_balance_outlined,
                 PaymentKind.cashOnDelivery => Icons.payments_outlined,
+                PaymentKind.googlePay => Icons.g_mobiledata,
+                PaymentKind.applePay => Icons.apple,
               },
               color: selected
                   ? context.appColors.onGoldSoft
@@ -605,7 +625,7 @@ class CheckoutBottomNav extends StatelessWidget {
         16,
         10,
         16,
-        MediaQuery.of(context).padding.bottom + 8,
+        MediaQuery.of(context).padding.bottom + 8 + kSellButtonOverhang,
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,

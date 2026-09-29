@@ -11,6 +11,7 @@ class CartItem {
     this.sellerName,
     this.sellerLogo,
     this.sellerVerified = false,
+    this.productPopulated = true,
   });
 
   final String id;
@@ -25,6 +26,11 @@ class CartItem {
   final String? sellerName;
   final String? sellerLogo;
   final bool sellerVerified;
+
+  /// Whether [product] came from a real product document. False when the server
+  /// answered a mutating cart endpoint with an unpopulated item, in which case
+  /// [product] is the placeholder built in [fromApi] (no image, no slug).
+  final bool productPopulated;
 
   num get lineTotal => product.price * quantity;
 
@@ -96,6 +102,7 @@ class CartItem {
       sellerName: sellerName,
       sellerLogo: sellerLogo,
       sellerVerified: sellerVerified,
+      productPopulated: rawProduct is Map<String, dynamic>,
     );
   }
 }
@@ -144,6 +151,16 @@ class CartData {
   final num subtotal;
   final num deliveryFee;
   final num total;
+
+  /// True when every row carries a real product document.
+  ///
+  /// A mutating cart endpoint that answers with an unpopulated cart parses
+  /// into placeholder rows (name "Product", no image, no seller), which would
+  /// replace good optimistic state with a visibly broken cart. Callers use
+  /// this to decide whether the response is safe to adopt or whether they must
+  /// refetch a populated cart instead.
+  bool get isPopulated =>
+      groups.isNotEmpty && groups.every((g) => g.items.every((i) => i.productPopulated));
 
   static const empty = CartData();
 

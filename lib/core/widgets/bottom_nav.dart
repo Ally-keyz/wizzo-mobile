@@ -12,6 +12,14 @@ import '../../features/notifications/models/notification.dart';
 import '../theme/app_colors.dart';
 import 'w_widgets.dart';
 
+/// How far the gold Sell circle rises above the top edge of the bottom nav bar.
+///
+/// The circle is painted outside the bar with `clipBehavior: Clip.none`, so any
+/// screen inside [WMarketShell] that pins a primary action to the bottom of the
+/// Scaffold body must reserve this much extra bottom padding, otherwise the bar
+/// paints on top of the button.
+const double kSellButtonOverhang = 20;
+
 /// The 3-item bottom navigation: Home, Sell, Account.
 ///
 /// Also hosts the live in-app notification poller: while the app is in the
@@ -294,7 +302,7 @@ class _BottomNavBar extends StatelessWidget {
         alignment: Alignment.topCenter,
         children: [
           Positioned(
-            top: -20,
+            top: -kSellButtonOverhang,
             child: GestureDetector(
               onTap: () => onTap(_sellIndex, -1),
               child: Container(

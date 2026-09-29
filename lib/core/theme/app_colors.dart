@@ -19,13 +19,13 @@ abstract class Palette {
   static const lightSuccess = Color(0xFF22C55E); // --success
   static const lightWarning = Color(0xFFEAB308); // --warning
 
-  // Dark mode
-  static const darkBackground = Color(0xFF18181B);
-  static const darkCard = Color(0xFF27272A);
+  // Dark mode — pure black canvas, near-black raised surfaces
+  static const darkBackground = Color(0xFF000000);
+  static const darkCard = Color(0xFF0A0A0A);
   static const darkForeground = Color(0xFFFAFAFA);
-  static const darkMuted = Color(0xFF27272A);
+  static const darkMuted = Color(0xFF141414);
   static const darkMutedForeground = Color(0xFFA1A1AA);
-  static const darkBorder = Color(0xFF3F3F46);
+  static const darkBorder = Color(0xFF262626);
   static const darkDestructive = Color(0xFFDC2626);
   static const darkSuccess = Color(0xFF22C55E);
   static const darkWarning = Color(0xFFEAB308);

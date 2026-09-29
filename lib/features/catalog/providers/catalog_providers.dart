@@ -62,17 +62,12 @@ final homeFeedProvider =
       HomeFeedController.new,
     );
 
-/// Every active deal (flash + today), merged & deduped, ending soonest first.
+/// Every active deal (flash + today + limited + clearance), merged & deduped,
+/// ending soonest first. Each endpoint degrades independently, so one failing
+/// route no longer blanks the whole "Exclusive Deals" rail.
 final allDealsProvider = FutureProvider<List<Deal>>((ref) async {
   final repo = ref.watch(catalogRepositoryProvider);
-  final results = await Future.wait([repo.deals(), repo.todayDeals()]);
-  final seen = <String>{};
-  final merged = <Deal>[];
-  for (final deals in results) {
-    for (final deal in deals) {
-      if (seen.add(deal.id)) merged.add(deal);
-    }
-  }
+  final merged = await repo.allActiveDeals();
   merged.sort((a, b) {
     final at = a.endsAt?.millisecondsSinceEpoch;
     final bt = b.endsAt?.millisecondsSinceEpoch;
@@ -89,20 +84,41 @@ final homeDealsProvider = FutureProvider<List<Deal>>(
   (ref) => ref.watch(allDealsProvider.future),
 );
 
-/// Every discounted product across all active deals (flash + today),
-/// biggest savings first. Backs the "All Deals" page.
-final allDealsProductsProvider = FutureProvider<List<Product>>((ref) async {
-  final deals = await ref.watch(allDealsProvider.future);
+/// Everything currently on promotion: products attached to any active deal,
+/// unioned with every discounted product from `/products?discount=true`,
+/// deduped and sorted by biggest saving first.
+///
+/// The union matters because a product can be discounted without sitting under
+/// a deal banner, and a deal banner can exist with no active end date. Relying
+/// on deal banners alone is what left the rail empty.
+final promotedProductsProvider = FutureProvider<List<Product>>((ref) async {
+  final repo = ref.watch(catalogRepositoryProvider);
+  final results = await Future.wait([
+    ref.watch(allDealsProvider.future).then(
+          (deals) => [for (final d in deals) ...d.products],
+          onError: (_) => <Product>[],
+        ),
+    repo.discountedProducts().then(
+          (products) => products,
+          onError: (_) => <Product>[],
+        ),
+  ]);
+
   final seen = <String>{};
   final products = <Product>[];
-  for (final deal in deals) {
-    for (final p in deal.products) {
-      if (seen.add(p.id)) products.add(p);
-    }
+  for (final p in [...results[0], ...results[1]]) {
+    if (p.id.isEmpty) continue;
+    if (seen.add(p.id)) products.add(p);
   }
   products.sort((a, b) => b.discount.compareTo(a.discount));
   return products;
 });
+
+/// Every discounted product across all active deals (flash + today),
+/// biggest savings first. Backs the "All Deals" page.
+final allDealsProductsProvider =
+    FutureProvider<List<Product>>((ref) => ref.watch(promotedProductsProvider.future));
+
 
 /// Category tree (2 levels).
 final categoriesProvider = FutureProvider<List<CategoryNode>>((ref) async {

@@ -77,6 +77,15 @@ double convertFromBase(num amount, String code, Map<String, double>? rates) {
   return amount * rate;
 }
 
+/// Converts an amount typed in [code] back into the base RWF figure the API
+/// stores. Inverse of [convertFromBase]; falls back to the static rates.
+double convertToBase(num amount, String code, Map<String, double>? rates) {
+  if (code == kBaseCurrency) return amount.toDouble();
+  final rate = rates?[code] ?? kFallbackRates[code] ?? 1;
+  if (rate <= 0) return amount.toDouble();
+  return amount / rate;
+}
+
 /// Formats a base-RWF amount in the selected currency, mirroring the web's
 /// `formatFromBase`: `$1,234.56`, `RWF 1,234,567`, `KSh 1,234,567`, ...
 String formatFromBase(num? amount, String code, Map<String, double>? rates) {

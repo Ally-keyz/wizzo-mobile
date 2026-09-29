@@ -311,6 +311,8 @@
     "viewMyOrders": "Meine Bestellungen ansehen",
     "total": "Gesamt",
     "stripeCardNote": "Sie werden zur sicheren Checkout-Seite von Stripe weitergeleitet und können per Debit- oder Kreditkarte, Google Pay oder Apple Pay bezahlen. Ihre Karte wird erst nach abgeschlossener Zahlung belastet.",
+    "stripeGooglePayNote": "Sie werden zur sicheren Zahlungsseite von Stripe weitergeleitet, um Ihre Google-Pay-Zahlung zu bestatigen.",
+    "stripeApplePayNote": "Sie werden zur sicheren Zahlungsseite von Stripe weitergeleitet, um Ihre Apple-Pay-Zahlung zu bestatigen.",
     "stripePaidNote": "Sicher über Stripe bezahlt – keine weiteren Schritte erforderlich.",
     "stripeWaitingTitle": "Warte auf Zahlungsbestätigung",
     "stripeWaitingBody": "Schließen Sie die Zahlung auf der gerade geöffneten Seite ab. Sobald Stripe sie bestätigt, wird Ihre Bestellung automatisch aufgegeben.",
@@ -318,6 +320,7 @@
     "stripeNotConfirmed": "Die Zahlung wurde nicht bestätigt. Ihre Karte wurde nicht belastet und Ihr Warenkorb ist unverändert.",
     "momoPhoneField": "MoMo-Telefonnummer",
     "momoPhoneHint": "788 123 456",
+    "momoPhoneInvalid": "Bitte geben Sie eine gultige MoMo-Nummer ein",
     "momoStkHint": "Wir senden eine Zahlungsaufforderung (STK-Push) an diese Nummer.",
     "momoSubmittedNote": "Ihre Bestellung bleibt „Zahlung eingereicht“, bis Ihr Mobile-Money-Anbieter die Zahlung über die auf Ihrem Telefon gesendete Aufforderung bestätigt. Sie wird NICHT automatisch als bezahlt markiert.",
     "momoChargeNote": "Ihre gesamte Bestellung wird einmalig über MoMo berechnet. Wir senden einen STK-Push an die obige Nummer, sobald Sie auf Bezahlen tippen.",
@@ -338,6 +341,14 @@
       "cod": {
         "name": "Barzahlung bei Lieferung",
         "desc": "Zahlen Sie bei Erhalt Ihrer Bestellung"
+      },
+      "googlePay": {
+        "name": "Google Pay",
+        "desc": "Mit deinem Google-Konto bezahlen"
+      },
+      "applePay": {
+        "name": "Apple Pay",
+        "desc": "Mit Face ID oder Touch ID bezahlen"
       }
     },
     "totalToPay": "Zu zahlender Gesamtbetrag",
@@ -489,6 +500,7 @@
   "currency": {
     "changedToast": "Währung auf {currency} gesetzt.",
     "description": "Wähle die Währung, die für alle Preise in der App verwendet wird.",
+    "noResults": "Keine Währung gefunden",
     "searchHint": "Währung suchen",
     "title": "Währung"
   },
@@ -709,7 +721,8 @@
     "selectSize": "Größe wählen",
     "selectSizeFirst": "Bitte wähle zuerst eine Größe.",
     "share": "Teilen",
-    "shareComingSoon": "Links teilen ist unterwegs. Kopiere den Produktnamen vorerst!",
+    "shareFailed": "Freigabedialog konnte nicht geöffnet werden. Bitte erneut versuchen.",
+    "shareText": "Schau dir {name} auf {app} an",
     "soldCount": "{count} verkauft",
     "specifications": "Technische Daten",
     "submitReview": "Bewertung senden",
@@ -828,6 +841,7 @@
     "createCouponCTA": "Gutschein erstellen",
     "createStore": "Shop erstellen",
     "createStorePrompt": "Erstelle deinen Shop, um Einstellungen zu verwalten.",
+    "currency": "Währung",
     "deactivate": "Deaktivieren",
     "dealEnds": "Angebot endet",
     "deleteCouponBody": "Code {code} wird entfernt und funktioniert nicht mehr.",
@@ -961,6 +975,9 @@
     "placedAt": "Bestellt am {date}",
     "price": "Preis (RWF)",
     "priceHint": "z. B. 25000",
+    "priceHintIn": "z. B. {amount}",
+    "priceIn": "Preis ({currency})",
+    "priceStoredAs": "Käufer sehen diesen Preis in ihrer Währung. Gespeichert als {amount}.",
     "pricingStock": "Preis & Bestand",
     "productNameHint": "z. B. Kabellose Bluetooth-Kopfhörer",
     "promotionsTitle": "Aktionen",
@@ -978,6 +995,7 @@
     "reviewRejectedBanner": "Dein Shop-Profil wurde abgelehnt. Aktualisiere die folgenden Angaben und speichere, um es erneut einzureichen.",
     "reviewStore": "Überprüfe deinen Shop",
     "salePrice": "Verkaufspreis",
+    "salePriceIn": "Verkaufspreis ({currency})",
     "saveAccount": "Konto speichern",
     "saveAsDraft": "Als Entwurf speichern",
     "saving": "Wird gespeichert…",

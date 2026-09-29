@@ -121,7 +121,7 @@ class _ShortVideoPageState extends ConsumerState<ShortVideoPage> {
     final prevCount = ref.read(cartCountProvider);
     ref
         .read(cartProvider.notifier)
-        .addItem(productId: product.id, quantity: 1, size: size, color: color)
+        .addItem(product: product, quantity: 1, size: size, color: color)
         .then((_) {})
         .catchError((_) {
           if (mounted) _toast(context.tr('cart.addFailed'));

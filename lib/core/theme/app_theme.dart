@@ -41,12 +41,13 @@ ColorScheme _darkScheme() => const ColorScheme.dark(
   onSecondaryContainer: Palette.darkForeground,
   tertiary: Palette.infoBlueBright,
   onTertiary: Color(0xFF05202F),
-  surface: Palette.darkCard,
+  surface: Palette.darkBackground,
   onSurface: Palette.darkForeground,
   onSurfaceVariant: Palette.darkMutedForeground,
-  surfaceContainerHighest: Color(0xFF2E2E32),
+  surfaceContainerLow: Palette.darkCard,
+  surfaceContainerHighest: Color(0xFF1C1C1C),
   outline: Palette.darkBorder,
-  outlineVariant: Color(0xFF333338),
+  outlineVariant: Color(0xFF1F1F1F),
   error: Palette.darkDestructive,
   onError: Colors.white,
   errorContainer: Color(0xFF7F1D1D),
@@ -90,6 +91,10 @@ ThemeData _base(ColorScheme scheme, AppColors appColors) {
     side: BorderSide(color: scheme.outlineVariant),
   );
 
+  // On the pure-black canvas, surfaces that sit above it (cards, sheets,
+  // dialogs, menus) need a near-black fill to stay readable as separate layers.
+  final raisedSurface = isDark ? scheme.surfaceContainerLow : scheme.surface;
+
   return ThemeData(
     useMaterial3: true,
     brightness: scheme.brightness,
@@ -116,7 +121,7 @@ ThemeData _base(ColorScheme scheme, AppColors appColors) {
     ),
 
     cardTheme: CardThemeData(
-      color: scheme.surface,
+      color: raisedSurface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       margin: EdgeInsets.zero,
@@ -210,7 +215,7 @@ ThemeData _base(ColorScheme scheme, AppColors appColors) {
     ),
 
     bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: scheme.surface,
+      backgroundColor: raisedSurface,
       surfaceTintColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -234,13 +239,13 @@ ThemeData _base(ColorScheme scheme, AppColors appColors) {
     ),
 
     dialogTheme: DialogThemeData(
-      backgroundColor: scheme.surface,
+      backgroundColor: raisedSurface,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),
 
     popupMenuTheme: PopupMenuThemeData(
-      color: scheme.surface,
+      color: raisedSurface,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),

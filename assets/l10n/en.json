@@ -311,6 +311,8 @@
     "viewMyOrders": "View My Orders",
     "total": "Total",
     "stripeCardNote": "You'll be taken to Stripe's secure checkout page to pay by debit or credit card, Google Pay or Apple Pay. Your cart is only charged once you complete the payment.",
+    "stripeGooglePayNote": "You'll be taken to Stripe's secure checkout page to confirm your Google Pay payment.",
+    "stripeApplePayNote": "You'll be taken to Stripe's secure checkout page to confirm your Apple Pay payment.",
     "stripePaidNote": "Paid securely via Stripe — no further action needed.",
     "stripeWaitingTitle": "Waiting for payment confirmation",
     "stripeWaitingBody": "Complete the payment in the page that just opened. Once Stripe confirms it, your order is placed automatically.",
@@ -318,6 +320,7 @@
     "stripeNotConfirmed": "Payment was not confirmed. Your card was not charged and your cart is unchanged.",
     "momoPhoneField": "MoMo phone number",
     "momoPhoneHint": "788 123 456",
+    "momoPhoneInvalid": "Enter a valid MoMo phone number",
     "momoStkHint": "We'll send a payment prompt (STK push) to this number.",
     "momoSubmittedNote": "Your order stays \"Payment submitted\" until your MoMo provider confirms the payment from the prompt on your phone. It is NOT marked as paid automatically.",
     "momoChargeNote": "Your whole order is charged once via MoMo. We'll send an STK push to the number above when you tap Pay.",
@@ -338,6 +341,14 @@
       "cod": {
         "name": "Cash on Delivery",
         "desc": "Pay when you receive your order"
+      },
+      "googlePay": {
+        "name": "Google Pay",
+        "desc": "Pay with your Google account"
+      },
+      "applePay": {
+        "name": "Apple Pay",
+        "desc": "Pay with Face ID or Touch ID"
       }
     },
     "totalToPay": "Total to pay",
@@ -489,6 +500,7 @@
   "currency": {
     "changedToast": "Currency set to {currency}.",
     "description": "Choose the currency used for every price across the app.",
+    "noResults": "No currency found",
     "searchHint": "Search currency",
     "title": "Currency"
   },
@@ -709,7 +721,8 @@
     "selectSize": "Select Size",
     "selectSizeFirst": "Please select a size first.",
     "share": "Share",
-    "shareComingSoon": "Sharing links is on its way. Copy the product name for now!",
+    "shareFailed": "Could not open the share sheet. Please try again.",
+    "shareText": "Check out {name} on {app}",
     "soldCount": "{count} sold",
     "specifications": "Specifications",
     "submitReview": "Submit Review",
@@ -828,6 +841,7 @@
     "createCouponCTA": "Create a coupon",
     "createStore": "Create Store",
     "createStorePrompt": "Create your store to manage settings.",
+    "currency": "Currency",
     "deactivate": "Deactivate",
     "dealEnds": "Deal ends",
     "deleteCouponBody": "Code {code} will be removed and stop working.",
@@ -961,6 +975,9 @@
     "placedAt": "Placed {date}",
     "price": "Price (RWF)",
     "priceHint": "e.g. 25000",
+    "priceHintIn": "e.g. {amount}",
+    "priceIn": "Price ({currency})",
+    "priceStoredAs": "Buyers see this price in their own currency. Stored as {amount}.",
     "pricingStock": "Pricing & stock",
     "productNameHint": "e.g. Wireless Bluetooth Headphones",
     "promotionsTitle": "Promotions",
@@ -978,6 +995,7 @@
     "reviewRejectedBanner": "Your store profile was rejected. Update the details below and save to resubmit.",
     "reviewStore": "Review your store",
     "salePrice": "Sale price",
+    "salePriceIn": "Sale price ({currency})",
     "saveAccount": "Save account",
     "saveAsDraft": "Save as draft",
     "saving": "Saving…",

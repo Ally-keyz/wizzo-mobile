@@ -2,6 +2,7 @@
 
 import '../../../core/network/api_providers.dart';
 
+import '../../catalog/models/product.dart';
 import '../data/cart_repository.dart';
 import '../models/cart.dart';
 
@@ -27,23 +28,24 @@ class CartController extends AsyncNotifier<CartData> {
   }
 
   Future<void> addItem({
-    required String productId,
+    required Product product,
     int quantity = 1,
     String? size,
     String? color,
   }) async {
     final previous = state.value;
     if (previous != null) {
-      state = AsyncData(_withAddedCount(previous, quantity));
+      state = AsyncData(_withAdded(previous, product, quantity, size, color));
     }
     try {
-      await ref.read(cartRepositoryProvider).addItem(
-            productId: productId,
-            quantity: quantity,
-            size: size,
-            color: color,
-          );
-      await refresh();
+      await _reconcile(
+        () => ref.read(cartRepositoryProvider).addItem(
+              productId: product.id,
+              quantity: quantity,
+              size: size,
+              color: color,
+            ),
+      );
     } catch (_) {
       if (previous != null) state = AsyncData(previous);
       rethrow;
@@ -56,8 +58,9 @@ class CartController extends AsyncNotifier<CartData> {
     if (current == null) return;
     state = AsyncData(_withQuantity(current, itemId, quantity));
     try {
-      await ref.read(cartRepositoryProvider).updateQuantity(itemId, quantity);
-      await refresh();
+      await _reconcile(
+        () => ref.read(cartRepositoryProvider).updateQuantity(itemId, quantity),
+      );
     } catch (_) {
       if (state.value != null) state = AsyncData(current);
     }
@@ -76,8 +79,9 @@ class CartController extends AsyncNotifier<CartData> {
         .toList();
     state = AsyncData(_rebuild(groups, current));
     try {
-      await ref.read(cartRepositoryProvider).removeItem(itemId);
-      await refresh();
+      await _reconcile(
+        () => ref.read(cartRepositoryProvider).removeItem(itemId),
+      );
     } catch (_) {
       if (state.value != null) state = AsyncData(current);
     }
@@ -87,15 +91,91 @@ class CartController extends AsyncNotifier<CartData> {
     state = const AsyncData(CartData.empty);
     await ref.read(cartRepositoryProvider).clear();
   }
+
+  /// Adopts the cart a mutating endpoint returned, avoiding the extra
+  /// `GET /cart` that used to follow every add/update/remove.
+  ///
+  /// Falls back to [refresh] when the response came back unpopulated, which
+  /// happens if the app is installed against a server build that still answers
+  /// mutating cart calls without populating products.
+  Future<void> _reconcile(Future<CartData> Function() mutation) async {
+    final server = await mutation();
+    if (server.isPopulated) {
+      state = AsyncData(server);
+    } else {
+      await refresh();
+    }
+  }
 }
 
-CartData _withAddedCount(CartData data, int quantity) => CartData(
-      groups: data.groups,
-      itemCount: data.itemCount + quantity,
-      subtotal: data.subtotal,
-      deliveryFee: data.deliveryFee,
-      total: data.total,
+/// Returns a copy of [data] with [product] added, matching the server's
+/// semantics: re-adding a product already in the cart increments its quantity
+/// rather than creating a second row. Totals are recomputed locally so the row
+/// and the totals appear in the same frame.
+CartData _withAdded(
+  CartData data,
+  Product product,
+  int quantity,
+  String? size,
+  String? color,
+) {
+  bool matches(CartItem i) => i.id == product.id || i.product.id == product.id;
+
+  final groups = data.groups.map((g) {
+    final idx = g.items.indexWhere(matches);
+    if (idx < 0) return g;
+    final items = [...g.items];
+    final existing = items[idx];
+    items[idx] = CartItem(
+      id: existing.id,
+      product: existing.product,
+      quantity: existing.quantity + quantity,
+      variantSize: size ?? existing.variantSize,
+      variantColor: color ?? existing.variantColor,
+      sellerId: existing.sellerId,
+      sellerName: existing.sellerName,
+      sellerLogo: existing.sellerLogo,
+      sellerVerified: existing.sellerVerified,
+      productPopulated: existing.productPopulated,
     );
+    return g.copyWith(items: items);
+  }).toList();
+
+  if (groups.any((g) => g.items.any(matches))) return _rebuild(groups, data);
+
+  final seller = product.seller;
+  final sellerId = seller?.id ?? '';
+  final item = CartItem(
+    id: product.id,
+    product: product,
+    quantity: quantity,
+    variantSize: size,
+    variantColor: color,
+    sellerId: sellerId.isEmpty ? null : sellerId,
+    sellerName: seller?.storeName,
+    sellerLogo: seller?.logoUrl,
+    sellerVerified: seller?.verified ?? false,
+  );
+
+  final groupIndex = groups.indexWhere((g) => g.sellerId == sellerId);
+  if (groupIndex >= 0) {
+    groups[groupIndex] = groups[groupIndex].copyWith(
+      items: [...groups[groupIndex].items, item],
+    );
+  } else {
+    groups.add(
+      CartSellerGroup(
+        sellerId: sellerId,
+        sellerName: seller?.storeName,
+        sellerSlug: seller?.storeSlug,
+        sellerLogo: seller?.logoUrl,
+        verified: seller?.verified ?? false,
+        items: [item],
+      ),
+    );
+  }
+  return _rebuild(groups, data);
+}
 
 /// Returns a copy of [data] with the matching item's quantity set to [quantity]
 /// and all totals recomputed locally so the UI reflects the change instantly.
@@ -113,6 +193,7 @@ CartData _withQuantity(CartData data, String itemId, int quantity) {
         sellerName: item.sellerName,
         sellerLogo: item.sellerLogo,
         sellerVerified: item.sellerVerified,
+        productPopulated: item.productPopulated,
       );
     }).toList();
     return g.copyWith(items: items);

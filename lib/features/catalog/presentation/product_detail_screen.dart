@@ -2,12 +2,16 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../../core/config/app_config.dart';
+import '../../../core/currency/currency_controller.dart';
+import '../../../core/currency/currency_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/variant_selector.dart';
+import '../../../core/widgets/bottom_nav.dart';
 import '../../../core/widgets/w_async.dart';
 import '../../../core/widgets/w_image.dart';
-import '../../../core/widgets/coming_soon_sheet.dart';
 import '../../../core/widgets/fly_to_cart.dart';
 import '../../account/data/account_repository.dart';
 import '../../account/models/profile.dart';
@@ -193,10 +197,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                           visualDensity: VisualDensity.compact,
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => _share(context, product),
-                        icon: const Icon(Icons.share_outlined),
-                        visualDensity: VisualDensity.compact,
+                      Builder(
+                        builder: (buttonContext) => IconButton(
+                          onPressed: () => _share(buttonContext, product),
+                          icon: const Icon(Icons.share_outlined),
+                          visualDensity: VisualDensity.compact,
+                        ),
                       ),
                     ],
                   ),
@@ -1125,7 +1131,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       right: 0,
       bottom: 0,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+        padding: EdgeInsets.fromLTRB(16, 10, 16, 10 + kSellButtonOverhang),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           border: Border(
@@ -1176,12 +1182,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       try {
         await ref
             .read(cartProvider.notifier)
-            .addItem(
-              productId: product.id,
-              quantity: _quantity,
-              size: _size,
-              color: _color,
-            );
+          .addItem(
+            product: product,
+            quantity: _quantity,
+            size: _size,
+            color: _color,
+          );
         if (context.mounted) _toast(context, context.tr('product.addedToCart'));
       } catch (e) {
         if (context.mounted)
@@ -1222,13 +1228,46 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     }
   }
 
-  void _share(BuildContext context, Product product) {
-    ComingSoonSheet.show(
-      context,
-      title: context.tr('product.share'),
-      description: context.tr('product.shareComingSoon'),
-      icon: Icons.share_outlined,
+  /// Hands the product off to the OS share sheet.
+  ///
+  /// Only the link is shared, never the image bytes: messaging apps fetch the
+  /// product photo from the page's `og:image` tags when they unfurl the URL, so
+  /// a shared message still carries the product photo as a link preview. The
+  /// trailing price is added as plain text because a recipient's app has no
+  /// way to know the sender's display currency.
+  Future<void> _share(BuildContext context, Product product) async {
+    final currency = currencyController.value;
+    final price = formatFromBase(
+      product.price,
+      currency.code,
+      currency.rates,
     );
+    final message = [
+      context.tr(
+        'product.shareText',
+        namedArgs: {'name': product.name, 'app': AppConfig.appName},
+      ),
+      price,
+      '${AppConfig.webUrl}/products/${product.id}',
+    ].join('\n');
+    // Required by iPad, harmless elsewhere: iOS refuses to present a share
+    // sheet without a rect to anchor it to.
+    final box = context.findRenderObject() as RenderBox?;
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: message,
+          subject: product.name,
+          sharePositionOrigin:
+              box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+        ),
+      );
+    } catch (_) {
+      // The sheet can fail on a device with no share targets installed.
+      if (context.mounted) {
+        _toast(context, context.tr('product.shareFailed'));
+      }
+    }
   }
 
   void _toast(BuildContext context, String message) {

@@ -311,6 +311,8 @@
     "viewMyOrders": "Ona Aagizo Yangu",
     "total": "Jumla",
     "stripeCardNote": "Utapelekwa kwenye ukurasa salama wa malipo wa Stripe kulipa kwa kadi ya benki au ya mkopo, Google Pay au Apple Pay. Kadi yako hito zwiw mara tu utakapomaliza malipo.",
+    "stripeGooglePayNote": "Utapelekwa kwenye ukurasa wa malipo salama wa Stripe ili kuthibitisha malipo yako ya Google Pay.",
+    "stripeApplePayNote": "Utapelekwa kwenye ukurasa wa malipo salama wa Stripe ili kuthibitisha malipo yako ya Apple Pay.",
     "stripePaidNote": "Imelipwa kwa usalama kupitia Stripe — hakuna hatua za ziada zinahitajika.",
     "stripeWaitingTitle": "Inasubiri uthibitisho wa malipo",
     "stripeWaitingBody": "Maliza malipo kwenye ukurasa ambao umefunguliwa hivi punde. Mara Stripe itakapothibitisha, agizo lako litawekwa kiotomatiki.",
@@ -318,6 +320,7 @@
     "stripeNotConfirmed": "Malipo hayakuthibitishwa. Kadi yako haikuto zwiwa na toroli lako halijabadilika.",
     "momoPhoneField": "Nambari ya simu ya MoMo",
     "momoPhoneHint": "788 123 456",
+    "momoPhoneInvalid": "Weka namba sahihi ya MoMo",
     "momoStkHint": "Tutakutumia arifa ya malipo (STK push) kwa nambari hii.",
     "momoSubmittedNote": "Agizo lako linahifadhiwa kama \"Malipo yamewasilishwa\" hadi provider yako ya mobile money itakapothibitisha malipo kupitia arifa iliyotumwa kwenye simu yako. Halijawekwa kama yamelipwa kiotomatiki.",
     "momoChargeNote": "Agizo lako lote linatozwa mara moja kupitia MoMo. Tutatumia STK push kwa nambari iliyo juu utakapogonga Lipa.",
@@ -338,6 +341,14 @@
       "cod": {
         "name": "Malipo baada ya Kupokea",
         "desc": "Lipa utakapopokea agizo lako"
+      },
+      "googlePay": {
+        "name": "Google Pay",
+        "desc": "Lipa kwa kutumia akaunti yako ya Google"
+      },
+      "applePay": {
+        "name": "Apple Pay",
+        "desc": "Lipa kwa kutumia Face ID au Touch ID"
       }
     },
     "totalToPay": "Jumla ya kulipa",
@@ -489,6 +500,7 @@
   "currency": {
     "changedToast": "Sarafu imewekwa: {currency}.",
     "description": "Chagua sarafu inayotumiwa kwa bei zote kwenye programu.",
+    "noResults": "Hakuna sarafu iliyopatikana",
     "searchHint": "Tafuta sarafu",
     "title": "Sarafu"
   },
@@ -709,7 +721,8 @@
     "selectSize": "Chagua Ukubwa",
     "selectSizeFirst": "Chagua ukubwa kwanza.",
     "share": "Shiriki",
-    "shareComingSoon": "Kushiriki viungo kunakuja hivi karibuni. Nakili jina la bidhaa kwa sasa!",
+    "shareFailed": "Imeshindikana kufungua menyu ya kushiriki. Jaribu tena.",
+    "shareText": "Angalia {name} kwenye {app}",
     "soldCount": "{count} zimeuzwa",
     "specifications": "Vipimo",
     "submitReview": "Tuma Maoni",
@@ -828,6 +841,7 @@
     "createCouponCTA": "Unda kuponi",
     "createStore": "Unda duka",
     "createStorePrompt": "Unda duka lako ili udhibiti mipangilio.",
+    "currency": "Sarafu",
     "deactivate": "Sitisha",
     "dealEnds": "Muda wa ofa unaisha",
     "deleteCouponBody": "Msimbo {code} utaondolewa na kuacha kufanya kazi.",
@@ -961,6 +975,9 @@
     "placedAt": "Iliwekwa {date}",
     "price": "Bei (RWF)",
     "priceHint": "mf. 25000",
+    "priceHintIn": "mf. {amount}",
+    "priceIn": "Bei ({currency})",
+    "priceStoredAs": "Wateuzi waona bei hii kwa sarafu yao. Inahifadhiwa kama {amount}.",
     "pricingStock": "Bei na hisa",
     "productNameHint": "mf. Headphones za Bluetooth",
     "promotionsTitle": "Matangazo",
@@ -978,6 +995,7 @@
     "reviewRejectedBanner": "Wasifu wa duka lako umekataliwa. Sasisha maelezo hapa chini na uhifadhi ili kuwasilisha tena.",
     "reviewStore": "Kagua duka lako",
     "salePrice": "Bei ya ofa",
+    "salePriceIn": "Bei ya ofa ({currency})",
     "saveAccount": "Hifadhi akaunti",
     "saveAsDraft": "Hifadhi kama rasimu",
     "saving": "Inahifadhi…",

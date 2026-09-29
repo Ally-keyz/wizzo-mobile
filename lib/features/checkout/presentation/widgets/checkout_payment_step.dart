@@ -16,13 +16,11 @@ class PaymentStep extends StatelessWidget {
     required this.method,
     required this.momoPhone,
     required this.totalAmount,
-    required this.termsAccepted,
     this.error,
     this.placing = false,
     required this.onMethodSelected,
     required this.onMomoPhoneChanged,
     required this.onChatWithSellers,
-    required this.onToggleTerms,
     required this.onPayNow,
   });
 
@@ -33,14 +31,20 @@ class PaymentStep extends StatelessWidget {
   final PaymentKind method;
   final String momoPhone;
   final num totalAmount;
-  final bool termsAccepted;
   final String? error;
   final bool placing;
   final void Function(PaymentKind kind) onMethodSelected;
   final void Function(String phone) onMomoPhoneChanged;
   final VoidCallback onChatWithSellers;
-  final VoidCallback onToggleTerms;
   final VoidCallback onPayNow;
+
+  /// Mobile Money plus Card, plus the wallet this device can actually use.
+  List<PaymentOption> _visibleOptions() {
+    final wallets = availableWallets().toSet();
+    return PaymentOption.all
+        .where((o) => !o.kind.isStripe || o.kind == PaymentKind.card || wallets.contains(o.kind))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +111,7 @@ class PaymentStep extends StatelessWidget {
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 10),
-        for (final option in PaymentOption.all)
+        for (final option in _visibleOptions())
           _PaymentMethodTile(
             option: option,
             selected: method == option.kind,
@@ -150,38 +154,8 @@ class PaymentStep extends StatelessWidget {
             ),
             onChanged: onMomoPhoneChanged,
           ),
-          const SizedBox(height: 10),
-          _Note(
-            icon: Icons.schedule_outlined,
-            color: colors.warning,
-            text: context.tr('checkout.momoSubmittedNote'),
-          ),
-        ],
-        if (method == PaymentKind.card) ...[
-          const SizedBox(height: 4),
-          _Note(
-            icon: Icons.credit_card_outlined,
-            color: colors.info,
-            text: context.tr('checkout.stripeCardNote'),
-          ),
-        ],
-        if (method == PaymentKind.momo) ...[
-          const SizedBox(height: 4),
-          _Note(
-            icon: Icons.phone_android_outlined,
-            color: colors.info,
-            text: context.tr('checkout.momoChargeNote'),
-          ),
         ],
         const SizedBox(height: 12),
-
-        // ── How the money is handled ─────────────────────────────────────
-        _Note(
-          icon: Icons.account_balance_wallet_outlined,
-          color: colors.success,
-          text: context.tr('checkout.wizzoCollectsNote'),
-        ),
-        const SizedBox(height: 16),
 
         // ── Chat with the sellers ────────────────────────────────────────
         SizedBox(
@@ -213,42 +187,10 @@ class PaymentStep extends StatelessWidget {
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onErrorContainer)),
           ),
-        InkWell(
-          onTap: onToggleTerms,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  termsAccepted
-                      ? Icons.check_circle
-                      : Icons.check_circle_outline,
-                  size: 20,
-                  color: termsAccepted
-                      ? colors.success
-                      : theme.colorScheme.outline,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    context.tr('checkout.termsAgreement'),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: (placing || !termsAccepted) ? null : onPayNow,
+            onPressed: placing ? null : onPayNow,
             style: FilledButton.styleFrom(
               backgroundColor: Palette.gold,
               foregroundColor: Colors.black,
@@ -291,43 +233,6 @@ class PaymentStep extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-class _Note extends StatelessWidget {
-  const _Note({required this.icon, required this.color, required this.text});
-
-  final IconData icon;
-  final Color color;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -430,6 +335,25 @@ class _PaymentIcon extends StatelessWidget {
           Icons.credit_card_outlined,
           size: 20,
           color: Color(0xFF635BFF),
+        ),
+      );
+    }
+
+    // Wallet marks: Google uses its four-colour "G", Apple its glyph. Both sit
+    // on the same neutral tile as the card icon so the row stays visually even.
+    if (kind == PaymentKind.googlePay || kind == PaymentKind.applePay) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        alignment: Alignment.center,
+        child: Icon(
+          kind == PaymentKind.googlePay ? Icons.g_mobiledata : Icons.apple,
+          size: kind == PaymentKind.googlePay ? 30 : 24,
+          color: kind == PaymentKind.googlePay ? const Color(0xFF4285F4) : Colors.black,
         ),
       );
     }

@@ -86,6 +86,7 @@ class NotificationsController extends AsyncNotifier<List<AppNotification>> {
         type: n.type,
         read: true,
         createdAt: n.createdAt,
+        data: n.data,
       );
 }
 

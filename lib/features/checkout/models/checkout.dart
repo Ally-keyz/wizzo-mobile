@@ -55,13 +55,32 @@ enum PaymentKind {
   momo,
   bank,
   cashOnDelivery,
-  card;
+  card,
+  googlePay,
+  applePay;
 
+  /// What the seller order records as its settlement method.
+  ///
+  /// The wallets settle through Stripe's hosted Checkout page as a card
+  /// charge, so they record as `card`. Sending `google_pay` instead would route
+  /// the order to the gateway path, which expects a `pm_` payment-method token
+  /// the app never produces — it would fail at charge time.
   String get apiValue => switch (this) {
         PaymentKind.momo => 'momo',
         PaymentKind.bank => 'bank',
         PaymentKind.cashOnDelivery => 'cash_on_delivery',
         PaymentKind.card => 'card',
+        PaymentKind.googlePay => 'card',
+        PaymentKind.applePay => 'card',
+      };
+
+  /// Wallets are offered on Stripe's hosted page, exactly like [card].
+  bool get isStripe => switch (this) {
+        PaymentKind.card ||
+        PaymentKind.googlePay ||
+        PaymentKind.applePay =>
+          true,
+        _ => false,
       };
 }
 
@@ -78,12 +97,7 @@ class PaymentOption {
   final String description;
   final List<String> providers;
 
-  String get apiValue => switch (kind) {
-        PaymentKind.momo => 'momo',
-        PaymentKind.bank => 'bank',
-        PaymentKind.cashOnDelivery => 'cash_on_delivery',
-        PaymentKind.card => 'card',
-      };
+  String get apiValue => kind.apiValue;
 
   static const List<PaymentOption> all = [
     PaymentOption(
@@ -96,7 +110,19 @@ class PaymentOption {
       kind: PaymentKind.card,
       label: 'Card / Stripe',
       description: 'Pay securely by debit or credit card',
-      providers: ['Card', 'Google Pay', 'Apple Pay'],
+      providers: ['Card'],
+    ),
+    PaymentOption(
+      kind: PaymentKind.googlePay,
+      label: 'Google Pay',
+      description: 'Pay with your Google account',
+      providers: ['Google Pay'],
+    ),
+    PaymentOption(
+      kind: PaymentKind.applePay,
+      label: 'Apple Pay',
+      description: 'Pay with Face ID or Touch ID',
+      providers: ['Apple Pay'],
     ),
   ];
 }
