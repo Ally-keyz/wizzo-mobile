@@ -521,7 +521,6 @@
     "accountSecurity": "Akaunti na Usalama",
     "accountSecuritySubtitle": "Nywila, barua pepe, na kulinda akaunti yako.",
     "browseTopics": "Vinjari mada",
-    "joinTelegram": "Jiunge na Jamii ya Wizzo kwenye Telegram kupata majibu ya haraka.",
     "needHelp": "Unahitaji msaada?",
     "ordersDelivery": "Maagizo na Uwasilishaji",
     "ordersDeliverySubtitle": "Hali ya maagizo, ratiba, na unachoweza kutarajia.",
@@ -533,7 +532,8 @@
     "sellingOnWizzo": "Kuuza kwenye Wizzo",
     "sellingOnWizzoSubtitle": "Kuorodhesha vitu na kulipwa — kitakuja katika Wizzo 2.0.",
     "title": "Kituo cha Msaada",
-    "topicComingSoon": "Makala ya kina ya msaada yanakuja. Kwa sasa, tuma barua pepe kwa {email}."
+    "topicComingSoon": "Makala ya kina ya msaada yanakuja. Kwa sasa, tuma barua pepe kwa {email}.",
+    "joinWhatsapp": "Jiunge na jumuiya ya Wizzo kwenye WhatsApp kwa majibu ya haraka."
   },
   "home": {
     "browseCategories": "Vinjari Kategoria",
@@ -636,7 +636,6 @@
     "getStarted": "Anza",
     "joinCommunity": "Jiunge na Jamii ya Wizzo",
     "next": "Ifuatayo",
-    "openTelegram": "Fungua Telegram",
     "skip": "Ruka",
     "t1Subtitle": "Soko la kuaminika la Rwanda kwa kununua na kuuza. Pata unachokihitaji kutoka kwa wauzaji wanaoaminika.",
     "t1Title": "Karibu kwenye Wizzo Market",
@@ -645,7 +644,8 @@
     "t3Subtitle": "Kila muuzaji amehakikiwa na kukaguliwa. Nunua kwa ujasiri ukijua unashughulika na watu halisi.",
     "t3Title": "Wauzaji Waliohakikiwa Pekee",
     "t4Subtitle": "Chaguzi rahisi za malipo ikiwemo Mobile Money, uhamisho wa benki na malipo baada ya kuwasilishwa. Lipa tu ukiwa unaridhika.",
-    "t4Title": "Miamala Salama"
+    "t4Title": "Miamala Salama",
+    "openWhatsapp": "Fungua WhatsApp"
   },
   "orders": {
     "cancelledInfo": "Agizo hili limekuwa {status}. Wasiliana na muuzaji kwa maelezo zaidi.",
@@ -1098,5 +1098,10 @@
     "emptyHint": "Gusa moyo kwenye bidhaa yoyote kuihifadhi hapa.",
     "loadFailed": "Imeshindwa kupakia orodha yako ya upendwa",
     "title": "Orodha ya Upendwa"
+  },
+  "cookies": {
+    "bannerText": "Tunatumia vidakuzi kuboresha uzoefu wako. Unakubali vidakuzi kwenye tovuti hii?",
+    "deny": "Kataa",
+    "allow": "Kubali"
   }
 }

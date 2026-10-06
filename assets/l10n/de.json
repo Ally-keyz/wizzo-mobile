@@ -521,7 +521,6 @@
     "accountSecurity": "Konto & Sicherheit",
     "accountSecuritySubtitle": "Passwort, E-Mail und Schutz deines Kontos.",
     "browseTopics": "Themen durchsuchen",
-    "joinTelegram": "Tritt der Wizzo-Community auf Telegram bei für sofortige Antworten.",
     "needHelp": "Hilfe nötig?",
     "ordersDelivery": "Bestellungen & Lieferung",
     "ordersDeliverySubtitle": "Bestellstatus, Zeitpläne und was dich erwartet.",
@@ -533,7 +532,8 @@
     "sellingOnWizzo": "Verkaufen auf Wizzo",
     "sellingOnWizzoSubtitle": "Artikel einstellen und bezahlt werden – kommt mit Wizzo 2.0.",
     "title": "Hilfecenter",
-    "topicComingSoon": "Ausführliche Hilfeartikel sind unterwegs. Vorerst sende eine E-Mail an {email}."
+    "topicComingSoon": "Ausführliche Hilfeartikel sind unterwegs. Vorerst sende eine E-Mail an {email}.",
+    "joinWhatsapp": "Trete der Wizzo-Community auf WhatsApp bei, um sofort Antworten zu erhalten."
   },
   "home": {
     "browseCategories": "Kategorien durchsuchen",
@@ -636,7 +636,6 @@
     "getStarted": "Loslegen",
     "joinCommunity": "Tritt der Wizzo-Community bei",
     "next": "Weiter",
-    "openTelegram": "Telegram öffnen",
     "skip": "Überspringen",
     "t1Subtitle": "Ruands vertrauenswürdiger Marktplatz zum Kaufen und Verkaufen. Finde, was du brauchst, bei Verkäufern, denen du vertrauen kannst.",
     "t1Title": "Willkommen bei Wizzo Market",
@@ -645,7 +644,8 @@
     "t3Subtitle": "Jeder Verkäufer ist verifiziert und bewertet. Kaufe mit Vertrauen, denn du hast es mit echten Menschen zu tun.",
     "t3Title": "Nur verifizierte Verkäufer",
     "t4Subtitle": "Flexible Zahlungsoptionen: Mobile Money, Überweisung und Zahlung bei Lieferung. Zahle nur, wenn du zufrieden bist.",
-    "t4Title": "Sichere Transaktionen"
+    "t4Title": "Sichere Transaktionen",
+    "openWhatsapp": "WhatsApp öffnen"
   },
   "orders": {
     "cancelledInfo": "Diese Bestellung wurde {status}. Kontaktiere den Verkäufer für weitere Informationen.",
@@ -1098,5 +1098,10 @@
     "emptyHint": "Tippe bei jedem Produkt auf das Herz, um es hier zu speichern.",
     "loadFailed": "Deine Wunschliste konnte nicht geladen werden",
     "title": "Meine Wunschliste"
+  },
+  "cookies": {
+    "bannerText": "Wir verwenden Cookies, um dein Erlebnis zu verbessern. Erlaubst du Cookies auf dieser Seite?",
+    "deny": "Ablehnen",
+    "allow": "Akzeptieren"
   }
 }

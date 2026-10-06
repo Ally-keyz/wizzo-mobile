@@ -20,6 +20,7 @@ class AppPrefs {
   static const _kNotifyPromo = 'wizzo_notify_promo';
   static const _kNotifySystem = 'wizzo_notify_system';
   static const _kCurrency = 'wizzo_currency';
+  static const _kCookieConsent = 'wizzo_cookie_consent';
 
   static Future<SharedPreferences> get _instance async {
     return _prefs ??= await SharedPreferences.getInstance();
@@ -114,6 +115,14 @@ class AppPrefs {
 
   static Future<void> setNotifySystem(bool value) async {
     (await _instance).setBool(_kNotifySystem, value);
+  }
+
+  // ---- Cookie consent ------------------------------------------------------
+  static Future<String?> cookieConsent() async =>
+      (await _instance).getString(_kCookieConsent);
+
+  static Future<void> setCookieConsent(String value) async {
+    (await _instance).setString(_kCookieConsent, value);
   }
 
   // ---- Display currency --------------------------------------------------

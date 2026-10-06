@@ -521,7 +521,6 @@
     "accountSecurity": "Konte n'Umutekano",
     "accountSecuritySubtitle": "Ijambo ry'ibanga, imeyili no kurinda konte yawe.",
     "browseTopics": "Renga mu nsanganyamatsiko",
-    "joinTelegram": "Injira mu Muryango wa Wizzo kuri Telegram kugira ngo ubone ibisubizo byihuse.",
     "needHelp": "Ukeneye ubufasha?",
     "ordersDelivery": "Amabuyoboze n'Ukohereza",
     "ordersDeliverySubtitle": "Ubyo bukoze, igenamiterere n'icyo kwitega.",
@@ -533,7 +532,8 @@
     "sellingOnWizzo": "Kugurisha kuri Wizzo",
     "sellingOnWizzoSubtitle": "Kwandika ibintu no kwishyurwa — biraza muri Wizzo 2.0.",
     "title": "Ikigo cy'Ubufasha",
-    "topicComingSoon": "Inkuru z'ubufasha zirambuye ziraza vuba. Kwa none, twandikire kuri {email}."
+    "topicComingSoon": "Inkuru z'ubufasha zirambuye ziraza vuba. Kwa none, twandikire kuri {email}.",
+    "joinWhatsapp": "Injira mu itsinda rya Wizzo kuri WhatsApp kugirango ubone ibisubizo byihuse."
   },
   "home": {
     "browseCategories": "Hitamo ubwoko",
@@ -636,7 +636,6 @@
     "getStarted": "Tangira",
     "joinCommunity": "Injira mu muryango wa Wizzo",
     "next": "Komeza",
-    "openTelegram": "Fungura Telegram",
     "skip": "Simbuta",
     "t1Subtitle": "Isoko ryizewe ryo mu Rwanda ryo kugura no kugurisha. Shakisha icyo ukeneye ku bacuruzi wizeye.",
     "t1Title": "Murakaza neza kuri Isoko rya Wizzo",
@@ -645,7 +644,8 @@
     "t3Subtitle": "Buri mucuruzi ariyemejwe kandi asuzumwe. Guru neza umenye ko ufitanye n'abantu nyakuri.",
     "t3Title": "Abacuruzi Bemewe Gusa",
     "t4Subtitle": "Uburyo bwo kwishyura buroroshye harimo Mobile Money, kohereza kuri banki no kwishyura igihe utanze. Ishkira uramutse wumva unyuzwe.",
-    "t4Title": "Ibikorwa by'Ubucuruzi Birinzwe"
+    "t4Title": "Ibikorwa by'Ubucuruzi Birinzwe",
+    "openWhatsapp": "Fungura WhatsApp"
   },
   "orders": {
     "cancelledInfo": "Ubu buyoboze bwa {status}. Vugana umucuruzi wabimenya menshi.",
@@ -1098,5 +1098,10 @@
     "emptyHint": "Kuganda ku mutima ku gicuruzwa icyo aricyo cyose kugira ngo ukibike hano.",
     "loadFailed": "Ntibyashobotse gupakira urutonde rwawe",
     "title": "Urutonde rw'Ibikunzwe"
+  },
+  "cookies": {
+    "bannerText": "Dukoresha cookies kugirango tunonosore ubumenyi bwawe. Wemeza cookies kuri iyi site?",
+    "deny": "Kwanga",
+    "allow": "Emera"
   }
 }

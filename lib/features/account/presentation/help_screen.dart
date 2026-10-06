@@ -1,10 +1,14 @@
 ﻿import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/coming_soon_sheet.dart';
+
+const _whatsAppCommunityUrl =
+    'https://chat.whatsapp.com/HEeBCmTxFVKAXLNsU8hbZT?s=cl&p=i&mlu=4&ilr=4';
 
 class HelpScreen extends ConsumerWidget {
   const HelpScreen({super.key});
@@ -75,23 +79,40 @@ class HelpScreen extends ConsumerWidget {
               ),
             ),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: theme.colorScheme.outlineVariant),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.telegram, color: Color(0xFF229ED9)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    context.tr('help.joinTelegram'),
-                    style: theme.textTheme.bodySmall,
+          InkWell(
+            onTap: () async {
+              final launched = await launchUrl(
+                Uri.parse(_whatsAppCommunityUrl),
+                mode: LaunchMode.externalApplication,
+              );
+              if (!launched && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    behavior: SnackBarBehavior.floating,
+                    content: Text(context.tr('common.linkOpenError')),
                   ),
-                ),
-              ],
+                );
+              }
+            },
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: theme.colorScheme.outlineVariant),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.chat, color: Color(0xFF25D366)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      context.tr('help.joinWhatsapp'),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

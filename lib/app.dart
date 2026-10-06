@@ -6,6 +6,7 @@ import 'core/currency/currency_controller.dart';
 import 'core/i18n/rw_fallback_localizations.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/cookie_consent.dart';
 import 'features/messages/providers/chat_providers.dart';
 import 'features/settings/theme_provider.dart';
 
@@ -31,7 +32,7 @@ class WizzoApp extends ConsumerWidget {
     // price switches instantly (like the web re-rendering on store change).
     return ValueListenableBuilder<CurrencyState>(
       valueListenable: currencyController,
-      builder: (context, _, _) => MaterialApp.router(
+      builder: (context, _, __) => MaterialApp.router(
         title: 'Wizzo Market',
         debugShowCheckedModeBanner: false,
         routerConfig: router,
@@ -50,6 +51,12 @@ class WizzoApp extends ConsumerWidget {
         ],
         supportedLocales: _easyLocales,
         locale: context.locale,
+        builder: (context, child) => Stack(
+          children: [
+            child ?? const SizedBox.shrink(),
+            const CookieConsentBanner(),
+          ],
+        ),
       ),
     );
   }

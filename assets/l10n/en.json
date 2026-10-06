@@ -521,7 +521,6 @@
     "accountSecurity": "Account & Security",
     "accountSecuritySubtitle": "Password, email, and protecting your account.",
     "browseTopics": "Browse topics",
-    "joinTelegram": "Join the Wizzo Community on Telegram for instant answers.",
     "needHelp": "Need help?",
     "ordersDelivery": "Orders & Delivery",
     "ordersDeliverySubtitle": "Order status, timelines, and what to expect.",
@@ -533,7 +532,8 @@
     "sellingOnWizzo": "Selling on Wizzo",
     "sellingOnWizzoSubtitle": "Listing items and getting paid — coming in Wizzo 2.0.",
     "title": "Help Center",
-    "topicComingSoon": "Detailed help articles are on the way. For now, email {email}."
+    "topicComingSoon": "Detailed help articles are on the way. For now, email {email}.",
+    "joinWhatsapp": "Join the Wizzo Community on WhatsApp for instant answers."
   },
   "home": {
     "browseCategories": "Browse Categories",
@@ -636,7 +636,6 @@
     "getStarted": "Get Started",
     "joinCommunity": "Join the Wizzo Community",
     "next": "Next",
-    "openTelegram": "Open Telegram",
     "skip": "Skip",
     "t1Subtitle": "Rwanda's trusted marketplace for buying and selling. Find what you need from sellers you can trust.",
     "t1Title": "Welcome to Wizzo Market",
@@ -645,7 +644,8 @@
     "t3Subtitle": "Every seller is verified and reviewed. Shop with confidence knowing you're dealing with real people.",
     "t3Title": "Verified Sellers Only",
     "t4Subtitle": "Flexible payment options including Mobile Money, bank transfer and cash on delivery. Pay only when you're happy.",
-    "t4Title": "Secure Transactions"
+    "t4Title": "Secure Transactions",
+    "openWhatsapp": "Open WhatsApp"
   },
   "orders": {
     "cancelledInfo": "This order has been {status}. Contact the seller for more info.",
@@ -1098,5 +1098,10 @@
     "emptyHint": "Tap the heart on any product to save it here.",
     "loadFailed": "Could not load your wishlist",
     "title": "My Wishlist"
+  },
+  "cookies": {
+    "bannerText": "We use cookies to improve your experience. Do you allow cookies on this site?",
+    "deny": "Deny",
+    "allow": "Allow"
   }
 }

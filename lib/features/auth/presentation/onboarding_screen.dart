@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/coming_soon_sheet.dart';
@@ -182,14 +183,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  void _showCommunity(BuildContext context) {
-    ComingSoonSheet.show(
-      context,
-      title: context.tr('onboarding.communityTitle'),
-      description: context.tr('onboarding.communityDesc'),
-      icon: Icons.groups_outlined,
-      ctaLabel: context.tr('onboarding.openTelegram'),
+  void _showCommunity(BuildContext context) async {
+    final launched = await launchUrl(
+      Uri.parse(
+          'https://chat.whatsapp.com/HEeBCmTxFVKAXLNsU8hbZT?s=cl&p=i&mlu=4&ilr=4'),
+      mode: LaunchMode.externalApplication,
     );
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(context.tr('common.linkOpenError')),
+        ),
+      );
+    }
   }
 
   Widget _slideArt(

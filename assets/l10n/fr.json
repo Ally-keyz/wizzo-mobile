@@ -521,7 +521,6 @@
     "accountSecurity": "Compte et sécurité",
     "accountSecuritySubtitle": "Mot de passe, e-mail et protection de votre compte.",
     "browseTopics": "Parcourir les sujets",
-    "joinTelegram": "Rejoignez la communauté Wizzo sur Telegram pour des réponses instantanées.",
     "needHelp": "Besoin d'aide ?",
     "ordersDelivery": "Commandes et livraison",
     "ordersDeliverySubtitle": "Statut des commandes, délais et à quoi vous attendre.",
@@ -533,7 +532,8 @@
     "sellingOnWizzo": "Vendre sur Wizzo",
     "sellingOnWizzoSubtitle": "Mettre en ligne des articles et être payé — à venir dans Wizzo 2.0.",
     "title": "Centre d'aide",
-    "topicComingSoon": "Des articles d'aide détaillés arrivent bientôt. Pour l'instant, écrivez à {email}."
+    "topicComingSoon": "Des articles d'aide détaillés arrivent bientôt. Pour l'instant, écrivez à {email}.",
+    "joinWhatsapp": "Rejoignez la communauté Wizzo sur WhatsApp pour des réponses instantanées."
   },
   "home": {
     "browseCategories": "Parcourir les catégories",
@@ -636,7 +636,6 @@
     "getStarted": "Commencer",
     "joinCommunity": "Rejoindre la communauté Wizzo",
     "next": "Suivant",
-    "openTelegram": "Ouvrir Telegram",
     "skip": "Passer",
     "t1Subtitle": "La place de marché de confiance du Rwanda pour acheter et vendre. Trouvez ce dont vous avez besoin auprès de vendeurs de confiance.",
     "t1Title": "Bienvenue sur Wizzo Market",
@@ -645,7 +644,8 @@
     "t3Subtitle": "Chaque vendeur est vérifié et évalué. Achetez en toute confiance en sachant que vous traitez avec de vraies personnes.",
     "t3Title": "Vendeurs vérifiés uniquement",
     "t4Subtitle": "Options de paiement flexibles : Mobile Money, virement bancaire et paiement à la livraison. Ne payez que lorsque vous êtes satisfait.",
-    "t4Title": "Transactions sécurisées"
+    "t4Title": "Transactions sécurisées",
+    "openWhatsapp": "Ouvrir WhatsApp"
   },
   "orders": {
     "cancelledInfo": "Cette commande a été {status}. Contactez le vendeur pour plus d'informations.",
@@ -1098,5 +1098,10 @@
     "emptyHint": "Touchez le cœur sur n'importe quel produit pour l'enregistrer ici.",
     "loadFailed": "Impossible de charger votre liste de souhaits",
     "title": "Ma liste de souhaits"
+  },
+  "cookies": {
+    "bannerText": "Nous utilisons des cookies pour améliorer votre expérience. Autorisez-vous les cookies sur ce site ?",
+    "deny": "Refuser",
+    "allow": "Accepter"
   }
 }
