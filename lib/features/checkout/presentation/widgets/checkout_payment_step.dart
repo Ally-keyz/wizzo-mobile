@@ -8,6 +8,7 @@ import '../../../../core/widgets/w_widgets.dart';
 import '../../../cart/models/cart.dart';
 import '../../models/checkout.dart';
 import 'checkout_shared.dart';
+import 'payment_marks.dart';
 
 class PaymentStep extends StatelessWidget {
   const PaymentStep({
@@ -26,9 +27,10 @@ class PaymentStep extends StatelessWidget {
 
   final CartData cart;
 
-  /// One payment method for the whole order — the platform collects the total
-  /// once and settles each seller's share afterwards.
-  final PaymentKind method;
+  /// The selected method for the whole order (platform collects the total
+  /// once and settles each seller's share afterwards). Null until the buyer
+  /// explicitly picks a tile — nothing is pre-selected by default.
+  final PaymentKind? method;
   final String momoPhone;
   final num totalAmount;
   final String? error;
@@ -38,13 +40,9 @@ class PaymentStep extends StatelessWidget {
   final VoidCallback onChatWithSellers;
   final VoidCallback onPayNow;
 
-  /// Mobile Money plus Card, plus the wallet this device can actually use.
-  List<PaymentOption> _visibleOptions() {
-    final wallets = availableWallets().toSet();
-    return PaymentOption.all
-        .where((o) => !o.kind.isStripe || o.kind == PaymentKind.card || wallets.contains(o.kind))
-        .toList();
-  }
+  /// All payment options: MoMo, Visa/Mastercard (Stripe), Google Pay and
+  /// Apple Pay. Apple Pay must always be visible alongside Google Pay.
+  List<PaymentOption> _visibleOptions() => PaymentOption.all;
 
   @override
   Widget build(BuildContext context) {
@@ -306,84 +304,36 @@ class _PaymentIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    if (kind == PaymentKind.card) {
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.credit_card_outlined,
-          size: 20,
-          color: Color(0xFF635BFF),
-        ),
-      );
-    }
-
-    // Wallet marks: Google uses its four-colour "G", Apple its glyph. Both sit
-    // on the same neutral tile as the card icon so the row stays visually even.
-    if (kind == PaymentKind.googlePay || kind == PaymentKind.applePay) {
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        alignment: Alignment.center,
-        child: Icon(
-          kind == PaymentKind.googlePay ? Icons.g_mobiledata : Icons.apple,
-          size: kind == PaymentKind.googlePay ? 30 : 24,
-          color: kind == PaymentKind.googlePay ? const Color(0xFF4285F4) : Colors.black,
-        ),
-      );
-    }
-
-    if (kind == PaymentKind.momo) {
-      return Container(
-        width: size,
-        height: size,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFFFCC00), Color(0xFFFDB913)],
+    switch (kind) {
+      case PaymentKind.momo:
+        return MomoMark(size: size);
+      case PaymentKind.card:
+        return CardMark(height: size);
+      case PaymentKind.googlePay:
+        return GooglePayMark(height: size * 0.6);
+      case PaymentKind.applePay:
+        return ApplePayMark(height: size * 0.6);
+      case PaymentKind.bank:
+      case PaymentKind.cashOnDelivery:
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(10),
           ),
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-        ),
-        alignment: Alignment.center,
-        child: const Text(
-          'M',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF0066B2),
+          alignment: Alignment.center,
+          child: Icon(
+            kind == PaymentKind.bank
+                ? Icons.account_balance_outlined
+                : Icons.payments_outlined,
+            size: 20,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
-        ),
-      );
+        );
     }
-
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest
-            .withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      alignment: Alignment.center,
-      child: Icon(
-        kind == PaymentKind.bank
-            ? Icons.account_balance_outlined
-            : Icons.payments_outlined,
-        size: 20,
-        color: theme.colorScheme.onSurfaceVariant,
-      ),
-    );
   }
 }

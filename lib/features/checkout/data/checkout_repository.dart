@@ -45,6 +45,33 @@ class CheckoutRepository {
     return items.map(SellerPaymentInfo.fromApi).toList();
   }
 
+  /// Creates a Stripe PaymentIntent for the in-app PaymentSheet flow
+  /// (mirrors the web checkout's PaymentElement modal — no hosted page).
+  Future<StripePaymentIntentResult> createStripePaymentIntent({
+    required List<Map<String, dynamic>> sellerPayments,
+    String deliveryOption = 'delivery',
+    String? deliveryAddressId,
+  }) async {
+    final data = await _api.post('/orders/stripe/payment-intent', body: {
+      'sellerPaymentSelection': sellerPayments,
+      'deliveryOption': deliveryOption,
+      if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
+        'deliveryAddressId': deliveryAddressId,
+    });
+    return StripePaymentIntentResult.fromApi(data);
+  }
+
+  /// Verifies the PaymentIntent succeeded and returns the placed order.
+  Future<StripeCheckoutStatusResult> confirmStripePaymentIntent(
+    String intentId,
+  ) async {
+    final data = await _api.post(
+      '/orders/stripe/payment-intent/confirm',
+      body: {'intentId': intentId},
+    );
+    return StripeCheckoutStatusResult.fromApi(data);
+  }
+
   /// Starts a Stripe-hosted Checkout session for the whole cart and returns
   /// the page to open. Nothing is charged until the buyer pays on Stripe's
   /// page; the webhook then places the order automatically.

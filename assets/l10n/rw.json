@@ -321,6 +321,7 @@
     "momoPhoneField": "Nomero ya telefone ya MoMo",
     "momoPhoneHint": "788 123 456",
     "momoPhoneInvalid": "Injiza nimero ya MoMo ihuye",
+    "selectPaymentMethod": "Hitamo uburyo bwo kwishyura",
     "momoStkHint": "Tuzohereza igisabe cyo kwishyura (STK push) kuri iyi nomero.",
     "momoSubmittedNote": "Ikubitiro ryawe riguma ari \"Ubwishyu bwatanzwe\" kugeza ubwo provider yawe ya mobile money yemeza ubwishyu buhagarariwe yanditse. Ntabwo byandikwa ko byishyuwe mu buryo bwikora.",
     "momoChargeNote": "Ikubitiro ryawe ryose rishyurwa inshimo imwe binyuze kuri MoMo. Tuzohereza STK push kuri nomero iri hejuru iyo ukandika kwishyura.",
@@ -331,7 +332,7 @@
         "desc": "Shyura mu buryo butaziguye binyuze kuri MTN MoMo cyangwa Airtel Money"
       },
       "card": {
-        "name": "Ikarita / Stripe",
+        "name": "Visa/Mastercard",
         "desc": "Shyura mu mutekano ukoresheje ikarita ya banki cyangwa y'inguzanyo"
       },
       "bank": {
@@ -349,7 +350,8 @@
       "applePay": {
         "name": "Apple Pay",
         "desc": "Paya ukoresheje Face ID cyangwa Touch ID"
-      }
+      },
+      "notCompleted": "Kwishyura ntibirangiye."
     },
     "totalToPay": "Igiteranyo cyo kwishyura",
     "wizzoCollectsNote": "Wishyura Wizzo rimwe. Twishyura buri mucuruzi umugabane we hanyuma tumwohereze igice cy'ubuyoboze agomba gutanga.",
@@ -1103,5 +1105,5 @@
     "bannerText": "Dukoresha cookies kugirango tunonosore ubumenyi bwawe. Wemeza cookies kuri iyi site?",
     "deny": "Kwanga",
     "allow": "Emera"
-  }
+  },
 }

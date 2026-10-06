@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/storage/app_prefs.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/flag_icon.dart';
 
 class LanguageScreen extends ConsumerStatefulWidget {
   const LanguageScreen({super.key});
@@ -15,12 +16,12 @@ class LanguageScreen extends ConsumerStatefulWidget {
 class _LanguageScreenState extends ConsumerState<LanguageScreen> {
   String? _lang;
 
-  static const _languages = <({String code, String native, String labelKey})>[
-    (code: 'en', native: 'English', labelKey: 'language.english'),
-    (code: 'fr', native: 'Français', labelKey: 'language.french'),
-    (code: 'rw', native: 'Kinyarwanda', labelKey: 'language.kinyarwanda'),
-    (code: 'de', native: 'Deutsch', labelKey: 'language.german'),
-    (code: 'sw', native: 'Kiswahili', labelKey: 'language.swahili'),
+  static const _languages = <({String code, String native, String labelKey, String flag})>[
+    (code: 'en', native: 'English', labelKey: 'language.english', flag: 'gb'),
+    (code: 'fr', native: 'Français', labelKey: 'language.french', flag: 'fr'),
+    (code: 'rw', native: 'Kinyarwanda', labelKey: 'language.kinyarwanda', flag: 'rw'),
+    (code: 'de', native: 'Deutsch', labelKey: 'language.german', flag: 'de'),
+    (code: 'sw', native: 'Kiswahili', labelKey: 'language.swahili', flag: 'ke'),
   ];
 
   @override
@@ -59,6 +60,7 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
               value: lang.code,
               groupValue: currentLang,
               activeColor: Palette.gold,
+              secondary: FlagIcon(countryCode: lang.flag, width: 22),
               title: Text(
                 lang.native,
                 style: theme.textTheme.bodyMedium?.copyWith(

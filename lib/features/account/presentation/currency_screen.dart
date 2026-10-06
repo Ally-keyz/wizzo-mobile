@@ -6,6 +6,7 @@ import '../../../core/currency/currencies.dart';
 import '../../../core/currency/currency_controller.dart';
 import '../../../core/currency/currency_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/flag_icon.dart';
 
 /// Lets the user pick the currency used to display every price in the app.
 ///
@@ -110,19 +111,27 @@ class _CurrencyScreenState extends ConsumerState<CurrencyScreen> {
                         RadioListTile<String>(
                           value: def.code,
                           activeColor: Palette.gold,
+                          secondary: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              FlagIcon(countryCode: def.flagCode, width: 22),
+                              const SizedBox(height: 2),
+                              Text(
+                                formatFromBase(100000, def.code, state.rates),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
                           title: Text(
                             def.name,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          subtitle: Text('${def.code} · ${def.symbol}'),
-                          secondary: Text(
-                            formatFromBase(100000, def.code, state.rates),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
+                          subtitle: Text(def.symbol),
                         ),
                     ],
                   ),

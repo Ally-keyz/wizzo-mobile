@@ -321,6 +321,7 @@
     "momoPhoneField": "MoMo-Telefonnummer",
     "momoPhoneHint": "788 123 456",
     "momoPhoneInvalid": "Bitte geben Sie eine gultige MoMo-Nummer ein",
+    "selectPaymentMethod": "Wählen Sie eine Zahlungsmethode",
     "momoStkHint": "Wir senden eine Zahlungsaufforderung (STK-Push) an diese Nummer.",
     "momoSubmittedNote": "Ihre Bestellung bleibt „Zahlung eingereicht“, bis Ihr Mobile-Money-Anbieter die Zahlung über die auf Ihrem Telefon gesendete Aufforderung bestätigt. Sie wird NICHT automatisch als bezahlt markiert.",
     "momoChargeNote": "Ihre gesamte Bestellung wird einmalig über MoMo berechnet. Wir senden einen STK-Push an die obige Nummer, sobald Sie auf Bezahlen tippen.",
@@ -331,7 +332,7 @@
         "desc": "Direkt via MTN MoMo oder Airtel Money bezahlen"
       },
       "card": {
-        "name": "Karte / Stripe",
+        "name": "Visa/Mastercard",
         "desc": "Sicher per Debit- oder Kreditkarte bezahlen"
       },
       "bank": {
@@ -349,7 +350,8 @@
       "applePay": {
         "name": "Apple Pay",
         "desc": "Mit Face ID oder Touch ID bezahlen"
-      }
+      },
+      "notCompleted": "Zahlung nicht abgeschlossen."
     },
     "totalToPay": "Zu zahlender Gesamtbetrag",
     "wizzoCollectsNote": "Du zahlst einmal an Wizzo. Wir zahlen jedem Verkäufer seinen Anteil und senden ihm den Teil der Bestellung, den er liefern muss.",
@@ -1103,5 +1105,5 @@
     "bannerText": "Wir verwenden Cookies, um dein Erlebnis zu verbessern. Erlaubst du Cookies auf dieser Seite?",
     "deny": "Ablehnen",
     "allow": "Akzeptieren"
-  }
+  },
 }

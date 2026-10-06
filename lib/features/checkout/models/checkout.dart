@@ -317,6 +317,41 @@ class PlacementSummary {
   }
 }
 
+/// Server response for `POST /orders/stripe/payment-intent` — the values
+/// needed to initialise an in-app Stripe PaymentSheet (no hosted page).
+class StripePaymentIntentResult {
+  const StripePaymentIntentResult({
+    required this.clientSecret,
+    required this.intentId,
+    required this.publishableKey,
+    this.grandTotal,
+    required this.currency,
+    this.chargeTotal,
+  });
+
+  final String clientSecret;
+  final String intentId;
+  final String publishableKey;
+  final num? grandTotal;
+  final String currency;
+  final num? chargeTotal;
+
+  factory StripePaymentIntentResult.fromApi(dynamic json) {
+    if (json is! Map<String, dynamic>) {
+      throw const FormatException('Invalid payment intent response');
+    }
+    return StripePaymentIntentResult(
+      clientSecret: json['clientSecret']?.toString() ?? '',
+      intentId: (json['intentId'] ?? json['_id'])?.toString() ?? '',
+      publishableKey: json['publishableKey']?.toString() ?? '',
+      grandTotal: json['grandTotal'] is num ? json['grandTotal'] as num : null,
+      currency: json['currency']?.toString() ?? 'rwf',
+      chargeTotal:
+          json['chargeTotal'] is num ? json['chargeTotal'] as num : null,
+    );
+  }
+}
+
 /// Server response for `POST /orders/stripe/checkout-session` — the hosted
 /// Stripe Checkout page to open plus the intent id used to poll status.
 class StripeCheckoutResult {

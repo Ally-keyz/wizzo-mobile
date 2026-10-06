@@ -13,6 +13,7 @@ import '../../../core/currency/currency_service.dart';
 import '../../../core/i18n/localization_helpers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/widgets/flag_icon.dart';
 import '../../../core/widgets/w_async.dart';
 import '../../../core/widgets/w_widgets.dart';
 import '../../catalog/models/product.dart';
@@ -1245,14 +1246,14 @@ class _CurrencyPickerShellState extends State<_CurrencyPickerShell> {
                     selectedTileColor: scheme.primaryContainer,
                     leading: def.code == state.code
                         ? Icon(Icons.check_circle, color: scheme.primary)
-                        : const Icon(Icons.payments_outlined),
+                        : FlagIcon(countryCode: def.flagCode, width: 24),
                     title: Text(
                       def.name,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    subtitle: Text('${def.code} · ${def.symbol}'),
+                    subtitle: Text(def.symbol),
                     trailing: Text(
                       formatFromBase(25000, def.code, state.rates),
                       style: theme.textTheme.bodySmall?.copyWith(

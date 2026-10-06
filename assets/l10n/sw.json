@@ -321,6 +321,7 @@
     "momoPhoneField": "Nambari ya simu ya MoMo",
     "momoPhoneHint": "788 123 456",
     "momoPhoneInvalid": "Weka namba sahihi ya MoMo",
+    "selectPaymentMethod": "Chagua njia ya malipo",
     "momoStkHint": "Tutakutumia arifa ya malipo (STK push) kwa nambari hii.",
     "momoSubmittedNote": "Agizo lako linahifadhiwa kama \"Malipo yamewasilishwa\" hadi provider yako ya mobile money itakapothibitisha malipo kupitia arifa iliyotumwa kwenye simu yako. Halijawekwa kama yamelipwa kiotomatiki.",
     "momoChargeNote": "Agizo lako lote linatozwa mara moja kupitia MoMo. Tutatumia STK push kwa nambari iliyo juu utakapogonga Lipa.",
@@ -331,7 +332,7 @@
         "desc": "Lipa moja kwa moja kupitia MTN MoMo au Airtel Money"
       },
       "card": {
-        "name": "Kadi / Stripe",
+        "name": "Visa/Mastercard",
         "desc": "Lipa kwa usalama kwa kadi ya benki au ya mkopo"
       },
       "bank": {
@@ -349,7 +350,8 @@
       "applePay": {
         "name": "Apple Pay",
         "desc": "Lipa kwa kutumia Face ID au Touch ID"
-      }
+      },
+      "notCompleted": "Malipo hayakukamilika."
     },
     "totalToPay": "Jumla ya kulipa",
     "wizzoCollectsNote": "Unamlipa Wizzo mara moja. Tunamlipa kila muuzaji sehemu yake na kumtuma sehemu ya agizo analopaswa kuandaa.",
@@ -1103,5 +1105,5 @@
     "bannerText": "Tunatumia vidakuzi kuboresha uzoefu wako. Unakubali vidakuzi kwenye tovuti hii?",
     "deny": "Kataa",
     "allow": "Kubali"
-  }
+  },
 }

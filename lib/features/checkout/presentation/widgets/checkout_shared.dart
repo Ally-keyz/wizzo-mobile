@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -30,17 +28,6 @@ String paymentKindDescription(BuildContext context, PaymentKind kind) =>
       PaymentKind.googlePay => context.tr('checkout.payment.googlePay.desc'),
       PaymentKind.applePay => context.tr('checkout.payment.applePay.desc'),
     };
-
-/// The wallet options that make sense on this device.
-///
-/// Google Pay is Android/Chrome only and Apple Pay is iOS/Safari only — a
-/// TECNO phone can never complete an Apple Pay sheet, so offering it there is
-/// a dead tile that only costs the user a failed tap.
-List<PaymentKind> availableWallets() {
-  if (Platform.isAndroid) return const [PaymentKind.googlePay];
-  if (Platform.isIOS) return const [PaymentKind.applePay];
-  return const [];
-}
 
 /// Shows the seller's pay-in details for a manual payment — the mobile
 /// equivalent of the web checkout `PaymentInstructions` component.
