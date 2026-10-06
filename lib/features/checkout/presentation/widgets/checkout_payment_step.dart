@@ -111,12 +111,22 @@ class PaymentStep extends StatelessWidget {
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 10),
-        for (final option in _visibleOptions())
-          _PaymentMethodTile(
-            option: option,
-            selected: method == option.kind,
-            onTap: () => onMethodSelected(option.kind),
-          ),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 3.4,
+          children: [
+            for (final option in _visibleOptions())
+              _PaymentMethodTile(
+                option: option,
+                selected: method == option.kind,
+                onTap: () => onMethodSelected(option.kind),
+              ),
+          ],
+        ),
         if (needsPhone) ...[
           const SizedBox(height: 4),
           TextField(
@@ -257,53 +267,29 @@ class _PaymentMethodTile extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: selected
               ? colors.goldSoft.withValues(alpha: 0.6)
-              : theme.colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(14),
+              : theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? Palette.gold : theme.colorScheme.outlineVariant,
+            width: selected ? 1.5 : 1,
+          ),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _PaymentIcon(kind: option.kind, size: 36),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    paymentKindLabel(context, option.kind),
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    paymentKindDescription(context, option.kind),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
+            _PaymentIcon(kind: option.kind, size: 24),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                paymentKindLabel(context, option.kind),
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
-            ),
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: selected ? Palette.gold : Colors.transparent,
-                border: Border.all(
-                  color: selected ? Palette.gold : theme.colorScheme.outline,
-                  width: 2,
-                ),
-              ),
-              child: selected
-                  ? const Icon(Icons.check, size: 14, color: Colors.white)
-                  : null,
             ),
           ],
         ),

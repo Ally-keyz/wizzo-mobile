@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:google_sign_in/google_sign_in.dart';
-
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
@@ -75,82 +73,6 @@ class AuthRepository {
       body: {'email': email.trim(), 'code': code.trim()},
     );
   }
-
-  Future<AuthResult> google() async {
-    // Only pass non-empty values. On Android an empty `serverClientId` string
-    // would make the native plugin call requestIdToken('') and fail instead of
-    // falling back to requestEmail-only sign-in.
-    final serverClientId =
-        AppConfig.googleServerClientId.trim().isEmpty
-            ? null
-            : AppConfig.googleServerClientId.trim();
-    final google = GoogleSignIn(
-      clientId:
-          AppConfig.googleAndroidClientId.trim().isEmpty
-              ? null
-              : AppConfig.googleAndroidClientId.trim(),
-      serverClientId: serverClientId,
-      scopes: ['email', 'profile'],
-    );
-    try {
-      final account = await google.signIn();
-      if (account == null) {
-        throw const ApiException(
-          status: 0,
-          code: 'cancelled',
-          message: 'Google sign-in was cancelled.',
-        );
-      }
-      final idToken = await account.authentication.then((a) => a.idToken);
-      if (idToken == null) {
-        // On Android an ID token is only issued when an OAuth audience is
-        // configured: the app needs `serverClientId` (the web client id) and
-        // the signing key's SHA-1 registered in the Google Cloud console.
-        CrashLogger.record(
-          'auth/google',
-          'idToken is null: app built without Google OAuth config',
-        );
-        throw const ApiException(
-          status: 0,
-          code: 'google-config',
-          message: 'Google sign-in didn\'t return an auth token. '
-              'Make sure the app is signed with the registered key, '
-              'or use email sign-in in the meantime.',
-        );
-      }
-      final data = await _api.post('/auth/google', body: {'idToken': idToken});
-      return _toResult(data);
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      // Surface the real Google error (e.g. 12500 DEVELOPER_ERROR for an
-      // unregistered signing fingerprint) and record it for diagnosis.
-      CrashLogger.record('auth/google', e);
-      final detail = e.toString().trim();
-      // Play Services reports 12500, not the legacy "10:". Matching on "10:"
-      // only meant this hint never fired for the exact case it was written for,
-      // so the failure surfaced as an opaque status with no explanation.
-      final hint = _isDeveloperError(detail)
-          ? ' (this build\'s signing key is not registered with Google — '
-                'add the SHA-1 fingerprint of the key that signed this build '
-                'to the Android OAuth client.)'
-          : '';
-      throw ApiException(
-        status: 0,
-        code: 'google',
-        message:
-            'Google sign-in failed: $detail$hint '
-            'Use email sign-in in the meantime.',
-      );
-    }
-  }
-
-  /// True when [detail] is Play Services' developer-error status, in either the
-  /// modern (`12500`) or legacy (`10:`) rendering. That status means Google
-  /// could not match this build's package name + signing certificate to an
-  /// Android OAuth client, which is a console setup task, not a code fault.
-  static bool _isDeveloperError(String detail) =>
-      detail.contains('12500') || detail.contains('10:');
 
   /// Refreshes tokens; returns the new access token or null on failure.
   Future<String?> refresh() async {

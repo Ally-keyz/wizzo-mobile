@@ -67,25 +67,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     context.go(refParam == 'create-store' ? '/seller/create-store' : '/home');
   }
 
-  Future<void> _google() async {
-    if (_busy) return;
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      await ref.read(authControllerProvider.notifier).google();
-      if (mounted) _afterLogin();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = localizeException(context, e);
-          _busy = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -129,31 +110,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      OutlinedButton.icon(
-                        onPressed: _busy ? null : _google,
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        icon: const _GoogleIcon(),
-                        label: Text(context.tr('auth.google.cta')),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          const Expanded(child: Divider()),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Text(
-                              context.tr('auth.signIn.orSignInWithEmail'),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                          const Expanded(child: Divider()),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
                       WTextField(
                         controller: _email,
                         label: context.tr('common.emailAddress'),
@@ -278,24 +234,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _GoogleIcon extends StatelessWidget {
-  const _GoogleIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 20,
-      height: 20,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.black12),
-      ),
-      child: const Icon(Icons.g_mobiledata, size: 18, color: Color(0xFF4285F4)),
     );
   }
 }

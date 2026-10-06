@@ -194,11 +194,6 @@ class AuthController extends Notifier<AuthState> {
     state = AuthState(user: updated, initializing: false);
   }
 
-  Future<void> google() async {
-    final result = await ref.read(authRepositoryProvider).google();
-    await _accept(result);
-  }
-
   Future<void> _accept(AuthResult result) async {
     if (result.accessToken == null) {
       throw const ApiException(

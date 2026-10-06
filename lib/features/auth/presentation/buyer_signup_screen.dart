@@ -37,25 +37,6 @@ class _BuyerSignUpScreenState extends ConsumerState<BuyerSignUpScreen> {
     super.dispose();
   }
 
-  Future<void> _google() async {
-    if (_busy) return;
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      await ref.read(authControllerProvider.notifier).google();
-      if (mounted) context.go('/home');
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _busy = false;
-          _error = localizeException(context, e);
-        });
-      }
-    }
-  }
-
   Future<void> _submit() async {
     if (_busy) return;
     setState(() {
@@ -143,33 +124,6 @@ class _BuyerSignUpScreenState extends ConsumerState<BuyerSignUpScreen> {
                       const SizedBox(height: 24),
 
                       if (_step == 0) ...[
-                        OutlinedButton.icon(
-                          onPressed: _busy ? null : _google,
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          icon: const _GoogleIcon(),
-                          label: Text(context.tr('auth.google.cta')),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            const Expanded(child: Divider()),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: Text(
-                                context.tr('auth.signUp.orSignUpWithEmail'),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                            const Expanded(child: Divider()),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
                         WTextField(
                           controller: _fullName,
                           label: context.tr('common.fullName'),
@@ -337,24 +291,6 @@ class _BuyerSignUpScreenState extends ConsumerState<BuyerSignUpScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _GoogleIcon extends StatelessWidget {
-  const _GoogleIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 20,
-      height: 20,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.black12),
-      ),
-      child: const Icon(Icons.g_mobiledata, size: 18, color: Color(0xFF4285F4)),
     );
   }
 }
