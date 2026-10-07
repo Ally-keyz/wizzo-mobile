@@ -51,12 +51,15 @@ class CheckoutRepository {
     required List<Map<String, dynamic>> sellerPayments,
     String deliveryOption = 'delivery',
     String? deliveryAddressId,
+    String? currency,
   }) async {
     final data = await _api.post('/orders/stripe/payment-intent', body: {
       'sellerPaymentSelection': sellerPayments,
       'deliveryOption': deliveryOption,
       if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
         'deliveryAddressId': deliveryAddressId,
+      if (currency != null && currency.isNotEmpty)
+        'currency': currency.toLowerCase(),
     });
     return StripePaymentIntentResult.fromApi(data);
   }

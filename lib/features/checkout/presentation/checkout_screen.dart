@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Address;
 
+import '../../../core/currency/currency_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/w_widgets.dart';
 import '../../account/data/account_repository.dart';
@@ -238,6 +239,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             deliveryOption: deliveryOption,
             deliveryAddressId:
                 _delivery == DeliveryKind.pickup ? null : address.id,
+            currency: currencyController.value.code.toLowerCase(),
           );
 
       Stripe.publishableKey = intent.publishableKey;
