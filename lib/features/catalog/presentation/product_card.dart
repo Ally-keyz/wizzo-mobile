@@ -190,6 +190,31 @@ class ProductCard extends ConsumerWidget {
       ],
     );
 
+    // The details block keeps its natural height (price, two-line name,
+    // seller row). When the card lives in a bounded slot (grid cell or fixed
+    // horizontal rail) the image absorbs the remaining space instead of the
+    // details overflowing the slot.
+    final details = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PriceRow(
+          price: product.price,
+          originalPrice: product.originalPrice,
+          currentStyle: currentStyle,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          product.name,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: nameStyle,
+        ),
+        const SizedBox(height: 6),
+        sellerRow(),
+      ],
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final bounded = constraints.hasBoundedHeight;
@@ -199,54 +224,11 @@ class ProductCard extends ConsumerWidget {
             width: width,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: bounded ? MainAxisSize.max : MainAxisSize.min,
               children: [
-                imageStack(),
+                if (bounded) Expanded(child: imageStack()) else imageStack(),
                 const SizedBox(height: 10),
-                if (bounded)
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        PriceRow(
-                          price: product.price,
-                          originalPrice: product.originalPrice,
-                          currentStyle: currentStyle,
-                        ),
-                        const SizedBox(height: 4),
-                        Flexible(
-                          child: Text(
-                            product.name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: nameStyle,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        sellerRow(),
-                      ],
-                    ),
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      PriceRow(
-                        price: product.price,
-                        originalPrice: product.originalPrice,
-                        currentStyle: currentStyle,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        product.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: nameStyle,
-                      ),
-                      const SizedBox(height: 6),
-                      sellerRow(),
-                    ],
-                  ),
+                details,
               ],
             ),
           ),

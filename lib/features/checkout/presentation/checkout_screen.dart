@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Address;
 
+import '../../../core/config/app_config.dart';
 import '../../../core/currency/currency_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/w_widgets.dart';
@@ -242,20 +243,40 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             currency: currencyController.value.code.toLowerCase(),
           );
 
-      Stripe.publishableKey = intent.publishableKey;
+      // The server echoes its own publishable key; fall back to the key baked
+      // into the build when the API isn't configured with one.
+      Stripe.publishableKey = intent.publishableKey.isNotEmpty
+          ? intent.publishableKey
+          : AppConfig.stripePublishableKey;
       await Stripe.instance.applySettings();
+
+      // Google Pay is Android-only and Apple Pay is iOS-only. Apple Pay also
+      // requires a merchant identifier — flutter_stripe asserts otherwise, so
+      // only attach it when one is configured (see AppConfig.applePayMerchantId).
+      final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+      final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+      final applePayMerchantId = AppConfig.applePayMerchantId;
+      final applePayEnabled = isIOS && applePayMerchantId.isNotEmpty;
+      if (applePayEnabled) {
+        Stripe.merchantIdentifier = applePayMerchantId;
+        await Stripe.instance.applySettings();
+      }
 
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           merchantDisplayName: 'Wizzo',
           paymentIntentClientSecret: intent.clientSecret,
           style: ThemeMode.system,
-          googlePay: PaymentSheetGooglePay(
-            merchantCountryCode: 'RW',
-            testEnv: !kReleaseMode,
-            currencyCode: intent.currency,
-          ),
-          applePay: const PaymentSheetApplePay(merchantCountryCode: 'RW'),
+          googlePay: isAndroid
+              ? PaymentSheetGooglePay(
+                  merchantCountryCode: 'RW',
+                  testEnv: !kReleaseMode,
+                  currencyCode: intent.currency.toUpperCase(),
+                )
+              : null,
+          applePay: applePayEnabled
+              ? const PaymentSheetApplePay(merchantCountryCode: 'RW')
+              : null,
           allowsDelayedPaymentMethods: true,
         ),
       );

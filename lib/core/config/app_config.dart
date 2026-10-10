@@ -54,6 +54,14 @@ class AppConfig {
     'STRIPE_PUBLISHABLE_KEY',
     defaultValue: 'pk_test_51UE1ZQ1HGKUHOr34tixbSjZVi5MCBHbdhJLHKeaT2ntl55iIAnmklzBtEU3XLkxaJmgRH42qTipbnQANqb13kWZk00kFInznQI',
   );
+
+  /// Apple Pay merchant identifier (iOS only). Apple Pay is only attached to
+  /// the Stripe PaymentSheet when this is set — passing an Apple Pay config
+  /// without a merchant identifier trips flutter_stripe's assertion.
+  /// Configure with `--dart-define=APPLE_PAY_MERCHANT_ID=merchant.com.example`.
+  static const String applePayMerchantId = String.fromEnvironment(
+    'APPLE_PAY_MERCHANT_ID',
+  );
   /// Upper bound for API calls. Kept generous because the free-tier Render
   /// hosting sleeps after idle and can take 30-60s to cold start.
   static const int requestTimeoutSeconds = 90;
