@@ -8,7 +8,7 @@ import '../../../core/widgets/w_image.dart';
 import '../../../core/widgets/w_widgets.dart';
 import '../../messages/providers/chat_providers.dart';
 import '../models/seller.dart';
-import '../presentation/product_card.dart';
+import '../presentation/product_shelf.dart';
 import '../providers/catalog_providers.dart';
 
 class ShopScreen extends ConsumerWidget {
@@ -147,20 +147,10 @@ class ShopScreen extends ConsumerWidget {
               ),
               if (productsAsync.value case final products?
                   when products.isNotEmpty)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.51,
-                        ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, i) => ProductCard(product: products[i]),
-                      childCount: products.length,
-                    ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 24),
+                    child: ProductShelves(products: products),
                   ),
                 ),
             ],

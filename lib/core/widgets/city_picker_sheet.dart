@@ -11,20 +11,32 @@ import '../geocoding/place_search_service.dart';
 /// Mirrors the web frontend: free-text autocomplete via Photon/Nominatim,
 /// debounced as the user types. Returns the chosen place's display label
 /// ("City, Country"), or null if dismissed without picking.
-Future<String?> showCityPicker(BuildContext context, String? currentCity) {
+///
+/// When [onUseCurrentLocation] is provided a "use my current location" action
+/// is shown; it should request the OS location permission, resolve a city and
+/// return its label (or null if it could not).
+Future<String?> showCityPicker(
+  BuildContext context,
+  String? currentCity, {
+  Future<String?> Function()? onUseCurrentLocation,
+}) {
   return showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
-    builder: (_) => _CityPickerSheet(currentCity: currentCity),
+    builder: (_) => _CityPickerSheet(
+      currentCity: currentCity,
+      onUseCurrentLocation: onUseCurrentLocation,
+    ),
   );
 }
 
 class _CityPickerSheet extends ConsumerStatefulWidget {
-  const _CityPickerSheet({this.currentCity});
+  const _CityPickerSheet({this.currentCity, this.onUseCurrentLocation});
 
   final String? currentCity;
+  final Future<String?> Function()? onUseCurrentLocation;
 
   @override
   ConsumerState<_CityPickerSheet> createState() => _CityPickerSheetState();
@@ -34,10 +46,24 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
   final TextEditingController _search = TextEditingController();
   final PlaceSearchService _places = PlaceSearchService();
   Timer? _debounce;
+  bool _locating = false;
 
   List<PlaceSuggestion> _results = const [];
   bool _searching = false;
   String _query = '';
+
+  Future<void> _useCurrentLocation() async {
+    final callback = widget.onUseCurrentLocation;
+    if (callback == null || _locating) return;
+    setState(() => _locating = true);
+    final label = await callback();
+    if (!mounted) return;
+    if (label != null && label.isNotEmpty) {
+      Navigator.of(context).pop(label);
+    } else {
+      setState(() => _locating = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -107,6 +133,29 @@ class _CityPickerSheetState extends ConsumerState<_CityPickerSheet> {
                 color: scheme.onSurfaceVariant,
               ),
             ),
+            if (widget.onUseCurrentLocation != null) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _locating ? null : _useCurrentLocation,
+                  icon: _locating
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.my_location, size: 18),
+                  label: Text(
+                    context.tr(
+                      _locating
+                          ? 'city.detectingLocation'
+                          : 'city.useCurrentLocation',
+                    ),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             TextField(
               controller: _search,

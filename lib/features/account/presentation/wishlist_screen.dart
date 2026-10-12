@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/w_widgets.dart';
-import '../../catalog/presentation/product_card.dart';
+import '../../catalog/presentation/product_shelf.dart';
 import '../providers/account_providers.dart';
 
 class WishlistScreen extends ConsumerWidget {
@@ -36,16 +36,9 @@ class WishlistScreen extends ConsumerWidget {
               onAction: () => context.go('/home'),
             );
           }
-          return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.51,
-            ),
-            itemCount: products.length,
-            itemBuilder: (_, i) => ProductCard(product: products[i]),
+          return ListView(
+            padding: const EdgeInsets.only(top: 16, bottom: 24),
+            children: [ProductShelves(products: products)],
           );
         },
       ),

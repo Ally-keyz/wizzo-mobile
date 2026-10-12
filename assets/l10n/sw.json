@@ -366,6 +366,10 @@
     "helper": "Husaidia kupata wauzaji na chaguzi za uwasilishaji karibu nawe.",
     "noCitiesFound": "Hakuna miji iliyopatikana. Jaribu utafutaji mwingine.",
     "searchHint": "Tafuta jiji",
+    "useCurrentLocation": "Tumia eneo langu la sasa",
+    "detectingLocation": "Inapata eneo lako...",
+    "locationDenied": "Ruhusa ya eneo imekataliwa. Iwashe kwenye mipangilio ya kifaa.",
+    "locationUnavailable": "Imeshindwa kupata eneo lako. Tafadhali jaribu tena.",
     "searchWorldwide": "Tafuta miji duniani kote",
     "searchWorldwideHint": "Pata wauzaji na usafirishaji popote duniani.",
     "searchingCities": "Inatafuta miji..."
@@ -1105,5 +1109,4 @@
     "bannerText": "Tunatumia vidakuzi kuboresha uzoefu wako. Unakubali vidakuzi kwenye tovuti hii?",
     "deny": "Kataa",
     "allow": "Kubali"
-  },
-}
+  }}

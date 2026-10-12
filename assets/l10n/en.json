@@ -366,6 +366,10 @@
     "helper": "Helps find sellers and delivery options near you.",
     "noCitiesFound": "No cities found. Try a different search.",
     "searchHint": "Search city",
+    "useCurrentLocation": "Use my current location",
+    "detectingLocation": "Getting your location...",
+    "locationDenied": "Location permission denied. Enable it in your device settings to use this.",
+    "locationUnavailable": "Couldn't get your location. Please try again.",
     "searchWorldwide": "Search cities worldwide",
     "searchWorldwideHint": "Find sellers and delivery anywhere in the world.",
     "searchingCities": "Searching cities..."

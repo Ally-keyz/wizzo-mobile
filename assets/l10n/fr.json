@@ -366,6 +366,10 @@
     "helper": "Permet de trouver des vendeurs et des options de livraison près de chez vous.",
     "noCitiesFound": "Aucune ville trouvée. Essayez une autre recherche.",
     "searchHint": "Rechercher une ville",
+    "useCurrentLocation": "Utiliser ma position actuelle",
+    "detectingLocation": "Localisation en cours...",
+    "locationDenied": "Autorisation de localisation refusée. Activez-la dans les réglages de l'appareil.",
+    "locationUnavailable": "Impossible d'obtenir votre position. Veuillez réessayer.",
     "searchWorldwide": "Rechercher des villes dans le monde",
     "searchWorldwideHint": "Trouvez des vendeurs et la livraison partout dans le monde.",
     "searchingCities": "Recherche de villes..."
@@ -1105,5 +1109,4 @@
     "bannerText": "Nous utilisons des cookies pour améliorer votre expérience. Autorisez-vous les cookies sur ce site ?",
     "deny": "Refuser",
     "allow": "Accepter"
-  },
-}
+  }}

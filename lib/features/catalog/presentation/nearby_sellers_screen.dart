@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/location/location_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/geo.dart';
 import '../models/seller.dart';
@@ -67,6 +68,7 @@ class _NearbySellersScreenState extends ConsumerState<NearbySellersScreen> {
   Widget build(BuildContext context) {
     final sellersAsync = ref.watch(nearbySellersProvider);
     final sellers = sellersAsync.value ?? const <Seller>[];
+    final origin = ref.watch(savedCoordsProvider) ?? Geo.fallback();
 
     return Scaffold(
       body: Stack(
@@ -129,7 +131,7 @@ class _NearbySellersScreenState extends ConsumerState<NearbySellersScreen> {
                 left: 12,
                 right: 12,
                 bottom: 78,
-                child: _NearbyListSheet(sellers: sellers),
+                child: _NearbyListSheet(sellers: sellers, origin: origin),
               ),
             Positioned(
               left: 12,
@@ -246,7 +248,8 @@ class _NearbySellersScreenState extends ConsumerState<NearbySellersScreen> {
     final located = sellers.where((s) => s.hasLocation).toList();
     if (located.isNotEmpty)
       return LatLng(located.first.latitude!, located.first.longitude!);
-    return LatLng(AppConfig.defaultLatitude, AppConfig.defaultLongitude);
+    final origin = ref.read(savedCoordsProvider) ?? Geo.fallback();
+    return LatLng(origin.lat, origin.lng);
   }
 
   void _showPanel(Seller s) {
@@ -413,12 +416,12 @@ class _GlassCircleButton extends StatelessWidget {
 }
 
 final nearbySellersProvider = FutureProvider<List<Seller>>((ref) {
+  // Sort by the buyer's real position once they've shared it; otherwise fall
+  // back to the app's default region (Kigali).
+  final origin = ref.watch(savedCoordsProvider) ?? Geo.fallback();
   return ref
       .read(catalogRepositoryProvider)
-      .nearbySellers(
-        lat: AppConfig.defaultLatitude,
-        lng: AppConfig.defaultLongitude,
-      );
+      .nearbySellers(lat: origin.lat, lng: origin.lng);
 });
 
 class _ListToggleButton extends StatelessWidget {
@@ -481,17 +484,18 @@ class _ListToggleButton extends StatelessWidget {
 }
 
 class _NearbyListSheet extends StatelessWidget {
-  const _NearbyListSheet({required this.sellers});
+  const _NearbyListSheet({required this.sellers, required this.origin});
 
   final List<Seller> sellers;
+  final NumPoint origin;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final sorted = [...sellers]..removeWhere((s) => !s.hasLocation);
     sorted.sort((a, b) {
-      final da = a.distanceTo(Geo.fallback()) ?? double.infinity;
-      final db = b.distanceTo(Geo.fallback()) ?? double.infinity;
+      final da = a.distanceTo(origin) ?? double.infinity;
+      final db = b.distanceTo(origin) ?? double.infinity;
       return da.compareTo(db);
     });
 
@@ -542,7 +546,7 @@ class _NearbyListSheet extends StatelessWidget {
               itemCount: sorted.length,
               itemBuilder: (context, i) {
                 final s = sorted[i];
-                final distance = s.distanceTo(Geo.fallback());
+                final distance = s.distanceTo(origin);
                 return _SellerTile(
                   seller: s,
                   distanceLabel: distance != null

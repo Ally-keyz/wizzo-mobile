@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/w_widgets.dart';
 import '../../catalog/providers/catalog_providers.dart';
-import '../../catalog/presentation/product_card.dart';
+import '../../catalog/presentation/product_shelf.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -211,31 +211,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.51,
-                ),
-                itemCount: list.length,
-                itemBuilder: (_, i) => ProductCard(product: list[i]),
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 24),
+                children: [ProductShelves(products: list)],
               ),
             ),
           ],
         );
       },
-      loading: () => GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.51,
-        ),
-        itemCount: 6,
-        itemBuilder: (_, _) => const ProductCardSkeleton(),
+      loading: () => ListView(
+        padding: const EdgeInsets.only(top: 16, bottom: 24),
+        children: const [
+          ProductShelfSkeleton(),
+          SizedBox(height: 20),
+          ProductShelfSkeleton(),
+        ],
       ),
       error: (e, _) => WEmptyState(
         icon: Icons.cloud_off,

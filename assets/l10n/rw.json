@@ -366,6 +366,10 @@
     "helper": "Bifatanya kubona abacuruzi n'uburyo bwo kohereza hafi yawe.",
     "noCitiesFound": "Nta mujyi ubonye. Gerageza ubundi bushakashatsi.",
     "searchHint": "Shakisha igisagara",
+    "useCurrentLocation": "Koresha aho ndi ubu",
+    "detectingLocation": "Turashaka aho uri...",
+    "locationDenied": "Uruhusa rw'aho uri rwanze. Rwemereze mu ma settings y'igikoresho.",
+    "locationUnavailable": "Ntibishobotse kubona aho uri. Ongera ugerageze.",
     "searchWorldwide": "Shakisha imijyi ku isi hose",
     "searchWorldwideHint": "Shakisha abacuruzi n'uburyo bwo kohereza aho uri hose ku isi.",
     "searchingCities": "Kurondora imijyi..."
@@ -1105,5 +1109,4 @@
     "bannerText": "Dukoresha cookies kugirango tunonosore ubumenyi bwawe. Wemeza cookies kuri iyi site?",
     "deny": "Kwanga",
     "allow": "Emera"
-  },
-}
+  }}

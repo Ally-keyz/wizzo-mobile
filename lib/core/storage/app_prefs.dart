@@ -15,6 +15,9 @@ class AppPrefs {
   static const _kThemeMode = 'wizzo_theme_mode';
   static const _kLanguage = 'wizzo_language';
   static const _kLastCity = 'wizzo_last_city';
+  static const _kLastLat = 'wizzo_last_lat';
+  static const _kLastLng = 'wizzo_last_lng';
+  static const _kLocationPrompted = 'wizzo_location_prompted';
   static const _kNotifyOrders = 'wizzo_notify_orders';
   static const _kNotifyChat = 'wizzo_notify_chat';
   static const _kNotifyPromo = 'wizzo_notify_promo';
@@ -86,6 +89,31 @@ class AppPrefs {
 
   static Future<void> setLastCity(String value) async {
     (await _instance).setString(_kLastCity, value);
+  }
+
+  /// Last known device coordinates, used to sort nearby sellers. Null until
+  /// the user grants location access.
+  static Future<(double, double)?> lastCoords() async {
+    final p = await _instance;
+    final lat = p.getDouble(_kLastLat);
+    final lng = p.getDouble(_kLastLng);
+    if (lat == null || lng == null) return null;
+    return (lat, lng);
+  }
+
+  static Future<void> setLastCoords(double lat, double lng) async {
+    final p = await _instance;
+    await p.setDouble(_kLastLat, lat);
+    await p.setDouble(_kLastLng, lng);
+  }
+
+  /// Whether we've already shown the OS location prompt once, so we don't nag
+  /// the user on every launch.
+  static Future<bool> locationPrompted() async =>
+      (await _instance).getBool(_kLocationPrompted) ?? false;
+
+  static Future<void> setLocationPrompted(bool value) async {
+    (await _instance).setBool(_kLocationPrompted, value);
   }
 
   // ---- Notification preferences ------------------------------------------

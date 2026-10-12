@@ -7,7 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/location/location_providers.dart';
+import '../../../core/location/location_service.dart';
+import '../../../core/storage/app_prefs.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/geo.dart';
 import '../../../core/widgets/city_picker_sheet.dart';
 import '../../../core/widgets/w_async.dart';
 import '../../../core/widgets/w_image.dart';
@@ -22,6 +26,7 @@ import '../models/seller.dart';
 import '../providers/catalog_providers.dart';
 import 'nearby_sellers_screen.dart';
 import 'product_card.dart';
+import 'product_shelf.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -38,6 +43,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     _computeGreeting();
     ref.read(nearbySellersProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoDetect());
+  }
+
+  /// Ask for the device location on first launch so the app can show the
+  /// user's real city and nearby sellers instead of the Kigali default.
+  Future<void> _maybeAutoDetect() async {
+    if (await AppPrefs.locationPrompted()) return;
+    if (!mounted) return;
+    await AppPrefs.setLocationPrompted(true);
+    // Respect a city the user already chose (or coordinates we already have).
+    if ((await AppPrefs.lastCity()).isNotEmpty) return;
+    if (await AppPrefs.lastCoords() != null) return;
+    if (!mounted) return;
+    await _detectAndSaveLocation();
+  }
+
+  /// Triggers the native location permission prompt, then persists the
+  /// detected coordinates and city. Returns the city label, or null on failure.
+  Future<String?> _detectAndSaveLocation() async {
+    final result = await ref.read(locationServiceProvider).detect();
+    final loc = result.location;
+    if (loc == null) {
+      if (mounted) _showLocationError(result.failure);
+      return null;
+    }
+    if (mounted) {
+      await ref
+          .read(savedCoordsProvider.notifier)
+          .set(NumPoint(lat: loc.latitude, lng: loc.longitude));
+      if (loc.label.isNotEmpty) {
+        await ref.read(lastCityProvider.notifier).setCity(loc.label);
+      }
+    }
+    return loc.label.isNotEmpty ? loc.label : null;
+  }
+
+  void _showLocationError(LocationFailure? failure) {
+    final key =
+        failure == LocationFailure.denied ||
+            failure == LocationFailure.deniedForever
+        ? 'city.locationDenied'
+        : 'city.locationUnavailable';
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(context.tr(key)),
+        ),
+      );
   }
 
   void _computeGreeting() {
@@ -296,7 +351,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _changeCity(BuildContext context, String current) async {
-    final picked = await showCityPicker(context, current);
+    final picked = await showCityPicker(
+      context,
+      current,
+      onUseCurrentLocation: _detectAndSaveLocation,
+    );
     if (picked != null && picked.isNotEmpty) {
       await ref.read(lastCityProvider.notifier).setCity(picked);
       if (context.mounted) {
@@ -847,23 +906,7 @@ class _ForYouSection extends ConsumerWidget {
     final feedAsync = ref.watch(homeFeedProvider);
 
     if (feedAsync.isLoading && feedAsync.value == null) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.51,
-            ),
-            itemCount: 4,
-            itemBuilder: (_, _) => const ProductCardSkeleton(),
-          ),
-        ),
-      );
+      return const SliverToBoxAdapter(child: ProductShelfSkeleton());
     }
 
     if (feedAsync.hasError && feedAsync.value == null) {
@@ -884,20 +927,8 @@ class _ForYouSection extends ConsumerWidget {
       return const SliverToBoxAdapter(child: SizedBox(height: 32));
     }
 
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.51,
-        ),
-        delegate: SliverChildBuilderDelegate(
-          (context, i) => ProductCard(product: products[i]),
-          childCount: products.length,
-        ),
-      ),
+    return SliverToBoxAdapter(
+      child: ProductShelves(products: products),
     );
   }
 }

@@ -158,6 +158,55 @@ class PlaceSearchService {
     return result.take(6).toList();
   }
 
+  /// Reverse-geocodes a coordinate to the nearest city ("City, Country").
+  /// Used to turn the device GPS fix into a browsable city label. Returns
+  /// null when the geocoder is unreachable or has no match.
+  Future<PlaceSuggestion?> reverseGeocode(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final res = await _client
+          .get(
+            Uri.parse(
+              'https://nominatim.openstreetmap.org/reverse?'
+              'format=jsonv2&addressdetails=1&accept-language=en&'
+              'lat=$latitude&lon=$longitude',
+            ),
+            headers: _headers,
+          )
+          .timeout(_timeout);
+      if (res.statusCode != 200) return null;
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
+      if (data is! Map<String, dynamic>) return null;
+      final a = (data['address'] as Map<String, dynamic>?) ?? const {};
+      final city =
+          (a['city'] ??
+                  a['town'] ??
+                  a['village'] ??
+                  a['municipality'] ??
+                  a['county'] ??
+                  a['state'] ??
+                  '')
+              .toString();
+      final country = (a['country'] as String?) ?? '';
+      if (city.isEmpty && country.isEmpty) return null;
+      return PlaceSuggestion(
+        primary: city.isNotEmpty ? city : country,
+        secondary: [
+          if ((a['state'] as String?)?.isNotEmpty ?? false) a['state']!,
+          if (country.isNotEmpty) country,
+        ].join(', '),
+        city: city.isNotEmpty ? city : country,
+        country: country,
+        latitude: latitude,
+        longitude: longitude,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Prioritises suggestions whose name or city matches the query, so the
   /// exact city (e.g. "Paris") ranks above its wider region ("Île-de-France").
   static int Function(PlaceSuggestion, PlaceSuggestion) _rank(String query) {

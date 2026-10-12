@@ -8,7 +8,7 @@ import '../../../core/widgets/w_widgets.dart';
 import '../models/product.dart';
 import '../models/seller.dart';
 import '../providers/catalog_providers.dart';
-import 'product_card.dart';
+import 'product_shelf.dart';
 
 enum _Sort { featured, newest, priceLow, priceHigh, rating }
 
@@ -279,18 +279,10 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                   onRefresh: () => ref.refresh(
                     categoryProductsProvider(effectiveSlug).future,
                   ),
-                  child: GridView.builder(
+                  child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.51,
-                        ),
-                    itemCount: sorted.length,
-                    itemBuilder: (_, i) => ProductCard(product: sorted[i]),
+                    padding: const EdgeInsets.fromLTRB(0, 4, 0, 24),
+                    children: [ProductShelves(products: sorted)],
                   ),
                 );
               },
@@ -465,17 +457,14 @@ class _GridSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
+    return ListView(
+      padding: const EdgeInsets.only(top: 4, bottom: 24),
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.51,
-      ),
-      itemCount: 6,
-      itemBuilder: (_, _) => const ProductCardSkeleton(),
+      children: const [
+        ProductShelfSkeleton(),
+        SizedBox(height: 20),
+        ProductShelfSkeleton(),
+      ],
     );
   }
 }

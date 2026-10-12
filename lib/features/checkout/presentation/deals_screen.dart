@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/w_widgets.dart';
-import '../../catalog/presentation/product_card.dart';
+import '../../catalog/presentation/product_shelf.dart';
 import '../../catalog/providers/catalog_providers.dart';
 
 /// Full-screen "All Deals" browse — every discounted product currently on
@@ -25,16 +25,13 @@ class DealsAllScreen extends ConsumerWidget {
         ),
       ),
       body: productsAsync.when(
-        loading: () => GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.51,
-          ),
-          itemCount: 6,
-          itemBuilder: (_, _) => const ProductCardSkeleton(),
+        loading: () => ListView(
+          padding: const EdgeInsets.only(top: 16, bottom: 24),
+          children: const [
+            ProductShelfSkeleton(),
+            SizedBox(height: 20),
+            ProductShelfSkeleton(),
+          ],
         ),
         error: (e, _) => WEmptyState(
           icon: Icons.cloud_off,
@@ -56,39 +53,31 @@ class DealsAllScreen extends ConsumerWidget {
             (max, p) => p.discount > max ? p.discount : max,
           );
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            padding: const EdgeInsets.only(top: 8, bottom: 24),
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.local_fire_department,
-                      size: 20, color: Palette.gold),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      context.tr('deals.productsUpToOff', namedArgs: {
-                        'count': '${products.length}',
-                        'percent': '$maxDiscount',
-                      }),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.local_fire_department,
+                        size: 20, color: Palette.gold),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        context.tr('deals.productsUpToOff', namedArgs: {
+                          'count': '${products.length}',
+                          'percent': '$maxDiscount',
+                        }),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.51,
-                ),
-                itemCount: products.length,
-                itemBuilder: (_, i) => ProductCard(product: products[i]),
-              ),
+              ProductShelves(products: products),
             ],
           );
         },

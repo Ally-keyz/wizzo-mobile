@@ -366,6 +366,10 @@
     "helper": "Hilft, Verkäufer und Lieferoptionen in deiner Nähe zu finden.",
     "noCitiesFound": "Keine Städte gefunden. Versuche eine andere Suche.",
     "searchHint": "Stadt suchen",
+    "useCurrentLocation": "Meinen aktuellen Standort verwenden",
+    "detectingLocation": "Standort wird ermittelt...",
+    "locationDenied": "Standortberechtigung verweigert. Aktiviere sie in den Geräteeinstellungen.",
+    "locationUnavailable": "Standort konnte nicht ermittelt werden. Bitte erneut versuchen.",
     "searchWorldwide": "Städte weltweit suchen",
     "searchWorldwideHint": "Finde Verkäufer und Lieferung überall auf der Welt.",
     "searchingCities": "Städte werden gesucht..."
@@ -1105,5 +1109,4 @@
     "bannerText": "Wir verwenden Cookies, um dein Erlebnis zu verbessern. Erlaubst du Cookies auf dieser Seite?",
     "deny": "Ablehnen",
     "allow": "Akzeptieren"
-  },
-}
+  }}
