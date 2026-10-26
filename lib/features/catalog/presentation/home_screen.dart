@@ -51,12 +51,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _maybeAutoDetect() async {
     if (await AppPrefs.locationPrompted()) return;
     if (!mounted) return;
-    await AppPrefs.setLocationPrompted(true);
     // Respect a city the user already chose (or coordinates we already have).
     if ((await AppPrefs.lastCity()).isNotEmpty) return;
     if (await AppPrefs.lastCoords() != null) return;
     if (!mounted) return;
     await _detectAndSaveLocation();
+    if (mounted) await AppPrefs.setLocationPrompted(true);
   }
 
   /// Triggers the native location permission prompt, then persists the
@@ -80,10 +80,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showLocationError(LocationFailure? failure) {
-    final key =
+    final service = ref.read(locationServiceProvider);
+    final denied =
         failure == LocationFailure.denied ||
-            failure == LocationFailure.deniedForever
+        failure == LocationFailure.deniedForever;
+    final serviceOff = failure == LocationFailure.serviceDisabled;
+    final key = denied
         ? 'city.locationDenied'
+        : serviceOff
+        ? 'city.locationServiceOff'
         : 'city.locationUnavailable';
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -91,6 +96,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         SnackBar(
           behavior: SnackBarBehavior.floating,
           content: Text(context.tr(key)),
+          action: denied
+              ? SnackBarAction(
+                  label: context.tr('city.openSettings'),
+                  onPressed: service.openAppSettings,
+                )
+              : serviceOff
+              ? SnackBarAction(
+                  label: context.tr('city.turnOnLocation'),
+                  onPressed: service.openLocationSettings,
+                )
+              : null,
         ),
       );
   }
@@ -211,16 +227,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // Promo / deals rail
             SliverToBoxAdapter(
               child: _DealsSection(onSeeAll: () => context.push('/deals/all')),
-            ),
-
-            // Categories rail
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
-                child: _CategoriesRail(
-                  categories: ref.watch(categoriesProvider),
-                ),
-              ),
             ),
 
             // View Shorts pill
@@ -800,113 +806,13 @@ class _DealCarouselCard extends StatelessWidget {
   }
 }
 
-class _CategoriesRail extends ConsumerWidget {
-  const _CategoriesRail({required this.categories});
-
-  final AsyncValue<List<CategoryNode>> categories;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final cats = categories.value ?? const <CategoryNode>[];
-
-    if (cats.isEmpty) {
-      return SizedBox(
-        height: 90,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          children: List.generate(
-            8,
-            (_) => const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
-              child: WSkeleton(width: 56, height: 56, radius: 28),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
-          child: Text(
-            context.tr('home.browseCategories'),
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        SizedBox(
-          height: 96,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            itemCount: cats.length.clamp(0, 12),
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, i) => _CategoryTile(category: cats[i]),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CategoryTile extends StatelessWidget {
-  const _CategoryTile({required this.category});
-
-  final CategoryNode category;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: () => context.push('/browse/${category.slug}'),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.secondaryContainer,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              category.icon ?? Icons.grid_view_rounded,
-              size: 26,
-              color: context.appColors.info,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              category.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ForYouSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feedAsync = ref.watch(homeFeedProvider);
 
     if (feedAsync.isLoading && feedAsync.value == null) {
-      return const SliverToBoxAdapter(child: ProductShelfSkeleton());
+      return const SliverToBoxAdapter(child: ProductGridSkeleton());
     }
 
     if (feedAsync.hasError && feedAsync.value == null) {
@@ -927,9 +833,7 @@ class _ForYouSection extends ConsumerWidget {
       return const SliverToBoxAdapter(child: SizedBox(height: 32));
     }
 
-    return SliverToBoxAdapter(
-      child: ProductShelves(products: products),
-    );
+    return SliverProductGrid(products: products);
   }
 }
 

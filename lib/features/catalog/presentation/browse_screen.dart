@@ -282,7 +282,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(0, 4, 0, 24),
-                    children: [ProductShelves(products: sorted)],
+                    children: [ProductGrid(products: sorted)],
                   ),
                 );
               },
@@ -461,9 +461,7 @@ class _GridSkeleton extends StatelessWidget {
       padding: const EdgeInsets.only(top: 4, bottom: 24),
       physics: const NeverScrollableScrollPhysics(),
       children: const [
-        ProductShelfSkeleton(),
-        SizedBox(height: 20),
-        ProductShelfSkeleton(),
+        ProductGridSkeleton(),
       ],
     );
   }

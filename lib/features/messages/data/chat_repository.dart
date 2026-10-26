@@ -150,4 +150,27 @@ class ChatRepository {
       // Non-fatal.
     }
   }
+
+  /// Reports a user/chat for review (App Store UGC moderation).
+  Future<void> reportUser({
+    required String userId,
+    required String reason,
+    String? details,
+  }) async {
+    await _api.post('/reports/user', body: {
+      'userId': userId,
+      'reason': reason,
+      if (details != null && details.trim().isNotEmpty)
+        'details': details.trim(),
+    });
+  }
+
+  /// Mutes another user: their thread disappears and messaging is refused.
+  Future<void> blockUser(String userId) async {
+    await _api.post('/users/me/blocks', body: {'userId': userId});
+  }
+
+  Future<void> unblockUser(String userId) async {
+    await _api.delete('/users/me/blocks/$userId');
+  }
 }

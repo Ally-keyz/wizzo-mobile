@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/currency/currency_controller.dart';
+import '../../../core/i18n/localization_helpers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/coming_soon_sheet.dart';
 import '../../auth/models/user.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../data/account_repository.dart';
 
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
@@ -138,9 +140,57 @@ class AccountScreen extends ConsumerWidget {
               ),
             ),
           ),
+          if (user != null) ...[
+            const SizedBox(height: 6),
+            TextButton.icon(
+              onPressed: () => _deleteAccount(context, ref),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: Text(context.tr('account.deleteAccount')),
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  /// App Store 5.1.1(v): accounts created in the app must be deletable here.
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(dialogContext.tr('account.deleteAccount')),
+        content: Text(dialogContext.tr('account.deleteAccountBody')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(dialogContext.tr('common.cancel')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(dialogContext.tr('account.deleteAccountConfirm')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(accountRepositoryProvider).deleteAccount();
+      await ref.read(authControllerProvider.notifier).logout();
+      if (context.mounted) context.go('/login');
+    } catch (error) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(localizeException(context, error))),
+      );
+    }
   }
 
   Widget _profileHeader(BuildContext context, WidgetRef ref, User? user) {

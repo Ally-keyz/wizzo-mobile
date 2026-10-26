@@ -63,15 +63,15 @@ class LocationService {
 
   static const _settings = LocationSettings(
     accuracy: LocationAccuracy.low,
-    timeLimit: Duration(seconds: 20),
+    timeLimit: Duration(seconds: 30),
   );
 
   Future<LocationResult> detect() async {
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        return const LocationResult.failed(LocationFailure.serviceDisabled);
-      }
-
+      // Ask for permission first so the native OS dialog ("Allow Wizzo to use
+      // your location?") always appears. If we checked the GPS service state
+      // first, a phone with location switched off would fail silently and the
+      // prompt would never be shown.
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -81,6 +81,11 @@ class LocationService {
       }
       if (permission == LocationPermission.deniedForever) {
         return const LocationResult.failed(LocationFailure.deniedForever);
+      }
+
+      // Permission is granted but GPS is switched off at the OS level.
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        return const LocationResult.failed(LocationFailure.serviceDisabled);
       }
 
       // Prefer a cached fix for an instant result, then fall back to a fresh
@@ -108,4 +113,11 @@ class LocationService {
       return const LocationResult.failed(LocationFailure.unavailable);
     }
   }
+
+  /// Opens the OS app-settings screen so the user can re-enable a permission
+  /// they previously denied ("don't allow" twice / forever).
+  Future<bool> openAppSettings() => Geolocator.openAppSettings();
+
+  /// Opens the system location (GPS) settings screen.
+  Future<bool> openLocationSettings() => Geolocator.openLocationSettings();
 }

@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/i18n/localization_helpers.dart';
@@ -247,6 +248,91 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     }
   }
 
+  /// App Store UGC moderation: report the person on the other side.
+  Future<void> _reportConversation(Conversation conv) async {
+    final otherId = conv.sellerId;
+    if (otherId == null || otherId.isEmpty) return;
+
+    const reasons = <String, String>{
+      'scam_fraud': 'chat.reportReasonScam',
+      'prohibited': 'chat.reportReasonProhibited',
+      'counterfeit': 'chat.reportReasonCounterfeit',
+      'other': 'chat.reportReasonOther',
+    };
+
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: Text(dialogContext.tr('chat.reportUser')),
+        children: [
+          for (final entry in reasons.entries)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialogContext, entry.key),
+              child: Text(dialogContext.tr(entry.value)),
+            ),
+        ],
+      ),
+    );
+    if (picked == null || !mounted) return;
+
+    try {
+      await ref
+          .read(chatRepositoryProvider)
+          .reportUser(userId: otherId, reason: picked);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.tr('chat.reportThanks'))),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(localizeException(context, e))),
+      );
+    }
+  }
+
+  /// Hides the thread and blocks further messages from the other side.
+  Future<void> _blockConversation(Conversation conv) async {
+    final otherId = conv.sellerId;
+    if (otherId == null || otherId.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(dialogContext.tr('chat.blockUser')),
+        content: Text(
+          dialogContext.tr(
+            'chat.blockUserBody',
+            namedArgs: {'name': conv.displayName(dialogContext)},
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(dialogContext.tr('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(dialogContext.tr('chat.blockUser')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(chatRepositoryProvider).blockUser(otherId);
+      ref.read(conversationsProvider.notifier).reloadSilently();
+      if (!mounted) return;
+      context.pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(localizeException(context, e))),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -331,6 +417,25 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
             ),
           ],
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'report') _reportConversation(conv);
+              if (value == 'block') _blockConversation(conv);
+            },
+            itemBuilder: (menuContext) => [
+              PopupMenuItem(
+                value: 'report',
+                child: Text(menuContext.tr('chat.reportUser')),
+              ),
+              PopupMenuItem(
+                value: 'block',
+                child: Text(menuContext.tr('chat.blockUser')),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         children: [

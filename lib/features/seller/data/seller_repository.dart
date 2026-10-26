@@ -8,6 +8,7 @@ import '../models/payment_account.dart';
 import '../models/seller_order.dart';
 import '../models/store.dart';
 import '../models/store_payout.dart';
+import '../models/supplier.dart';
 import 'upload_service.dart';
 
 /// A color option paired with its own product photo, sent with product
@@ -39,6 +40,8 @@ class ProductInput {
     this.deliveryOptions = const [],
     this.tags = const [],
     this.video,
+    this.supplierId,
+    this.supplierItemId,
   });
 
   final String name;
@@ -58,6 +61,11 @@ class ProductInput {
   final List<String> deliveryOptions;
   final List<String> tags;
   final String? video;
+
+  /// Set only when the seller lists an admin-managed supplier product. The
+  /// backend snapshots that catalog item so the order can be pushed later.
+  final String? supplierId;
+  final String? supplierItemId;
 
   Map<String, dynamic> toJson({bool isUpdate = false}) => {
         'name': name.trim(),
@@ -83,6 +91,10 @@ class ProductInput {
         if (deliveryOptions.isNotEmpty) 'deliveryOptions': deliveryOptions,
         if (tags.isNotEmpty) 'tags': tags,
         if (video != null && video!.trim().isNotEmpty) 'video': video!.trim(),
+        if (!isUpdate && supplierId != null && supplierId!.isNotEmpty)
+          'supplierId': supplierId,
+        if (!isUpdate && supplierItemId != null && supplierItemId!.isNotEmpty)
+          'supplierItemId': supplierItemId,
       };
 }
 
@@ -169,6 +181,19 @@ class SellerRepository {
 
   Future<void> deleteProduct(String id) async {
     await _api.delete('/products/$id');
+  }
+
+  // -- Dropshipping ---------------------------------------------------------
+  /// Active suppliers a seller can dropship from (admin-managed directory).
+  Future<List<SupplierSummary>> activeSuppliers() async {
+    final data = await _api.get('/supplier/suppliers');
+    return _extractList(data).map(SupplierSummary.fromApi).toList();
+  }
+
+  /// Active catalog products belonging to one dropship supplier.
+  Future<List<SupplierItem>> supplierItems(String supplierId) async {
+    final data = await _api.get('/supplier/suppliers/$supplierId/products');
+    return _extractList(data).map(SupplierItem.fromApi).toList();
   }
 
   // -- Orders ---------------------------------------------------------------

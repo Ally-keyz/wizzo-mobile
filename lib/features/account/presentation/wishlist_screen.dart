@@ -38,7 +38,7 @@ class WishlistScreen extends ConsumerWidget {
           }
           return ListView(
             padding: const EdgeInsets.only(top: 16, bottom: 24),
-            children: [ProductShelves(products: products)],
+            children: [ProductGrid(products: products)],
           );
         },
       ),

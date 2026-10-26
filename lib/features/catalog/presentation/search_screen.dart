@@ -213,7 +213,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 24),
-                children: [ProductShelves(products: list)],
+                children: [ProductGrid(products: list)],
               ),
             ),
           ],
@@ -221,11 +221,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       },
       loading: () => ListView(
         padding: const EdgeInsets.only(top: 16, bottom: 24),
-        children: const [
-          ProductShelfSkeleton(),
-          SizedBox(height: 20),
-          ProductShelfSkeleton(),
-        ],
+        children: const [ProductGridSkeleton()],
       ),
       error: (e, _) => WEmptyState(
         icon: Icons.cloud_off,

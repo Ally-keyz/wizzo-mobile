@@ -20,14 +20,17 @@ import '../../catalog/models/product.dart';
 import '../../catalog/models/seller.dart';
 import '../../catalog/providers/catalog_providers.dart';
 import '../data/seller_repository.dart';
+import '../models/supplier.dart';
 import '../providers/seller_providers.dart';
 
 /// Create / edit listing form. For edits, pass the existing [Product] through
-/// the route `extra`.
+/// the route `extra`. For dropship listings, pass the chosen supplier product
+/// as [dropship] so the form opens pre-filled with the supplier details.
 class ProductFormScreen extends ConsumerStatefulWidget {
-  const ProductFormScreen({super.key, this.product});
+  const ProductFormScreen({super.key, this.product, this.dropship});
 
   final Product? product;
+  final DropshipSelection? dropship;
 
   @override
   ConsumerState<ProductFormScreen> createState() => _ProductFormScreenState();
@@ -94,6 +97,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _colorPhotos.add(ColorPhotoDraft(name: v.name, image: v.image));
       }
       if (p.video != null && p.video!.isNotEmpty) _video = p.video;
+    } else if (widget.dropship != null) {
+      // Dropship listing: everything the supplier already knows is pre-filled;
+      // the seller only picks a category and their own selling price.
+      final selection = widget.dropship!;
+      final item = selection.item;
+      _name.text = item.name;
+      _brand.text = selection.supplierName;
+      _description.text = item.description ?? '';
+      _stock.text = (item.stock ?? 0).toString();
+      _images.addAll(item.gallery.take(6));
+      final currency = item.currency.toUpperCase();
+      _priceCurrency = isSupportedCurrency(currency) ? currency : kBaseCurrency;
     } else {
       // A brand new listing should default to the currency the seller already
       // browses prices in, so the amount they type needs no mental conversion.
@@ -403,6 +418,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       deliveryOptions: const [],
       tags: const [],
       video: _video,
+      supplierId: isEdit ? null : widget.dropship?.supplierId,
+      supplierItemId: isEdit ? null : widget.dropship?.item.id,
     );
     try {
       final repo = ref.read(sellerRepositoryProvider);
@@ -443,7 +460,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          context.tr(isEdit ? 'seller.editItem' : 'seller.addProduct'),
+          context.tr(
+            isEdit
+                ? 'seller.editItem'
+                : widget.dropship != null
+                ? 'seller.addDropshipProduct'
+                : 'seller.addProduct',
+          ),
         ),
         actions: [
           if (isEdit)
@@ -499,6 +522,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
             children: [
+              if (widget.dropship != null && !isEdit) ...[
+                _dropshipBanner(theme, scheme),
+                const SizedBox(height: 18),
+              ],
               // Photos
               Text(
                 context.tr('seller.photos'),
@@ -1017,6 +1044,98 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         style: theme.textTheme.titleSmall?.copyWith(
           fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+
+  Widget _dropshipBanner(ThemeData theme, ColorScheme scheme) {
+    final selection = widget.dropship!;
+    final item = selection.item;
+    final gallery = item.gallery;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.secondaryContainer.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: 54,
+              height: 54,
+              child: gallery.isNotEmpty
+                  ? Image.network(
+                      gallery.first,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Container(
+                        color: scheme.surfaceContainerHighest,
+                        child: Icon(
+                          Icons.inventory_2_outlined,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      color: scheme.surfaceContainerHighest,
+                      child: Icon(
+                        Icons.inventory_2_outlined,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.local_shipping_outlined,
+                      size: 16,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        context.tr(
+                          'seller.dropshipFrom',
+                          namedArgs: {'supplier': selection.supplierName},
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${context.tr('seller.dropshipSupplierCost')}: '
+                  '${formatSupplierCost(item.cost, item.currency)}'
+                  '${item.sku != null ? ' · ${item.sku}' : ''}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  context.tr('seller.dropshipHint'),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

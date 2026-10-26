@@ -29,6 +29,7 @@ import '../../features/auth/presentation/seller_signup_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/cart/presentation/cart_screen.dart';
 import '../../features/catalog/presentation/browse_screen.dart';
+import '../../features/catalog/presentation/categories_screen.dart';
 import '../../features/catalog/presentation/home_screen.dart';
 import '../../features/catalog/presentation/nearby_sellers_screen.dart';
 import '../../features/catalog/presentation/product_detail_screen.dart';
@@ -43,7 +44,9 @@ import '../../features/videos/presentation/shorts_feed_screen.dart';
 import '../../features/messages/presentation/messages_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/catalog/models/product.dart';
+import '../../features/seller/models/supplier.dart';
 import '../../features/seller/presentation/create_store_screen.dart';
+import '../../features/seller/presentation/dropship_picker_screen.dart';
 import '../../features/seller/presentation/my_products_screen.dart';
 import '../../features/seller/presentation/payment_accounts_screen.dart';
 import '../../features/seller/presentation/product_form_screen.dart';
@@ -101,6 +104,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+              ..._buildSharedRoutes(),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/categories',
+                builder: (_, _) => const CategoriesScreen(),
+              ),
               ..._buildSharedRoutes(),
             ],
           ),
@@ -188,7 +200,15 @@ List<RouteBase> _buildSharedRoutes() => [
   ),
   GoRoute(
     path: '/seller/product/new',
-    builder: (_, _) => const ProductFormScreen(),
+    builder: (_, state) => ProductFormScreen(
+      dropship: state.extra is DropshipSelection
+          ? state.extra! as DropshipSelection
+          : null,
+    ),
+  ),
+  GoRoute(
+    path: '/seller/dropship',
+    builder: (_, _) => const DropshipPickerScreen(),
   ),
   GoRoute(
     path: '/seller/product/:id/edit',

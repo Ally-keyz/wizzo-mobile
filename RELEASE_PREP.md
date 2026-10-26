@@ -3,6 +3,8 @@
 Prepared for the Android app in this repo (package `app.wizzo.wizzo_market`).
 Store listing **app name: KATISHA** (owner's choice), app label stays "Wizzo Market".
 
+> iOS / App Store submission lives in [`APPSTORE_RELEASE.md`](APPSTORE_RELEASE.md).
+
 ---
 
 ## 1. Build verified (✔ done in this session)

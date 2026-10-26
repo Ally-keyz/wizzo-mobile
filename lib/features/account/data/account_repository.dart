@@ -24,6 +24,12 @@ class AccountRepository {
     return data is Map<String, dynamic> ? data : const {};
   }
 
+  /// Permanently deletes the signed-in account (App Store 5.1.1(v)).
+  /// The server anonymises the profile and takes listings offline.
+  Future<void> deleteAccount() async {
+    await _api.delete('/users/me');
+  }
+
   Future<AddressBook> addresses() async {
     final data = await _api.get('/users/me/addresses');
     final items = data is List ? data : (data is Map ? (data['addresses'] ?? const []) : const <dynamic>[]);

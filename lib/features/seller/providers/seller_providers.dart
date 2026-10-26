@@ -4,6 +4,7 @@ import '../../catalog/models/product.dart';
 import '../data/seller_repository.dart';
 import '../models/seller_order.dart';
 import '../models/store.dart';
+import '../models/supplier.dart';
 
 /// The signed-in user's store profile, or null when they have no store yet.
 final myStoreProvider = FutureProvider<MyStore?>((ref) {
@@ -12,6 +13,17 @@ final myStoreProvider = FutureProvider<MyStore?>((ref) {
 
 final myProductsProvider = FutureProvider<List<Product>>((ref) {
   return ref.watch(sellerRepositoryProvider).myProducts();
+});
+
+/// Admin-managed dropship suppliers available to the signed-in seller.
+final activeSuppliersProvider = FutureProvider<List<SupplierSummary>>((ref) {
+  return ref.watch(sellerRepositoryProvider).activeSuppliers();
+});
+
+/// Catalog products of one dropship supplier.
+final supplierItemsProvider =
+    FutureProvider.family<List<SupplierItem>, String>((ref, supplierId) {
+  return ref.watch(sellerRepositoryProvider).supplierItems(supplierId);
 });
 
 final sellerOrdersProvider = FutureProvider<List<SellerOrder>>((ref) {

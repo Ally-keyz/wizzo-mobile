@@ -166,6 +166,11 @@ class SellerDashboard extends ConsumerWidget {
         '/seller/product/new',
       ),
       (
+        Icons.local_shipping_outlined,
+        context.tr('seller.dropshipping'),
+        '/seller/dropship',
+      ),
+      (
         Icons.receipt_long_outlined,
         context.tr('seller.ordersTitle'),
         '/seller/orders',

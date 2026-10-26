@@ -39,6 +39,19 @@ class _BuyerSignUpScreenState extends ConsumerState<BuyerSignUpScreen> {
 
   Future<void> _submit() async {
     if (_busy) return;
+
+    // Catch password problems before hitting the network so the button always
+    // produces visible feedback instead of a silent no-op.
+    final passwordError = Validators.password(_password.text);
+    if (passwordError != null) {
+      setState(() => _error = localizeError(context, passwordError));
+      return;
+    }
+    if (_password.text != _confirm.text) {
+      setState(() => _error = context.tr('common.errors.passwordsDoNotMatch'));
+      return;
+    }
+
     setState(() {
       _error = null;
       _busy = true;
@@ -52,7 +65,8 @@ class _BuyerSignUpScreenState extends ConsumerState<BuyerSignUpScreen> {
             password: _password.text,
           );
       if (mounted) {
-        Navigator.of(context).popUntil((r) => r.isFirst);
+        // The router redirect already leaves the auth flow once the auth state
+        // flips; just make sure we land on the home branch.
         context.go('/home');
       }
     } catch (e) {
@@ -95,9 +109,13 @@ class _BuyerSignUpScreenState extends ConsumerState<BuyerSignUpScreen> {
           children: [
             Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 24,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  24,
+                  24,
+                  24 + MediaQuery.viewInsetsOf(context).bottom,
                 ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
@@ -263,10 +281,14 @@ class _BuyerSignUpScreenState extends ConsumerState<BuyerSignUpScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            context.tr('common.alreadyHaveAccount'),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: scheme.onSurfaceVariant,
+                          Flexible(
+                            child: Text(
+                              context.tr('common.alreadyHaveAccount'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                           TextButton(

@@ -60,10 +60,15 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
   String? _validateCurrentStep() {
     switch (_step) {
       case 0:
-        return localizeError(
-          context,
-          Validators.fullName(_fullName.text) ?? Validators.email(_email.text)!,
-        );
+        // Validate the two fields independently. Chaining
+        // `Validator.fullName(...) ?? Validator.email(...)!` crashed with a
+        // null-assertion error whenever BOTH values were valid (both helpers
+        // return null), which made the Continue button do nothing.
+        final nameError = Validators.fullName(_fullName.text);
+        if (nameError != null) return localizeError(context, nameError);
+        final emailError = Validators.email(_email.text);
+        if (emailError != null) return localizeError(context, emailError);
+        return null;
       case 1:
         final pass = Validators.password(_password.text);
         if (pass != null) return localizeError(context, pass);
@@ -179,7 +184,6 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
           .read(authControllerProvider.notifier)
           .verifyEmailOtp(_email.text, code);
       if (mounted) {
-        Navigator.of(context).popUntil((r) => r.isFirst);
         context.go('/home');
       }
     } catch (e) {
@@ -232,9 +236,13 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
           children: [
             Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 24,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  24,
+                  24,
+                  24 + MediaQuery.viewInsetsOf(context).bottom,
                 ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
@@ -487,10 +495,14 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            context.tr('common.alreadyHaveAccount'),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: scheme.onSurfaceVariant,
+                          Flexible(
+                            child: Text(
+                              context.tr('common.alreadyHaveAccount'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                           TextButton(

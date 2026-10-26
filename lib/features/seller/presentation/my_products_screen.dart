@@ -32,6 +32,11 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
         title: Text(context.tr('seller.myItems')),
         actions: [
           IconButton(
+            tooltip: context.tr('seller.addDropshipProduct'),
+            onPressed: () => context.push('/seller/dropship'),
+            icon: const Icon(Icons.local_shipping_outlined),
+          ),
+          IconButton(
             tooltip: context.tr('seller.addProduct'),
             onPressed: () => context.push('/seller/product/new'),
             icon: const Icon(Icons.add_box_outlined),
@@ -443,6 +448,12 @@ class _EmptyItems extends StatelessWidget {
                 onPressed: () => context.push('/seller/product/new'),
                 icon: const Icon(Icons.add),
                 label: Text(context.tr('seller.addFirstItem')),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => context.push('/seller/dropship'),
+                icon: const Icon(Icons.local_shipping_outlined, size: 18),
+                label: Text(context.tr('seller.addDropshipProduct')),
               ),
             ],
           ],

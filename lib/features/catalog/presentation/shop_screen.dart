@@ -147,11 +147,9 @@ class ShopScreen extends ConsumerWidget {
               ),
               if (productsAsync.value case final products?
                   when products.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 24),
-                    child: ProductShelves(products: products),
-                  ),
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 24),
+                  sliver: SliverProductGrid(products: products),
                 ),
             ],
           ),

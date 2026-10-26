@@ -20,7 +20,7 @@ import 'w_widgets.dart';
 /// paints on top of the button.
 const double kSellButtonOverhang = 20;
 
-/// The 3-item bottom navigation: Home, Sell, Account.
+/// The 4-item bottom navigation: Home, Categories, Sell, Account.
 ///
 /// Also hosts the live in-app notification poller: while the app is in the
 /// foreground it re-checks for new notifications and surfaces a banner when
@@ -193,7 +193,7 @@ class _WMarketShellState extends ConsumerState<WMarketShell>
       bottomNavigationBar: _BottomNavBar(
         currentIndex: widget.navigationShell.currentIndex,
         onTap: (arrayIndex, branch) {
-          if (arrayIndex == 1) {
+          if (branch < 0) {
             _openSell(context, ref);
             return;
           }
@@ -231,6 +231,12 @@ class _BottomNavBar extends StatelessWidget {
           branch: 0,
         ),
         (
+          labelKey: 'nav.categories',
+          icon: Icons.grid_view_outlined,
+          activeIcon: Icons.grid_view_rounded,
+          branch: 1,
+        ),
+        (
           labelKey: 'nav.sell',
           icon: Icons.add,
           activeIcon: Icons.add,
@@ -240,11 +246,11 @@ class _BottomNavBar extends StatelessWidget {
           labelKey: 'nav.account',
           icon: Icons.person_outline,
           activeIcon: Icons.person,
-          branch: 1,
+          branch: 2,
         ),
       ];
 
-  static const _sellIndex = 1;
+  static const _sellIndex = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -258,8 +264,9 @@ class _BottomNavBar extends StatelessWidget {
           child: Row(
             children: [
               _item(context, 0, scheme),
+              _item(context, 1, scheme),
               _sellButton(context, scheme),
-              _item(context, 2, scheme),
+              _item(context, 3, scheme),
             ],
           ),
         ),

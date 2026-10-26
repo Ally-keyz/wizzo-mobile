@@ -47,6 +47,26 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<!-- Languages the app ships (assets/l10n). Lets iOS report the app as
+		     localized and show the right language in the App Store listing. -->
+		<key>CFBundleLocalizations</key>
+		<array>
+			<string>en</string>
+			<string>fr</string>
+			<string>rw</string>
+			<string>de</string>
+			<string>sw</string>
+		</array>
+		<!-- url_launcher: schemes the app may test/open (WhatsApp support links,
+		     mail, phone). Without these, canLaunchUrl() returns false on iOS. -->
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>https</string>
+			<string>http</string>
+			<string>mailto</string>
+			<string>tel</string>
+			<string>whatsapp</string>
+		</array>
 		<!-- Permission usage descriptions (App Store review requires these). -->
 		<key>NSCameraUsageDescription</key>
 		<string>Wizzo uses the camera to take product photos or a profile picture for your store.</string>
@@ -56,23 +76,9 @@
 		<string>Wizzo uses the microphone when recording product videos.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Wizzo uses your location to show nearby sellers and delivery areas on the map.</string>
-		<!--
-		  Google Sign-In: replace the scheme suffix with this app's dedicated
-		  iOS OAuth client (Google Cloud Console → Credentials → OAuth 2.0
-		  Client IDs for iOS → Client ID), reversed as a URL scheme, and drop
-		  the matching GoogleService-Info.plist into ios/Runner/.
-		-->
-		<key>CFBundleURLTypes</key>
-		<array>
-			<dict>
-				<key>CFBundleTypeRole</key>
-				<string>Editor</string>
-				<key>CFBundleURLSchemes</key>
-				<array>
-					<string>com.googleusercontent.apps.REPLACE_WITH_IOS_CLIENT_ID</string>
-				</array>
-			</dict>
-		</array>
+		<!-- Google Sign-In was removed from the app, so no custom URL scheme is
+		     registered here. Add the reversed iOS OAuth client id back only if
+		     Google login is reintroduced. -->
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 	</dict>
