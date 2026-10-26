@@ -11,6 +11,10 @@ workflows:
       groups:
         - "apple store"
     scripts:
+      - name: Install dependencies & pods
+        script: |
+          flutter pub get
+          cd ios && pod install && cd ..
       - name: Set up code signing
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
@@ -19,12 +23,9 @@ workflows:
             --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
           
           xcode-project use-profiles
-      - name: Install dependencies
-        script: |
-          flutter pub get
       - name: Build IPA
         script: |
-          flutter build ipa --release --no-codesign # or let xcode-project use-profiles handle it cleanly
+          flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
