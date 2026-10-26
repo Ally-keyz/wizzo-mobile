@@ -1,1 +1,46 @@
-null
+workflows:
+  wizzo-mobile-workflow:
+    name: Wizzo Mobile Android Workflow
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+      - name: Build Flutter package
+        script: |
+          flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
+
+wizzo-ios-workflow:
+    name: Wizzo Mobile iOS Workflow
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: "com.wizzo.mobile"
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+      - name: Set up code signing
+        script: |
+          echo "Preparing iOS build..."
+      - name: Build IPA
+        script: |
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth:
+          issuer_id: "@env:APP_STORE_CONNECT_ISSUER_ID"
+          key_identifier: "@env:APP_STORE_CONNECT_KEY_IDENTIFIER"
+          private_key: "@env:APP_STORE_CONNECT_PRIVATE_KEY"
+        submit_to_testflight: true
