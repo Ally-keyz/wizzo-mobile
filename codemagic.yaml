@@ -9,7 +9,7 @@ workflows:
       vars:
         BUNDLE_ID: "com.wizzo.mobile"
       groups:
-        - app_store_credentials
+        - "apple store"
     scripts:
       - name: Install dependencies
         script: |
@@ -25,7 +25,7 @@ workflows:
     publishing:
       app_store_connect:
         auth:
-          issuer_id: "$APP_STORE_CONNECT_ISSUER_ID"
-          key_identifier: "$APP_STORE_CONNECT_KEY_IDENTIFIER"
-          private_key: "$APP_STORE_CONNECT_PRIVATE_KEY"
+          issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+          key_identifier: $APP_STORE_CONNECT_KEY_IDENTIFIER
+          private_key: $APP_STORE_CONNECT_PRIVATE_KEY
         submit_to_testflight: true
