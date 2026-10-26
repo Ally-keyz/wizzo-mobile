@@ -19,7 +19,7 @@ workflows:
           cd ..
       - name: Set up code signing
         script: |
-          # Automatically fetch or create signing files from Apple Developer Portal
+          # Fetch and apply code signing files from App Store Connect automatically
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
             --key-identifier "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
