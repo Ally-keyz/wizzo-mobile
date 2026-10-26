@@ -1,7 +1,9 @@
+
 workflows:
   wizzo-ios-workflow:
     name: Wizzo Mobile iOS Workflow
     max_build_duration: 60
+
     environment:
       flutter: stable
       xcode: latest
@@ -10,18 +12,22 @@ workflows:
         BUNDLE_ID: "com.wizzo.mobile"
       groups:
         - "apple store"
+
     scripts:
       - name: Install dependencies
-        script: |
-          flutter pub get
+        script: flutter pub get
+
       - name: Set up code signing
         script: |
-          echo "Preparing ios build..."
+          echo "Preparing iOS build..."
+
       - name: Build IPA
         script: |
           flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
     artifacts:
       - build/ios/ipa/*.ipa
+
     publishing:
       app_store_connect:
         auth:
