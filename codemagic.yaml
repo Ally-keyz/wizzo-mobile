@@ -16,7 +16,14 @@ workflows:
           flutter pub get
       - name: Set up code signing
         script: |
-          echo "Preparing ios build..."
+          # Use Codemagic's automatic code signing initialization
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-identifier "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
+          
+          # Use the fetched certificates in Xcode
+          xcode-project use-profiles
       - name: Build IPA
         script: |
           flutter build ipa --release
