@@ -7,26 +7,24 @@ workflows:
       xcode: latest
       cocoapods: default
       vars:
-        BUNDLE_ID: "com.wizzo.mobile"
+        BUNDLE_ID: "app.wizzo.wizzoMarket"
       groups:
         - "apple store"
     scripts:
-      - name: Install dependencies
-        script: |
-          flutter pub get
       - name: Set up code signing
         script: |
-          # Use Codemagic's automatic code signing initialization
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
             --key-identifier "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
             --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
           
-          # Use the fetched certificates in Xcode
           xcode-project use-profiles
+      - name: Install dependencies
+        script: |
+          flutter pub get
       - name: Build IPA
         script: |
-          flutter build ipa --release
+          flutter build ipa --release --no-codesign # or let xcode-project use-profiles handle it cleanly
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
