@@ -265,4 +265,4 @@ for the review build.
 - **iPad**: not applicable — the build is iPhone-only (`TARGETED_DEVICE_FAMILY = 1`).
 - **Name**: "Wizzo Market" must be available on the App Store; otherwise use the
   KATISHA listing name already planned for Google Play.
-- **Version**: build number must increase for every upload (34 now).
+- **Version**: build number must increase for every upload (35 now).
