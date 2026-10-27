@@ -71,6 +71,22 @@ Keep the `.p8` and the private key safe and never commit them.
 > profile under **Code signing identities** and use Codemagic's `ios_signing`
 > block. The CLI flow above is already wired up and needs no extra uploads.
 
+### App Store Connect API key stored as an integration
+
+If you added the API key under **Team settings → Integrations → App Store
+Connect** instead of pasting it into the `apple store` group, Codemagic does
+**not** inject it automatically. Name the integration in `codemagic.yaml`:
+
+```yaml
+    environment:
+      integrations:
+        app_store_connect: <integration name>
+```
+
+That exposes `APP_STORE_CONNECT_PRIVATE_KEY`, `APP_STORE_CONNECT_KEY_IDENTIFIER`
+and `APP_STORE_CONNECT_ISSUER_ID`. `CERTIFICATE_PRIVATE_KEY` still has to live
+in the `apple store` group.
+
 ## 3. Run the build
 
 Codemagic → application → **Start new build** → branch/commit → workflow
@@ -79,9 +95,11 @@ Codemagic → application → **Start new build** → branch/commit → workflow
 The workflow:
 
 1. `flutter pub get`
-2. `flutter analyze --no-fatal-infos --no-fatal-warnings`
-3. `keychain initialize`
-4. `app-store-connect fetch-signing-files app.wizzo.wizzoMarket --type IOS_APP_STORE --create`
+2. `pod install`
+3. `flutter analyze --no-fatal-infos --no-fatal-warnings`
+4. verify that the four `apple store` variables are non-empty (fail fast)
+5. `keychain initialize`
+6. `app-store-connect fetch-signing-files app.wizzo.wizzoMarket --type IOS_APP_STORE --create`
 5. `keychain add-certificates`
 6. `xcode-project use-profiles`
 7. `flutter build ipa --release --export-method app-store`
@@ -105,6 +123,7 @@ for a new store version, the name (`1.5.0+37`).
 
 | Log message | Fix |
 |---|---|
+| `argument --private-key: Missing value PRIVATE_KEY` | The API key is not reaching the step. Add `APP_STORE_CONNECT_PRIVATE_KEY` (full `.p8` text, not a file path) to the `apple store` group, or reference the integration with `integrations: app_store_connect: <name>`. The "Verify App Store Connect credentials" step lists what is missing. |
 | `No valid code signing certificates were found` | The `keychain` steps are missing, or `CERTIFICATE_PRIVATE_KEY` is not set/does not match the certificate. Check the "Fetch App Store signing files" step output. |
 | `No matching profiles found` | The App ID `app.wizzo.wizzoMarket` does not exist, or the API key lacks App Manager rights. Create the App ID and app record first. |
 | `Authentication credentials are missing or invalid` | One of the three `APP_STORE_CONNECT_*` variables is wrong or missing from the `apple store` group. |

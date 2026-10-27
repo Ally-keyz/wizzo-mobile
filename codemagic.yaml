@@ -11,6 +11,12 @@
 # The App Store Connect API key must have App Manager rights, and an app record
 # for `app.wizzo.wizzoMarket` must already exist in App Store Connect.
 #
+# If the API key is stored as a Codemagic integration instead of env vars, add
+#   integrations:
+#     app_store_connect: <integration name>
+# under `environment`; Codemagic then injects the three APP_STORE_CONNECT_*
+# variables. CERTIFICATE_PRIVATE_KEY still belongs in the "apple store" group.
+#
 # Version/build number come from pubspec.yaml. Bump the build number before
 # every upload (App Store Connect rejects a build number it has already seen).
 workflows:
@@ -44,6 +50,23 @@ workflows:
         # The project still has a few info/warning lints; only hard errors
         # should block a release build.
         script: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Verify App Store Connect credentials
+        script: |
+          missing=0
+          for name in APP_STORE_CONNECT_PRIVATE_KEY APP_STORE_CONNECT_KEY_IDENTIFIER APP_STORE_CONNECT_ISSUER_ID CERTIFICATE_PRIVATE_KEY; do
+            eval "value=\${$name}"
+            if [ -z "$value" ]; then
+              echo "MISSING: $name"
+              missing=1
+            else
+              echo "OK: $name"
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Add the missing variables to the Codemagic environment group 'apple store' (or use an App Store Connect integration)."
+            exit 1
+          fi
 
       - name: Initialise signing keychain
         script: keychain initialize
