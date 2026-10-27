@@ -68,6 +68,19 @@ workflows:
             exit 1
           fi
 
+      - name: Inspect App Store Connect credentials
+        # Prints only shapes/brackets, never the key itself. Apple returns 401
+        # when the Key ID and the .p8 do not belong together, when the Issuer ID
+        # has stray whitespace/quotes, or when the key was revoked.
+        script: |
+          echo "Key ID:    [$APP_STORE_CONNECT_KEY_IDENTIFIER]"
+          echo "Issuer ID: [$APP_STORE_CONNECT_ISSUER_ID]"
+          echo "p8 chars:  ${#APP_STORE_CONNECT_PRIVATE_KEY}"
+          if [ -f "$APP_STORE_CONNECT_PRIVATE_KEY" ]; then
+            echo "WARNING: APP_STORE_CONNECT_PRIVATE_KEY is a file path, not PEM text"
+          fi
+          printf '%s\n' "$APP_STORE_CONNECT_PRIVATE_KEY" | sed -n '1p;$p'
+
       - name: Initialise signing keychain
         script: keychain initialize
 
