@@ -1,37 +1,72 @@
+# Wizzo Market — iOS / App Store release pipeline.
+#
+# Required Codemagic setup (Team settings → Environment variables, group
+# "apple store"):
+#   APP_STORE_CONNECT_PRIVATE_KEY   contents of the AuthKey_XXXXXXXXXX.p8 file
+#   APP_STORE_CONNECT_KEY_IDENTIFIER  the key ID shown in App Store Connect
+#   APP_STORE_CONNECT_ISSUER_ID     the issuer ID shown in App Store Connect
+#   CERTIFICATE_PRIVATE_KEY         PEM private key used to create/import the
+#                                   Apple Distribution certificate
+#
+# The App Store Connect API key must have App Manager rights, and an app record
+# for `app.wizzo.wizzoMarket` must already exist in App Store Connect.
+#
+# Version/build number come from pubspec.yaml. Bump the build number before
+# every upload (App Store Connect rejects a build number it has already seen).
 workflows:
   wizzo-ios-workflow:
-    name: Wizzo Mobile iOS Workflow
-    max_build_duration: 60
+    name: Wizzo Market iOS – App Store
+    max_build_duration: 90
     environment:
-      flutter: stable
+      flutter: 3.38.5
       xcode: latest
       cocoapods: default
-      vars:
-        BUNDLE_ID: "app.wizzo.wizzoMarket"
       groups:
         - "apple store"
+      vars:
+        BUNDLE_ID: "app.wizzo.wizzoMarket"
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
     scripts:
-      - name: Install dependencies & pods
+      - name: Get Flutter packages
+        script: flutter pub get
+
+      - name: Install CocoaPods dependencies
         script: |
-          flutter pub get
           cd ios
           pod install
           cd ..
-      - name: Set up code signing
+
+      - name: Static analysis
+        # The project still has a few info/warning lints; only hard errors
+        # should block a release build.
+        script: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Initialise signing keychain
+        script: keychain initialize
+
+      - name: Fetch App Store signing files
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-identifier "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY" \
             --type IOS_APP_STORE \
             --create
-          
-          xcode-project use-profiles
+
+      - name: Import distribution certificate
+        script: keychain add-certificates
+
+      - name: Apply provisioning profiles to the Xcode project
+        script: xcode-project use-profiles
+
       - name: Build IPA
         script: |
-          flutter build ipa --release --export-method app-store
+          flutter build ipa --release \
+            --export-method app-store
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/ios/archive/*.xcarchive
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY

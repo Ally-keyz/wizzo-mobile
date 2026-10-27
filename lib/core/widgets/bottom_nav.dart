@@ -333,7 +333,7 @@ class _BottomNavBar extends StatelessWidget {
           Positioned(
             bottom: 6,
             child: Text(
-              context.tr(_tabs[1].labelKey),
+              context.tr(_tabs[_sellIndex].labelKey),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,

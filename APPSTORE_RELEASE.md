@@ -4,7 +4,7 @@ Everything the iOS app needs before it goes to App Store Connect, plus the exact
 steps to build, upload and submit it. Android/Play details stay in
 [`RELEASE_PREP.md`](RELEASE_PREP.md).
 
-Current version: **1.4.8 (build 33)** — `pubspec.yaml`. Bundle id:
+Current version: **1.4.9 (build 35)** — `pubspec.yaml`. Bundle id:
 **`app.wizzo.wizzoMarket`**. Apple Developer Program: paid team required.
 
 ---
@@ -13,7 +13,7 @@ Current version: **1.4.8 (build 33)** — `pubspec.yaml`. Bundle id:
 
 | Item | Where | Status |
 |---|---|---|
-| Version bump to 1.4.8+33 | `pubspec.yaml` | ✔ |
+| Version bump to 1.4.9+35 | `pubspec.yaml` | ✔ |
 | Categories moved from the home rail to a bottom-bar tab (`/categories`) | `bottom_nav.dart`, `app_router.dart`, `home_screen.dart` | ✔ |
 | Sign-up "Continue" no longer dead (seller name+email validation crash) | `seller_signup_screen.dart`, `buyer_signup_screen.dart` | ✔ |
 | In-app **Delete account** (App Store 5.1.1(v)) | account screen → `DELETE /users/me` (server anonymises the profile, hides listings, revokes refresh tokens) | ✔ |
@@ -71,17 +71,20 @@ Hard requirements still owned by you:
 
 ---
 
-## 3. Build the iOS archive (on macOS)
+## 3. Build the iOS archive (on macOS or Codemagic)
 
 ```bash
 cd mobile
 flutter pub get
-cd ios && pod install && cd ..
 
 flutter build ipa --release \
-  --build-name 1.4.8 --build-number 33
+  --build-name 1.4.9 --build-number 35
   # add --dart-define=APPLE_PAY_MERCHANT_ID=merchant.com.wizzomarketplace if enabled
 ```
+
+The project uses **CocoaPods** (`ios/Podfile`); `flutter build ipa` runs
+`pod install` automatically. On a fresh checkout run `flutter pub get` first so
+`ios/Flutter/Generated.xcconfig` exists.
 
 Output: `build/ios/ipa/wizzo_market.ipa` (and the `.xcarchive`). Upload with:
 
@@ -90,12 +93,15 @@ Output: `build/ios/ipa/wizzo_market.ipa` (and the `.xcarchive`). Upload with:
 - or **Transporter** app (drag the `.ipa`), or
   `xcrun altool --upload-app -f build/ios/ipa/*.ipa -t ios --apiKey … --apiIssuer …`.
 
-If you do not own a Mac, use a macOS CI (Codemagic, GitHub Actions `macos-latest`,
-Bitrise): the steps are identical — `flutter build ipa` plus an App Store Connect
-API key (App Store Connect → Users and Access → Integrations → App Store Connect API).
+If you do not own a Mac, use Codemagic — the workflow and the exact one-time
+setup are in [`CODEMAGIC_IOS.md`](CODEMAGIC_IOS.md). It builds, signs, uploads to
+TestFlight and can submit the build to App Store Connect. Other macOS CIs
+(GitHub Actions `macos-latest`, Bitrise) work the same: `flutter build ipa` plus
+an App Store Connect API key (App Store Connect → Users and Access → Integrations
+→ App Store Connect API).
 
 Checklist for the archive:
-- Version shows **1.4.8 (33)** in App Store Connect after upload.
+- Version shows **1.4.9 (35)** in App Store Connect after upload.
 - No signing warnings; "Upload Symbols" enabled (default via Flutter).
 - The archive must be built with the latest public Xcode SDK (Apple rejects old SDKs).
 
@@ -150,14 +156,15 @@ marketplace,shopping,buy,sell,kigali,rwanda,east africa,momo,phones,fashion,deal
 **Screenshots** (take on a real device or the simulator, light + dark recommended):
 - 6.9" iPhone — 1320 × 2868 (required)
 - 6.5" iPhone — 1242 × 2688 or 1284 × 2778 (optional but useful)
-- 13" iPad — 2064 × 2752 (required **only** if you keep iPad support; see note)
+- 13" iPad — not required: this build is **iPhone only**
+  (`TARGETED_DEVICE_FAMILY = 1`).
 
 Suggested shots: home with deals → categories tab → product detail with variants →
 chat with a seller → checkout payment options → seller dashboard.
 
-> Note: if you do **not** want to support iPad, set *Targeted Device Families* to
-> iPhone only (`TARGETED_DEVICE_FAMILY = 1` in Xcode / `project.pbxproj`) and no
-> iPad screenshots are needed.
+> Note: the project is already configured iPhone-only
+> (`TARGETED_DEVICE_FAMILY = 1` in `project.pbxproj`), so no iPad screenshots are
+> needed. To ship on iPad later, set it back to `"1,2"` and add iPad screenshots.
 
 **App icon:** the existing 1024×1024 icon in `AppIcon.appiconset` (no alpha, no
 rounded corners — Apple masks it).
@@ -175,7 +182,7 @@ tracking, never sold):
 | User content | Photos/videos, messages, product listings, store info | chat, listings, proof of payment |
 | Identifiers | User ID | backend account id |
 | Purchases | Purchase history | orders |
-| Location | Coarse location (city/country) | chosen by the user, no GPS tracking |
+| Location | Precise device location when the user grants permission | used only to show the current city and nearby sellers; the user can skip the prompt and pick a city manually |
 | Diagnostics | none | no crash/analytics SDK |
 
 - **Tracking:** No. The app has no ad SDKs and does not share data with data brokers.
@@ -230,12 +237,12 @@ for the review build.
 3. Add yourself as an **internal tester**, install via TestFlight and smoke-test:
    sign-up (buyer + seller), sign-in, categories tab, product → cart → checkout,
    chat/report/block, delete account (use a throwaway account).
-4. Back in App Store Connect: create version **1.4.8**, attach build 33, fill
+4. Back in App Store Connect: create version **1.4.9**, attach build 35, fill
    §4–§7, upload screenshots, save.
 5. **Add for Review** → answer the final questions (ads: no; content rights: you
    own/have rights; encryption: no) → **Submit**.
 6. Review usually takes 24–48 h. If rejected, fix and upload a new build
-   (build number must increase: 1.4.8+34).
+   (build number must increase: 1.4.9+36).
 7. On approval choose **Manually release** so you control the go-live moment.
 
 ---
@@ -255,7 +262,7 @@ for the review build.
   the main flows (some seller "coming soon" sheets exist — reviewers tolerate them
   when clearly secondary, but remove if asked).
 - **Privacy policy** must mention account deletion and chat/report data.
-- **iPad**: either ship iPad screenshots or switch to iPhone-only.
+- **iPad**: not applicable — the build is iPhone-only (`TARGETED_DEVICE_FAMILY = 1`).
 - **Name**: "Wizzo Market" must be available on the App Store; otherwise use the
   KATISHA listing name already planned for Google Play.
-- **Version**: build number must increase for every upload (33 now).
+- **Version**: build number must increase for every upload (34 now).

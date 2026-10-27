@@ -454,8 +454,13 @@ class _DealsSection extends ConsumerStatefulWidget {
 }
 
 class _DealsSectionState extends ConsumerState<_DealsSection> {
-  static const _autoAdvance = Duration(seconds: 4);
+  static const _autoAdvance = Duration(seconds: 5);
+  static const _gutter = 20.0;
+  static const _bannerHeight = 190.0;
 
+  // Full-viewport pages with an inner gutter: exactly one banner is visible at
+  // rest, centred with equal space on both sides, instead of a rail of peeking
+  // product cards.
   final _controller = PageController();
   Timer? _timer;
   int _current = 0;
@@ -463,23 +468,33 @@ class _DealsSectionState extends ConsumerState<_DealsSection> {
   @override
   void initState() {
     super.initState();
-    _startAutoAdvance();
+    _restartTimer();
   }
 
-  void _startAutoAdvance() {
+  void _restartTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(_autoAdvance, (_) {
-      if (!mounted || !_controller.hasClients) return;
-      final deals = ref.read(homeDealsProvider).value;
-      final count = deals?.length ?? 0;
-      if (count <= 1) return;
-      final next = (_current + 1) % count;
-      _controller.animateToPage(
-        next,
-        duration: const Duration(milliseconds: 450),
-        curve: Curves.easeInOut,
-      );
-    });
+    _timer = Timer.periodic(_autoAdvance, (_) => _advance());
+  }
+
+  /// Number of slides currently shown: deal banners win, promoted products are
+  /// the fallback when no deal banner is configured.
+  int _slideCount() {
+    final deals = ref.read(homeDealsProvider).value ?? const <Deal>[];
+    if (deals.isNotEmpty) return deals.length;
+    return (ref.read(promotedProductsProvider).value ?? const <Product>[])
+        .length;
+  }
+
+  void _advance() {
+    if (!mounted || !_controller.hasClients) return;
+    final count = _slideCount();
+    if (count <= 1) return;
+    final next = (_current + 1) % count;
+    _controller.animateToPage(
+      next,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -501,7 +516,10 @@ class _DealsSectionState extends ConsumerState<_DealsSection> {
 
     // Nothing on promotion at all: drop the heading too, rather than leaving
     // an "Exclusive Deals" title with an empty gap underneath it.
-    if (deals.isEmpty && promoted.isEmpty && !dealsAsync.isLoading && !promotedAsync.isLoading) {
+    if (deals.isEmpty &&
+        promoted.isEmpty &&
+        !dealsAsync.isLoading &&
+        !promotedAsync.isLoading) {
       return const SizedBox.shrink();
     }
 
@@ -547,105 +565,103 @@ class _DealsSectionState extends ConsumerState<_DealsSection> {
           ),
           const SizedBox(height: 12),
           if (deals.isNotEmpty)
-            _dealsCarousel(context, deals)
-          else
-            _promotedStrip(context, promoted, promotedAsync.isLoading),
+            _carousel(
+              count: deals.length,
+              itemBuilder: (_, i) =>
+                  _DealCarouselCard(deal: deals[i], onTap: widget.onSeeAll),
+            )
+          else if (promoted.isNotEmpty)
+            _carousel(
+              count: promoted.length,
+              itemBuilder: (_, i) =>
+                  _PromotedCarouselCard(product: promoted[i]),
+            )
+          else if (promotedAsync.isLoading)
+            _loadingBanner(context),
+          if (deals.length > 1 || (deals.isEmpty && promoted.length > 1))
+            _dots(context, deals.isNotEmpty ? deals.length : promoted.length),
         ],
       ),
     );
   }
 
-  /// Banner carousel, shown whenever at least one deal is active.
-  Widget _dealsCarousel(BuildContext context, List<Deal> deals) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        SizedBox(
-          height: 180,
-          child: PageView.builder(
-            controller: _controller,
-            onPageChanged: (i) => setState(() => _current = i),
-            itemCount: deals.length,
-            itemBuilder: (_, i) => Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: i < deals.length - 1 ? 0 : 16,
-              ),
-              child: _DealCarouselCard(
-                deal: deals[i],
-                onTap: widget.onSeeAll,
-              ),
-            ),
+  /// Single-slide carousel. Each page is inset by [_gutter] on both sides, so
+  /// the banner is ~90% of the screen width and only one is visible at a time.
+  Widget _carousel({
+    required int count,
+    required IndexedWidgetBuilder itemBuilder,
+  }) {
+    return SizedBox(
+      height: _bannerHeight,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          // Pause while the user drags, resume once the page settles so the
+          // banner being read is not yanked away.
+          if (notification is ScrollStartNotification &&
+              notification.dragDetails != null) {
+            _timer?.cancel();
+          } else if (notification is ScrollEndNotification) {
+            _restartTimer();
+          }
+          return false;
+        },
+        child: PageView.builder(
+          controller: _controller,
+          itemCount: count,
+          onPageChanged: (i) {
+            setState(() => _current = i);
+            _restartTimer();
+          },
+          itemBuilder: (context, i) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: _gutter),
+            child: itemBuilder(context, i),
           ),
         ),
-        if (deals.length > 1) ...[
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(deals.length, (i) {
-              final active = i == _current;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: active ? 20 : 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color:
-                      active ? Palette.gold : theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              );
-            }),
-          ),
-        ],
-      ],
+      ),
     );
   }
 
-  /// Fallback shown when no deal banner is active: every discounted product,
-  /// so the section still surfaces real promotions instead of going blank.
-  Widget _promotedStrip(
-    BuildContext context,
-    List<Product> products,
-    bool loading,
-  ) {
-    if (products.isEmpty) {
-      if (loading) {
-        return SizedBox(
-          height: 180,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
+  Widget _dots(BuildContext context, int count) {
+    final active = _current.clamp(0, count - 1);
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(count, (i) {
+          final isActive = i == active;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: isActive ? 20 : 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? Palette.gold
+                  : Theme.of(context).colorScheme.outlineVariant,
+              borderRadius: BorderRadius.circular(4),
             ),
-          ),
-        );
-      }
-      return const SizedBox.shrink();
-    }
+          );
+        }),
+      ),
+    );
+  }
 
-    return SizedBox(
-      height: 268,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: products.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (_, i) => SizedBox(
-          width: 168,
-          child: ProductCard(product: products[i]),
+  /// Placeholder in the same 90%-wide footprint while promotions load.
+  Widget _loadingBanner(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: _gutter),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox(
+          height: _bannerHeight,
+          child: ColoredBox(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
         ),
       ),
     );
   }
 }
-
 
 /// Full-bleed banner card for one deal inside the auto-advancing carousel.
 class _DealCarouselCard extends StatelessWidget {
@@ -803,6 +819,99 @@ class _DealCarouselCard extends StatelessWidget {
       if (p.images.isNotEmpty) return p.images.first;
     }
     return null;
+  }
+}
+
+/// Full-width promo slide used when no deal banner is configured: one
+/// discounted product at a time instead of a horizontally scrolling rail.
+class _PromotedCarouselCard extends StatelessWidget {
+  const _PromotedCarouselCard({required this.product});
+
+  final Product product;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final image = product.images.isNotEmpty ? product.images.first : null;
+
+    return GestureDetector(
+      onTap: () => context.push('/product/${product.id}'),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (image != null)
+              WImage(url: image, fit: BoxFit.cover)
+            else
+              ColoredBox(color: theme.colorScheme.surfaceContainerHighest),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.black.withValues(alpha: 0.02),
+                    Colors.black.withValues(alpha: 0.75),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (product.discount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Palette.gold,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '-${product.discount}%',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                  const Spacer(),
+                  Text(
+                    product.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  PriceRow(
+                    price: product.price,
+                    originalPrice: product.originalPrice,
+                    currentStyle: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    originalStyle: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.white54,
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: Colors.white54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
