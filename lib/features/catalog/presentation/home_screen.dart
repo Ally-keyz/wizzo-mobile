@@ -681,9 +681,8 @@ class _DealCarouselCard extends StatelessWidget {
     final bannerUrl = deal.bannerUrl ?? deal.imageUrl;
     final productCount = deal.productCount ?? deal.products.length;
 
-    // A designed banner is meant to fill the slide. Without one we fall back to
-    // a product photo, and that must stay uncropped: forcing a 1:1 shot into a
-    // 190px banner is what made these images look zoomed and soft.
+    // A designed banner fills the whole slide. Without one we fall back to the
+    // product-photo layout, whose image panel is full-bleed too.
     if (bannerUrl == null) {
       return _PromoSlide(
         imageUrl: _firstProductImage(deal),
@@ -871,8 +870,8 @@ class _PromotedCarouselCard extends StatelessWidget {
 }
 
 /// Image + details slide shared by product promotions and deal cards that have
-/// no designed banner. The photo is letterboxed inside its own panel, so the
-/// whole product stays visible and sharp.
+/// no designed banner. The photo fills its panel edge to edge (cropped to fit)
+/// so the card never shows empty letterbox bands beside the image.
 class _PromoSlide extends StatelessWidget {
   const _PromoSlide({
     required this.title,
@@ -909,16 +908,20 @@ class _PromoSlide extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: 140,
-              padding: const EdgeInsets.all(10),
-              color: theme.colorScheme.surfaceContainerHighest,
+            // Full-bleed image panel: the photo fills the whole left side of
+            // the card (edge to edge, top to bottom) instead of being
+            // letterboxed inside a padded box.
+            SizedBox(
+              width: 132,
               child: imageUrl != null
-                  ? WImage(url: imageUrl, fit: BoxFit.contain)
-                  : Icon(
-                      Icons.image_outlined,
-                      size: 32,
-                      color: theme.colorScheme.onSurfaceVariant,
+                  ? WImage(url: imageUrl, fit: BoxFit.cover)
+                  : ColoredBox(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: Icon(
+                        Icons.image_outlined,
+                        size: 32,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
             ),
             Expanded(
