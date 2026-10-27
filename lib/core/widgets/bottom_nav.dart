@@ -6,10 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/cart/providers/cart_provider.dart';
 import '../../features/messages/providers/chat_providers.dart';
 import '../../features/notifications/data/notification_repository.dart';
 import '../../features/notifications/models/notification.dart';
 import '../theme/app_colors.dart';
+import 'fly_to_cart.dart';
 import 'w_widgets.dart';
 
 /// How far the gold Sell circle rises above the top edge of the bottom nav bar.
@@ -18,9 +20,13 @@ import 'w_widgets.dart';
 /// screen inside [WMarketShell] that pins a primary action to the bottom of the
 /// Scaffold body must reserve this much extra bottom padding, otherwise the bar
 /// paints on top of the button.
-const double kSellButtonOverhang = 20;
+const double kSellButtonOverhang = 12;
 
-/// The 4-item bottom navigation: Home, Categories, Sell, Account.
+/// Pseudo-branch the bottom nav uses for the cart: it is a pushed route shared
+/// by every shell branch, not a [StatefulNavigationShell] branch.
+const int _cartBranch = -2;
+
+/// The 5-item bottom navigation: Home, Categories, Sell, Cart, Account.
 ///
 /// Also hosts the live in-app notification poller: while the app is in the
 /// foreground it re-checks for new notifications and surfaces a banner when
@@ -190,16 +196,31 @@ class _WMarketShellState extends ConsumerState<WMarketShell>
         },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: _BottomNavBar(
-        currentIndex: widget.navigationShell.currentIndex,
-        onTap: (arrayIndex, branch) {
-          if (branch < 0) {
-            _openSell(context, ref);
-            return;
-          }
-          widget.navigationShell.goBranch(
-            branch,
-            initialLocation: branch == widget.navigationShell.currentIndex,
+      bottomNavigationBar: ListenableBuilder(
+        listenable: router.routerDelegate,
+        builder: (context, _) {
+          final location = router
+              .routerDelegate
+              .currentConfiguration
+              .lastOrNull
+              ?.matchedLocation;
+          return _BottomNavBar(
+            currentIndex: widget.navigationShell.currentIndex,
+            currentLocation: location,
+            onTap: (arrayIndex, branch) {
+              if (branch == _cartBranch) {
+                if (location != '/cart') context.push('/cart');
+                return;
+              }
+              if (branch < 0) {
+                _openSell(context, ref);
+                return;
+              }
+              widget.navigationShell.goBranch(
+                branch,
+                initialLocation: branch == widget.navigationShell.currentIndex,
+              );
+            },
           );
         },
       ),
@@ -216,10 +237,15 @@ class _WMarketShellState extends ConsumerState<WMarketShell>
   }
 }
 
-class _BottomNavBar extends StatelessWidget {
-  const _BottomNavBar({required this.currentIndex, required this.onTap});
+class _BottomNavBar extends ConsumerWidget {
+  const _BottomNavBar({
+    required this.currentIndex,
+    required this.currentLocation,
+    required this.onTap,
+  });
 
   final int currentIndex;
+  final String? currentLocation;
   final void Function(int arrayIndex, int branch) onTap;
 
   static const _tabs =
@@ -243,6 +269,12 @@ class _BottomNavBar extends StatelessWidget {
           branch: -1,
         ),
         (
+          labelKey: 'nav.cart',
+          icon: Icons.shopping_cart_outlined,
+          activeIcon: Icons.shopping_cart,
+          branch: _cartBranch,
+        ),
+        (
           labelKey: 'nav.account',
           icon: Icons.person_outline,
           activeIcon: Icons.person,
@@ -251,10 +283,12 @@ class _BottomNavBar extends StatelessWidget {
       ];
 
   static const _sellIndex = 2;
+  static const _cartIndex = 3;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final cartCount = ref.watch(cartCountProvider);
     return Container(
       color: scheme.surface,
       child: SafeArea(
@@ -266,11 +300,28 @@ class _BottomNavBar extends StatelessWidget {
               _item(context, 0, scheme),
               _item(context, 1, scheme),
               _sellButton(context, scheme),
-              _item(context, 3, scheme),
+              _cartItem(context, scheme, cartCount),
+              _item(context, 4, scheme),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _label(
+    BuildContext context,
+    String labelKey,
+    Color color, {
+    FontWeight weight = FontWeight.w400,
+  }) {
+    return Text(
+      context.tr(labelKey),
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: TextStyle(fontSize: 11, fontWeight: weight, color: color),
     );
   }
 
@@ -282,20 +333,73 @@ class _BottomNavBar extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => onTap(arrayIndex, tab.branch),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(active ? tab.activeIcon : tab.icon, size: 24, color: color),
-            const SizedBox(height: 3),
-            Text(
-              context.tr(tab.labelKey),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                color: color,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(active ? tab.activeIcon : tab.icon, size: 24, color: color),
+              const SizedBox(height: 3),
+              _label(
+                context,
+                tab.labelKey,
+                color,
+                weight: active ? FontWeight.w600 : FontWeight.w400,
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Cart tab. It also doubles as the "fly to cart" landing target, so the
+  /// animation always ends on the icon the user can actually tap.
+  Widget _cartItem(BuildContext context, ColorScheme scheme, int count) {
+    final active = currentLocation == '/cart';
+    final color = active ? Palette.gold : scheme.onSurfaceVariant;
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onTap(_cartIndex, _cartBranch),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 26,
+                height: 24,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(
+                      active
+                          ? _tabs[_cartIndex].activeIcon
+                          : _tabs[_cartIndex].icon,
+                      key: flyToCartController.cartTargetKey,
+                      size: 24,
+                      color: color,
+                    ),
+                    if (count > 0)
+                      Positioned(
+                        right: -8,
+                        top: -6,
+                        child: WBadge(count: count),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 3),
+              _label(
+                context,
+                _tabs[_cartIndex].labelKey,
+                color,
+                weight: active ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -303,7 +407,7 @@ class _BottomNavBar extends StatelessWidget {
 
   Widget _sellButton(BuildContext context, ColorScheme scheme) {
     return SizedBox(
-      width: 76,
+      width: 64,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
@@ -313,32 +417,30 @@ class _BottomNavBar extends StatelessWidget {
             child: GestureDetector(
               onTap: () => onTap(_sellIndex, -1),
               child: Container(
-                width: 58,
-                height: 58,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
                   color: Palette.gold,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Palette.gold.withValues(alpha: 0.4),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
+                      color: Palette.gold.withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
-                child: const Icon(Icons.add, size: 30, color: Colors.black),
+                child: const Icon(Icons.add, size: 22, color: Colors.black),
               ),
             ),
           ),
           Positioned(
-            bottom: 6,
-            child: Text(
-              context.tr(_tabs[_sellIndex].labelKey),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: scheme.onSurfaceVariant,
-              ),
+            bottom: 4,
+            child: _label(
+              context,
+              _tabs[_sellIndex].labelKey,
+              scheme.onSurfaceVariant,
+              weight: FontWeight.w500,
             ),
           ),
         ],

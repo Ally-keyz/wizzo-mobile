@@ -365,7 +365,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 context,
                 Icons.shopping_cart_outlined,
                 () => context.push('/cart'),
-                key: flyToCartController.cartTargetKey,
               ),
             ],
           ),

@@ -7,7 +7,7 @@ import 'package:wizzo_market/core/widgets/bottom_nav.dart';
 /// [kSellButtonOverhang] of clearance or the bar covers the button.
 void main() {
   test('kSellButtonOverhang matches the Sell circle protrusion', () {
-    expect(kSellButtonOverhang, 20);
+    expect(kSellButtonOverhang, 12);
   });
 
   testWidgets('Sell circle extends above the bottom nav bar', (tester) async {
@@ -34,8 +34,8 @@ void main() {
                             top: -kSellButtonOverhang,
                             child: Container(
                               key: const Key('sellCircle'),
-                              width: 58,
-                              height: 58,
+                              width: 46,
+                              height: 46,
                             ),
                           ),
                         ],
@@ -103,7 +103,7 @@ void main() {
       return barTop - ctaBottom;
     }
 
-    // Without clearance the button sits inside the Sell circle's 20px band.
+    // Without clearance the button sits inside the Sell circle's 12px band.
     final without = await measureBottomGap(withClearance: false);
     expect(without, lessThan(kSellButtonOverhang));
 

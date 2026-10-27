@@ -4,7 +4,7 @@ Everything the iOS app needs before it goes to App Store Connect, plus the exact
 steps to build, upload and submit it. Android/Play details stay in
 [`RELEASE_PREP.md`](RELEASE_PREP.md).
 
-Current version: **1.4.9 (build 35)** — `pubspec.yaml`. Bundle id:
+Current version: **1.4.9 (build 36)** — `pubspec.yaml`. Bundle id:
 **`app.wizzo.wizzoMarket`**. Apple Developer Program: paid team required.
 
 ---
@@ -13,7 +13,7 @@ Current version: **1.4.9 (build 35)** — `pubspec.yaml`. Bundle id:
 
 | Item | Where | Status |
 |---|---|---|
-| Version bump to 1.4.9+35 | `pubspec.yaml` | ✔ |
+| Version bump to 1.4.9+36 | `pubspec.yaml` | ✔ |
 | Categories moved from the home rail to a bottom-bar tab (`/categories`) | `bottom_nav.dart`, `app_router.dart`, `home_screen.dart` | ✔ |
 | Sign-up "Continue" no longer dead (seller name+email validation crash) | `seller_signup_screen.dart`, `buyer_signup_screen.dart` | ✔ |
 | In-app **Delete account** (App Store 5.1.1(v)) | account screen → `DELETE /users/me` (server anonymises the profile, hides listings, revokes refresh tokens) | ✔ |
@@ -78,7 +78,7 @@ cd mobile
 flutter pub get
 
 flutter build ipa --release \
-  --build-name 1.4.9 --build-number 35
+  --build-name 1.4.9 --build-number 36
   # add --dart-define=APPLE_PAY_MERCHANT_ID=merchant.com.wizzomarketplace if enabled
 ```
 
@@ -101,7 +101,7 @@ an App Store Connect API key (App Store Connect → Users and Access → Integra
 → App Store Connect API).
 
 Checklist for the archive:
-- Version shows **1.4.9 (35)** in App Store Connect after upload.
+- Version shows **1.4.9 (36)** in App Store Connect after upload.
 - No signing warnings; "Upload Symbols" enabled (default via Flutter).
 - The archive must be built with the latest public Xcode SDK (Apple rejects old SDKs).
 
@@ -237,12 +237,12 @@ for the review build.
 3. Add yourself as an **internal tester**, install via TestFlight and smoke-test:
    sign-up (buyer + seller), sign-in, categories tab, product → cart → checkout,
    chat/report/block, delete account (use a throwaway account).
-4. Back in App Store Connect: create version **1.4.9**, attach build 35, fill
+4. Back in App Store Connect: create version **1.4.9**, attach build 36, fill
    §4–§7, upload screenshots, save.
 5. **Add for Review** → answer the final questions (ads: no; content rights: you
    own/have rights; encryption: no) → **Submit**.
 6. Review usually takes 24–48 h. If rejected, fix and upload a new build
-   (build number must increase: 1.4.9+36).
+   (build number must increase: 1.4.9+37).
 7. On approval choose **Manually release** so you control the go-live moment.
 
 ---
@@ -265,4 +265,4 @@ for the review build.
 - **iPad**: not applicable — the build is iPhone-only (`TARGETED_DEVICE_FAMILY = 1`).
 - **Name**: "Wizzo Market" must be available on the App Store; otherwise use the
   KATISHA listing name already planned for Google Play.
-- **Version**: build number must increase for every upload (35 now).
+- **Version**: build number must increase for every upload (36 now).

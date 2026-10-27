@@ -8,10 +8,13 @@ import '../../core/utils/media_utils.dart';
 
 /// Shared network-image with shimmer placeholder and a graceful error state.
 ///
-/// Decodes network images at the render size (via [memCacheWidth] /
-/// [memCacheHeight]) instead of full resolution, which keeps memory usage low
-/// in grids, rails and chat bubbles. An explicit override wins over the
-/// inferred layout size.
+/// Decodes network images at the render size instead of full resolution, which
+/// keeps memory usage low in grids, rails and chat bubbles. Decoding happens on
+/// a single axis so the source aspect ratio is preserved: Flutter's
+/// `ResizeImage` defaults to `ResizeImagePolicy.exact`, and passing both a
+/// width and a height makes it stretch the bitmap to the box's ratio (the
+/// BoxFit.fill behaviour that made photos look zoomed and soft). An explicit
+/// override wins over the inferred layout size.
 class WImage extends StatelessWidget {
   const WImage({
     super.key,
@@ -71,7 +74,15 @@ class WImage extends StatelessWidget {
                       memCacheWidth ?? _targetPx(layoutWidth, dpr);
                   final targetHeight =
                       memCacheHeight ?? _targetPx(layoutHeight, dpr);
-                  final renditionWidth = (targetWidth ?? 800).clamp(200, 2048);
+                  // Decode on one axis only so the bitmap keeps its aspect
+                  // ratio; ResizeImage's default "exact" policy would stretch
+                  // it to the layout box and make the picture look zoomed.
+                  final decodeWidth =
+                      targetWidth ?? (targetHeight == null ? 800 : null);
+                  final decodeHeight = decodeWidth == null
+                      ? targetHeight
+                      : null;
+                  final renditionWidth = (decodeWidth ?? 800).clamp(200, 2048);
                   return CachedNetworkImage(
                     imageUrl: highQualityCloudinaryUrl(
                       safe,
@@ -81,8 +92,8 @@ class WImage extends StatelessWidget {
                     height: height,
                     fit: fit,
                     filterQuality: FilterQuality.high,
-                    memCacheWidth: targetWidth,
-                    memCacheHeight: targetHeight,
+                    memCacheWidth: decodeWidth,
+                    memCacheHeight: decodeHeight,
                     placeholder: (_, _) =>
                         Container(color: scheme.surfaceContainerHighest),
                     errorWidget: (_, _, _) => _placeholder(scheme, errorIcon),

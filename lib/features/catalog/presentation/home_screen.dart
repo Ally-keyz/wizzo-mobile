@@ -16,7 +16,6 @@ import '../../../core/widgets/city_picker_sheet.dart';
 import '../../../core/widgets/w_async.dart';
 import '../../../core/widgets/w_image.dart';
 import '../../../core/widgets/w_widgets.dart';
-import '../../../core/widgets/fly_to_cart.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../notifications/data/notification_repository.dart';
 import '../../settings/theme_provider.dart';
@@ -170,8 +169,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onPressed: () => _openSearch(context),
             icon: const Icon(Icons.search),
           ),
-          const CartAppBarAction(),
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
         ],
       ),
       body: RefreshIndicator(
@@ -680,8 +678,44 @@ class _DealCarouselCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bgUrl = deal.bannerUrl ?? deal.imageUrl ?? _firstProductImage(deal);
+    final bannerUrl = deal.bannerUrl ?? deal.imageUrl;
     final productCount = deal.productCount ?? deal.products.length;
+
+    // A designed banner is meant to fill the slide. Without one we fall back to
+    // a product photo, and that must stay uncropped: forcing a 1:1 shot into a
+    // 190px banner is what made these images look zoomed and soft.
+    if (bannerUrl == null) {
+      return _PromoSlide(
+        imageUrl: _firstProductImage(deal),
+        title: deal.title,
+        subtitle: deal.subtitle,
+        onTap: onTap,
+        badges: [
+          _SlidePill(_typeLabel(context), highlight: true),
+          if (deal.discountPercent != null)
+            _SlidePill('-${deal.discountPercent}%'),
+        ],
+        footer: Wrap(
+          spacing: 10,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            WCountdown(deal.endsAt),
+            if (productCount > 0)
+              Text(
+                context.tr(
+                  'deals.productCount',
+                  namedArgs: {'count': '$productCount'},
+                ),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
+        ),
+      );
+    }
 
     return GestureDetector(
       onTap: onTap,
@@ -690,18 +724,7 @@ class _DealCarouselCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (bgUrl != null)
-              WImage(url: bgUrl, fit: BoxFit.cover)
-            else
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Palette.navy, theme.colorScheme.inversePrimary],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
+            WImage(url: bannerUrl, fit: BoxFit.cover),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -822,8 +845,8 @@ class _DealCarouselCard extends StatelessWidget {
   }
 }
 
-/// Full-width promo slide used when no deal banner is configured: one
-/// discounted product at a time instead of a horizontally scrolling rail.
+/// Product-backed promo slide: the photo is shown whole (`BoxFit.contain`)
+/// beside the details instead of being cropped into a banner-shaped box.
 class _PromotedCarouselCard extends StatelessWidget {
   const _PromotedCarouselCard({required this.product});
 
@@ -831,84 +854,138 @@ class _PromotedCarouselCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final image = product.images.isNotEmpty ? product.images.first : null;
-
-    return GestureDetector(
+    return _PromoSlide(
+      imageUrl: product.images.isNotEmpty ? product.images.first : null,
+      title: product.name,
       onTap: () => context.push('/product/${product.id}'),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          fit: StackFit.expand,
+      badges: [
+        if (product.discount > 0)
+          _SlidePill('-${product.discount}%', highlight: true),
+      ],
+      price: PriceRow(
+        price: product.price,
+        originalPrice: product.originalPrice,
+      ),
+    );
+  }
+}
+
+/// Image + details slide shared by product promotions and deal cards that have
+/// no designed banner. The photo is letterboxed inside its own panel, so the
+/// whole product stays visible and sharp.
+class _PromoSlide extends StatelessWidget {
+  const _PromoSlide({
+    required this.title,
+    required this.onTap,
+    this.imageUrl,
+    this.subtitle,
+    this.badges = const [],
+    this.price,
+    this.footer,
+  });
+
+  final String title;
+  final VoidCallback onTap;
+  final String? imageUrl;
+  final String? subtitle;
+  final List<Widget> badges;
+  final Widget? price;
+  final Widget? footer;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (image != null)
-              WImage(url: image, fit: BoxFit.cover)
-            else
-              ColoredBox(color: theme.colorScheme.surfaceContainerHighest),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withValues(alpha: 0.02),
-                    Colors.black.withValues(alpha: 0.75),
+            Container(
+              width: 140,
+              padding: const EdgeInsets.all(10),
+              color: theme.colorScheme.surfaceContainerHighest,
+              child: imageUrl != null
+                  ? WImage(url: imageUrl, fit: BoxFit.contain)
+                  : Icon(
+                      Icons.image_outlined,
+                      size: 32,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (badges.isNotEmpty)
+                      Wrap(spacing: 6, runSpacing: 4, children: badges),
+                    const Spacer(),
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                    if (price != null) ...[const SizedBox(height: 6), price!],
+                    if (footer != null) ...[const SizedBox(height: 6), footer!],
                   ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (product.discount > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Palette.gold,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '-${product.discount}%',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                    ),
-                  const Spacer(),
-                  Text(
-                    product.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  PriceRow(
-                    price: product.price,
-                    originalPrice: product.originalPrice,
-                    currentStyle: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    originalStyle: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.white54,
-                      decoration: TextDecoration.lineThrough,
-                      decorationColor: Colors.white54,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SlidePill extends StatelessWidget {
+  const _SlidePill(this.text, {this.highlight = false});
+
+  final String text;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: highlight
+            ? Palette.gold
+            : theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: highlight ? Colors.black : theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
