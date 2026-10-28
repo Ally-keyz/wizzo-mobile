@@ -557,6 +557,7 @@
     "joinWhatsapp": "Join the Wizzo Community on WhatsApp for instant answers."
   },
   "home": {
+    "all": "All",
     "browseCategories": "Browse Categories",
     "browsingCity": "Browsing {city} now",
     "communityCta": "Join Wizzo Community",
@@ -572,6 +573,7 @@
     "greetingOnly": "{greeting}! 👋",
     "greetingWithName": "{greeting}, {name}! 👋",
     "nearbySellers": "Nearby Sellers",
+    "noCategoryProducts": "No products in this category yet.",
     "searchPlaceholder": "Search products, sellers, deals...",
     "tagline": "Find something you love, from someone you can trust.",
     "topSellers": "Top Sellers"

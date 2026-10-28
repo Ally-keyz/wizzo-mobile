@@ -557,6 +557,7 @@
     "joinWhatsapp": "Jiunge na jumuiya ya Wizzo kwenye WhatsApp kwa majibu ya haraka."
   },
   "home": {
+    "all": "Zote",
     "browseCategories": "Vinjari Kategoria",
     "browsingCity": "Unavinjari {city} sasa",
     "communityCta": "Jiunge na Jamii ya Wizzo",
@@ -572,6 +573,7 @@
     "greetingOnly": "{greeting}! 👋",
     "greetingWithName": "{greeting}, {name}! 👋",
     "nearbySellers": "Wauzaji wa Karibu",
+    "noCategoryProducts": "Hakuna bidhaa katika kundi hili bado.",
     "searchPlaceholder": "Tafuta bidhaa, wauzaji, ofa...",
     "tagline": "Pata unachokipenda, kutoka kwa mtu unayemwamini.",
     "topSellers": "Wauzaji Bora"

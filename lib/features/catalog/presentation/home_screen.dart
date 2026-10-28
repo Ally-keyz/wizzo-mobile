@@ -37,6 +37,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _greetingKey = 'home.greetingGoodDay';
 
+  /// Category currently filtering the home feed; `null` means "All".
+  String? _categorySlug;
+  String? _categoryName;
+
   @override
   void initState() {
     super.initState();
@@ -134,22 +138,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final unreadNotifications =
         ref.watch(notificationsUnreadProvider).value ?? 0;
 
+    // Light mode paints the home app bar and the category filter strip in the
+    // same light-zinc tone. Dark mode keeps the plain canvas colour.
+    final barColor = theme.brightness == Brightness.light
+        ? Palette.lightMuted
+        : theme.colorScheme.surface;
+
     return Scaffold(
       appBar: AppBar(
-        leadingWidth: 56,
+        backgroundColor: barColor,
+        surfaceTintColor: Colors.transparent,
+        leadingWidth: 52,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: WAppMark(size: 30),
+          padding: const EdgeInsets.only(left: 14),
+          child: WAppMark(size: 26),
         ),
-        titleSpacing: 8,
-        title: Text(
-          'Wizzo',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
+        titleSpacing: 6,
+        // The old full-width search bar moved up here as a compact field.
+        title: Row(
+          children: [
+            Expanded(
+              child: _AppBarSearchField(onTap: () => _openSearch(context)),
+            ),
+          ],
         ),
         actions: [
           IconButton(
+            visualDensity: VisualDensity.compact,
             onPressed: () => _openNotifications(context),
             icon: Badge(
               isLabelVisible: unreadNotifications > 0,
@@ -165,26 +180,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: const Icon(Icons.notifications_none),
             ),
           ),
-          IconButton(
-            onPressed: () => _openSearch(context),
-            icon: const Icon(Icons.search),
-          ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await Future.wait([
+          final jobs = <Future<dynamic>>[
             ref.refresh(homeFeedProvider.future),
             ref.refresh(homeDealsProvider.future),
             ref.refresh(promotedProductsProvider.future),
             ref.refresh(topSellersProvider.future),
-          ]);
+          ];
+          final slug = _categorySlug;
+          if (slug != null) {
+            jobs.add(ref.refresh(categoryProductsProvider(slug).future));
+          }
+          await Future.wait(jobs);
         },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(child: _cityBar(context)),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -198,7 +213,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       'name': userName ?? '',
                     },
                   ),
-                  style: theme.textTheme.headlineSmall?.copyWith(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -216,11 +231,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
-                child: _SearchButton(onTap: () => _openSearch(context)),
+              child: _HomeCategoriesRail(
+                selectedSlug: _categorySlug,
+                onSelected: (category) {
+                  setState(() {
+                    // Tapping the active chip clears the filter.
+                    final isSame =
+                        category != null && category.slug == _categorySlug;
+                    _categorySlug = isSame ? null : category?.slug;
+                    _categoryName = isSame ? null : category?.name;
+                  });
+                },
               ),
             ),
+            SliverToBoxAdapter(child: _cityBar(context)),
 
             // Promo / deals rail
             SliverToBoxAdapter(
@@ -271,22 +295,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
 
-            // For You section
+            // For You section — the grid follows the active category chip.
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 30, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
-                        context.tr('home.forYou'),
+                        _categoryName ?? context.tr('home.forYou'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                     TextButton(
-                      onPressed: () => context.push('/search'),
+                      onPressed: () => context.push(
+                        _categorySlug == null
+                            ? '/search'
+                            : '/browse/$_categorySlug',
+                      ),
                       child: Text(
                         context.tr('common.seeAll'),
                         maxLines: 1,
@@ -297,10 +327,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
-            _ForYouSection(),
+            if (_categorySlug == null)
+              _ForYouSection()
+            else
+              _CategoryFeedSection(slug: _categorySlug!),
 
             // Continue viewing CTA — keeps the endless For You scroll going.
-            const SliverToBoxAdapter(child: _ContinueViewingButton()),
+            if (_categorySlug == null)
+              const SliverToBoxAdapter(child: _ContinueViewingButton()),
 
             // Top sellers rail
             SliverToBoxAdapter(
@@ -330,7 +364,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final city = ref.watch(lastCityProvider);
     final label = city.isEmpty ? AppConfig.defaultCity : city;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: GestureDetector(
         onTap: () => _changeCity(context, label),
         child: Row(
@@ -397,44 +431,212 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class _SearchButton extends ConsumerWidget {
-  const _SearchButton({required this.onTap});
+/// Compact, non-editable search field that lives in the home app bar. Tapping
+/// it opens the full search screen, exactly like the old full-width field.
+class _AppBarSearchField extends StatelessWidget {
+  const _AppBarSearchField({required this.onTap});
 
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: scheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: scheme.outline),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.search, color: scheme.onSurfaceVariant),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                context.tr('home.searchPlaceholder'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
+    return Semantics(
+      button: true,
+      label: context.tr('home.searchPlaceholder'),
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          height: 38,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: isLight ? scheme.surface : scheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(19),
+            border: Border.all(color: scheme.outline),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.search, size: 18, color: scheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  context.tr('home.searchPlaceholder'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Icon(Icons.tune, color: scheme.onSurfaceVariant),
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+}
+
+/// Horizontally scrolling category chips that filter the home feed in place.
+class _HomeCategoriesRail extends ConsumerWidget {
+  const _HomeCategoriesRail({
+    required this.selectedSlug,
+    required this.onSelected,
+  });
+
+  final String? selectedSlug;
+  final ValueChanged<CategoryNode?> onSelected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final categories = ref.watch(categoriesProvider);
+    final list = categories.value ?? const <CategoryNode>[];
+    final bandColor = theme.brightness == Brightness.light
+        ? Palette.lightMuted
+        : theme.colorScheme.surface;
+
+    if (list.isEmpty) {
+      // Keep the band from flashing while the tree loads; hide it entirely on
+      // error (the Categories tab still reaches every category).
+      if (categories.hasError) return const SizedBox.shrink();
+      return Container(
+        height: 56,
+        color: bandColor,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: const Row(
+          children: [
+            WSkeleton(width: 56, height: 34, radius: 17),
+            SizedBox(width: 8),
+            WSkeleton(width: 92, height: 34, radius: 17),
+            SizedBox(width: 8),
+            WSkeleton(width: 76, height: 34, radius: 17),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      height: 56,
+      color: bandColor,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: list.length + 1,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _CategoryChip(
+              label: context.tr('home.all'),
+              selected: selectedSlug == null,
+              onTap: () => onSelected(null),
+            );
+          }
+          final category = list[index - 1];
+          return _CategoryChip(
+            label: category.name,
+            selected: selectedSlug == category.slug,
+            onTap: () => onSelected(category),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
+    return Material(
+      color: selected
+          ? Palette.gold
+          : (isLight ? scheme.surface : scheme.surfaceContainerHighest),
+      shape: StadiumBorder(
+        side: BorderSide(color: selected ? Palette.gold : scheme.outline),
+      ),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: selected ? Colors.black : scheme.onSurface,
+              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Product grid for the selected home category (the "For You" grid while a
+/// category chip is active).
+class _CategoryFeedSection extends ConsumerWidget {
+  const _CategoryFeedSection({required this.slug});
+
+  final String slug;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final products = ref.watch(categoryProductsProvider(slug));
+
+    if (products.isLoading && products.value == null) {
+      return const SliverToBoxAdapter(child: ProductGridSkeleton());
+    }
+
+    if (products.hasError && products.value == null) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 32),
+          child: WAsyncView(
+            value: products,
+            onRetry: () => ref.invalidate(categoryProductsProvider(slug)),
+            builder: (_, _) => const SizedBox(),
+          ),
+        ),
+      );
+    }
+
+    final list = products.value ?? const <Product>[];
+    if (list.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
+          child: Text(
+            context.tr('home.noCategoryProducts'),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SliverProductGrid(products: list);
   }
 }
 

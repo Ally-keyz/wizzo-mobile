@@ -557,6 +557,7 @@
     "joinWhatsapp": "Trete der Wizzo-Community auf WhatsApp bei, um sofort Antworten zu erhalten."
   },
   "home": {
+    "all": "Alle",
     "browseCategories": "Kategorien durchsuchen",
     "browsingCity": "Du stöberst gerade in {city}",
     "communityCta": "Der Wizzo-Community beitreten",
@@ -572,6 +573,7 @@
     "greetingOnly": "{greeting}! 👋",
     "greetingWithName": "{greeting}, {name}! 👋",
     "nearbySellers": "Verkäufer in der Nähe",
+    "noCategoryProducts": "Noch keine Produkte in dieser Kategorie.",
     "searchPlaceholder": "Produkte, Verkäufer, Angebote suchen...",
     "tagline": "Finde etwas, das du liebst, bei jemandem, dem du vertraust.",
     "topSellers": "Top-Verkäufer"

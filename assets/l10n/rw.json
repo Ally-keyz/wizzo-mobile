@@ -557,6 +557,7 @@
     "joinWhatsapp": "Injira mu itsinda rya Wizzo kuri WhatsApp kugirango ubone ibisubizo byihuse."
   },
   "home": {
+    "all": "Byose",
     "browseCategories": "Hitamo ubwoko",
     "browsingCity": "Urareba muri {city} ubu",
     "communityCta": "Injira mu Muryango wa Wizzo",
@@ -572,6 +573,7 @@
     "greetingOnly": "{greeting}! 👋",
     "greetingWithName": "{greeting}, {name}! 👋",
     "nearbySellers": "Abacuruzi hafi y'aho uri",
+    "noCategoryProducts": "Nta bicuruzwa muri iyi cyiciro byabonetse.",
     "searchPlaceholder": "Shakisha ibicuruzwa, abacuruzi, amahirwe...",
     "tagline": "Shakisha ibicuruzwa kubantu bizewe",
     "topSellers": "Abacuruzi Beza"

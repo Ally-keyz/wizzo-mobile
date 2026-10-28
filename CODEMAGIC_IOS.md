@@ -103,9 +103,13 @@ The workflow:
 5. `keychain add-certificates`
 6. `xcode-project use-profiles`
 7. `flutter build ipa --release --export-method app-store`
-8. Uploads to TestFlight (`submit_to_testflight: true`).
+8. checks that an `.ipa` was actually produced and fails the build (with a
+   listing of `build/ios`) when it was not, instead of letting the publisher
+   skip the upload
+9. uploads to TestFlight (`submit_to_testflight: true`).
 
-Artifacts: `build/ios/ipa/*.ipa` and `build/ios/archive/*.xcarchive`.
+Artifacts: `build/ios/ipa/*.ipa`, `build/ios/ipa/*.pkg` and
+`build/ios/archive/*.xcarchive`.
 
 ## 4. Versioning
 
@@ -130,6 +134,8 @@ for a new store version, the name (`1.5.0+37`).
 | `The provided entity includes an attribute with a value that has already been used` | The build number was already uploaded. Bump it in `pubspec.yaml`. |
 | `Invalid Bundle. The bundle at ... does not support the minimum OS Version` | Deployment target must stay at 15.0 in the Xcode project and `AppFrameworkInfo.plist`. |
 | `Provisioning profile ... doesn't include signing certificate` | `keychain add-certificates` did not run or imported the wrong certificate. |
+| `Skip publishing to App Store Connect: no IPAs or PKGs found` | No `.ipa` reached the artifact list, so there was nothing to upload. The "Verify IPA artifact" step now prints `build/ios` and fails the build when the export produced no IPA. Also confirm the run used **this** YAML workflow: *Start new build → Wizzo Market iOS – App Store*. A build configured in the Flutter Workflow Editor ignores `codemagic.yaml` (and its `publishing` block) completely. |
+| `Missing value PRIVATE_KEY` / `401` while uploading (not skipped) | The three `APP_STORE_CONNECT_*` values reached the build but Apple rejected them — see the rows above; `publishing.app_store_connect.api_key` must contain the `.p8` **contents**, not a file path. |
 
 ## 6. After the upload
 

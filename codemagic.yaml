@@ -100,20 +100,36 @@ workflows:
         script: |
           flutter build ipa --release \
             --export-method app-store
+
+      - name: Verify IPA artifact
+        # Codemagic's App Store Connect publisher only uploads .ipa/.pkg files
+        # that were collected as build artifacts. When the export step fails
+        # quietly the publisher logs "no IPAs or PKGs found" and skips the
+        # upload, which looks like a successful build. Fail here instead.
+        script: |
+          set -e
+          echo "--- build/ios ---"
+          ls -la build/ios || true
+          echo "--- ipa files ---"
+          find build -name "*.ipa" -print || true
+          ipa="$(find build -name '*.ipa' -type f | head -n 1)"
+          if [ -z "$ipa" ]; then
+            echo "No .ipa was produced. Check the 'Build IPA' step output above:"
+            echo "the archive must finish with 'Built IPA to ...' and the export"
+            echo "needs a valid App Store provisioning profile for $BUNDLE_ID."
+            exit 1
+          fi
+          echo "IPA ready: $ipa ($(du -h "$ipa" | cut -f1))"
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/ios/ipa/*.pkg
       - build/ios/archive/*.xcarchive
+      - /tmp/xcodebuild_logs/*.log
     publishing:
-      email:
-        recipients:
-          - your-email@example.com
       app_store_connect:
-        auth: api_key
-        # Codemagic automatically maps these environment variables when 'api_key' is used:
+        # Contents of the AuthKey_XXXXXXXXXX.p8 file (not a path).
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
         submit_to_testflight: true
-        # Optional: specify if you want it to automatically distribute to groups
-        # beta_groups:
-        #   - Test Group Name
+
