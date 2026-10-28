@@ -64,6 +64,25 @@ class CatalogRepository {
     return _productList(data);
   }
 
+  /// Pre-owned marketplace listings (`listingType=second_hand`) in the used
+  /// condition, newest first. Backs the home rail and the full listing page.
+  Future<List<Product>> secondHandProducts({
+    int limit = 24,
+    int page = 1,
+  }) async {
+    final data = await _api.get(
+      '/products',
+      query: {
+        'limit': limit,
+        'page': page,
+        'listingType': 'second_hand',
+        'condition': 'used',
+        'sort': 'newest',
+      },
+    );
+    return _productList(data);
+  }
+
   Future<List<Product>> related(String id, {int limit = 10}) async {
     final data = await _api.get(
       '/products/$id/related',

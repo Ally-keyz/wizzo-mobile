@@ -120,6 +120,11 @@ final allDealsProductsProvider =
     FutureProvider<List<Product>>((ref) => ref.watch(promotedProductsProvider.future));
 
 
+/// Second-hand marketplace rail and full listing page.
+final secondHandProductsProvider = FutureProvider<List<Product>>((ref) async {
+  return ref.watch(catalogRepositoryProvider).secondHandProducts(limit: 24);
+});
+
 /// Category tree (2 levels).
 final categoriesProvider = FutureProvider<List<CategoryNode>>((ref) async {
   return ref.watch(catalogRepositoryProvider).categoryTree();

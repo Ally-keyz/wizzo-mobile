@@ -34,6 +34,7 @@ import '../../features/catalog/presentation/home_screen.dart';
 import '../../features/catalog/presentation/nearby_sellers_screen.dart';
 import '../../features/catalog/presentation/product_detail_screen.dart';
 import '../../features/catalog/presentation/search_screen.dart';
+import '../../features/catalog/presentation/second_hand_screen.dart';
 import '../../features/catalog/presentation/shop_screen.dart';
 import '../../features/checkout/models/checkout.dart';
 import '../../features/checkout/presentation/checkout_screen.dart';
@@ -182,6 +183,7 @@ List<RouteBase> _buildSharedRoutes() => [
     builder: (_, _) => const NearbySellersScreen(),
   ),
   GoRoute(path: '/deals/all', builder: (_, _) => const DealsAllScreen()),
+  GoRoute(path: '/second-hand', builder: (_, _) => const SecondHandScreen()),
   GoRoute(path: '/orders', builder: (_, _) => const OrdersScreen()),
   GoRoute(
     path: '/order/:id',
@@ -204,6 +206,7 @@ List<RouteBase> _buildSharedRoutes() => [
       dropship: state.extra is DropshipSelection
           ? state.extra! as DropshipSelection
           : null,
+      secondHand: state.uri.queryParameters['type'] == 'second_hand',
     ),
   ),
   GoRoute(

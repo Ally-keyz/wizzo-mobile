@@ -34,6 +34,7 @@ class ProductInput {
     required this.images,
     this.brand,
     this.condition = 'new',
+    this.listingType = 'standard',
     this.sizeOptions = const [],
     this.colorOptions = const [],
     this.colorVariants = const [],
@@ -55,6 +56,7 @@ class ProductInput {
   final List<String> images;
   final String? brand;
   final String condition;
+  final String listingType;
   final List<String> sizeOptions;
   final List<String> colorOptions;
   final List<ColorPhotoInput> colorVariants;
@@ -82,6 +84,7 @@ class ProductInput {
         'images': images,
         if (brand != null && brand!.trim().isNotEmpty) 'brand': brand!.trim(),
         'condition': condition,
+        'listingType': listingType,
         if (isUpdate || sizeOptions.isNotEmpty) 'sizeOptions': sizeOptions,
         if (isUpdate || colorOptions.isNotEmpty) 'colorOptions': colorOptions,
         if (isUpdate || colorVariants.isNotEmpty)

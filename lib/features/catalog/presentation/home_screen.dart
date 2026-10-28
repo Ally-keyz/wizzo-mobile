@@ -246,6 +246,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             SliverToBoxAdapter(child: _cityBar(context)),
 
+            // Second-hand marketplace rail (above Exclusive Deals)
+            SliverToBoxAdapter(
+              child: _SecondHandSection(
+                onSeeAll: () => context.push('/second-hand'),
+              ),
+            ),
+
             // Promo / deals rail
             SliverToBoxAdapter(
               child: _DealsSection(onSeeAll: () => context.push('/deals/all')),
@@ -643,6 +650,97 @@ class _CategoryFeedSection extends ConsumerWidget {
 final authDisplayNameProvider = Provider<String?>((ref) {
   return ref.watch(authControllerProvider).user?.fullName;
 });
+
+/// Horizontal rail of pre-owned products. Sits above Exclusive Deals and
+/// disappears entirely when the marketplace has no second-hand listings.
+class _SecondHandSection extends ConsumerWidget {
+  const _SecondHandSection({required this.onSeeAll});
+
+  final VoidCallback onSeeAll;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final productsAsync = ref.watch(secondHandProductsProvider);
+    final products = productsAsync.value ?? const <Product>[];
+
+    if (products.isEmpty && !productsAsync.isLoading) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.recycling_rounded,
+                  size: 20,
+                  color: Palette.gold,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    context.tr('secondHand.title'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: onSeeAll,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        context.tr('secondHand.viewAll'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const Icon(Icons.chevron_right, size: 18),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            height: 292,
+            child: products.isEmpty
+                ? ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: 3,
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (_, _) => const WSkeleton(
+                      width: 156,
+                      height: 292,
+                      radius: 12,
+                    ),
+                  )
+                : ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: products.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (context, i) => ProductCard(
+                      product: products[i],
+                      width: 156,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _DealsSection extends ConsumerStatefulWidget {
   const _DealsSection({required this.onSeeAll});

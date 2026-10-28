@@ -1085,7 +1085,8 @@
     "videoAttached": "Video yongeweho — abaguzi barashobora kuyireba.",
     "videoTooLong": "Video igomba kuba ihagaze isegonde 60 cyangwa munsi",
     "viewAllOrders": "Reba orders zose",
-    "you": "wowe"
+    "you": "wowe",
+    "addSecondHandProduct": "Ongeraho igicuruzwa cyakoreshejwe"
   },
   "sellers": {
     "attributionCarto": "© abashyikirije OpenStreetMap © CARTO",
@@ -1148,4 +1149,13 @@
     "bannerText": "Dukoresha cookies kugirango tunonosore ubumenyi bwawe. Wemeza cookies kuri iyi site?",
     "deny": "Kwanga",
     "allow": "Emera"
-  }}
+  },
+  "secondHand": {
+    "title": "Ibicuruzwa Byakoreshejwe",
+    "viewAll": "Reba byose",
+    "empty": "Nta bicuruzwa byakoreshejwe byashyizweho. Ongera uze nyuma.",
+    "count": "{{count}} ibicuruzwa byakoreshejwe",
+    "sellerNoticeTitle": "Itangazo ry igicuruzwa cyakoreshejwe",
+    "sellerNotice": "Iki gicuruzwa kizagaragara ku isoko ry ibicuruzwa byakoreshejwe. Imiterere yashyizwe kuri {{condition}}."
+  }
+}

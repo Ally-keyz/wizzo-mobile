@@ -1085,7 +1085,8 @@
     "videoAttached": "Vidéo jointe — les acheteurs peuvent la visionner.",
     "videoTooLong": "La vidéo doit durer 60 secondes ou moins",
     "viewAllOrders": "Voir toutes les commandes",
-    "you": "vous"
+    "you": "vous",
+    "addSecondHandProduct": "Ajouter un produit d occasion"
   },
   "sellers": {
     "attributionCarto": "© contributeurs d'OpenStreetMap © CARTO",
@@ -1148,4 +1149,13 @@
     "bannerText": "Nous utilisons des cookies pour améliorer votre expérience. Autorisez-vous les cookies sur ce site ?",
     "deny": "Refuser",
     "allow": "Accepter"
-  }}
+  },
+  "secondHand": {
+    "title": "Produits d occasion",
+    "viewAll": "Voir tout",
+    "empty": "Aucun produit d occasion pour le moment. Revenez bientot.",
+    "count": "{{count}} annonces d occasion",
+    "sellerNoticeTitle": "Annonce d occasion",
+    "sellerNotice": "Cet article apparaitra dans la marketplace d occasion. L etat est defini sur {{condition}}."
+  }
+}

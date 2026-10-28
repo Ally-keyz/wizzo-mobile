@@ -155,6 +155,7 @@ class Product {
     this.salesCount,
     this.viewsCount,
     this.condition = 'new',
+    this.listingType = 'standard',
     this.brand,
     this.video,
     this.stock,
@@ -185,6 +186,8 @@ class Product {
   final int? salesCount;
   final int? viewsCount;
   final String condition;
+  /// `standard` for catalog stock, `second_hand` for the pre-owned marketplace.
+  final String listingType;
   final String? brand;
   final String? video;
   final int? stock;
@@ -206,6 +209,7 @@ class Product {
   bool get isNew => condition.toLowerCase() == 'new';
   bool get isUsed => condition.toLowerCase() == 'used';
   bool get isRefurbished => condition.toLowerCase() == 'refurbished';
+  bool get isSecondHand => listingType.toLowerCase() == 'second_hand';
   bool get isOnSale => originalPrice != null && originalPrice! > price;
   bool get isAvailable => status != 'rejected' && status != 'draft';
   int get discount => discountPercent ??
@@ -258,6 +262,8 @@ class Product {
       salesCount: (json['salesCount'] as num?)?.toInt(),
       viewsCount: (json['viewsCount'] as num?)?.toInt(),
       condition: json['condition']?.toString().toLowerCase() ?? 'new',
+      listingType:
+          json['listingType']?.toString().toLowerCase() ?? 'standard',
       brand: json['brand']?.toString(),
       video: json['video']?.toString(),
       stock: (json['stock'] as num?)?.toInt(),

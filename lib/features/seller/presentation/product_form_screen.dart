@@ -27,10 +27,18 @@ import '../providers/seller_providers.dart';
 /// the route `extra`. For dropship listings, pass the chosen supplier product
 /// as [dropship] so the form opens pre-filled with the supplier details.
 class ProductFormScreen extends ConsumerStatefulWidget {
-  const ProductFormScreen({super.key, this.product, this.dropship});
+  const ProductFormScreen({
+    super.key,
+    this.product,
+    this.dropship,
+    this.secondHand = false,
+  });
 
   final Product? product;
   final DropshipSelection? dropship;
+
+  /// Opens a brand-new listing in the second-hand marketplace (condition Used).
+  final bool secondHand;
 
   @override
   ConsumerState<ProductFormScreen> createState() => _ProductFormScreenState();
@@ -53,6 +61,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   String? _categoryName;
   String? _subcategoryName;
   String _condition = 'new';
+  String _listingType = 'standard';
   String _priceCurrency = kBaseCurrency;
   DateTime? _discountEndsAt;
   final List<String> _sizeOptions = [];
@@ -82,6 +91,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       _brand.text = p.brand ?? '';
       _description.text = p.description ?? '';
       _condition = p.condition;
+      _listingType = p.listingType;
       _discountEndsAt = p.discountEndsAt;
       _categoryId = p.category?.id;
       _subcategoryId = p.subcategory?.id;
@@ -114,6 +124,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       // browses prices in, so the amount they type needs no mental conversion.
       final display = currencyController.value.code;
       _priceCurrency = isSupportedCurrency(display) ? display : kBaseCurrency;
+      if (widget.secondHand) {
+        // Pre-owned by definition: publish in the second-hand bucket as Used.
+        _listingType = 'second_hand';
+        _condition = 'used';
+      }
     }
     _price.addListener(_refreshPricePreview);
     _discountPrice.addListener(_refreshPricePreview);
@@ -409,6 +424,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       images: _images,
       brand: _brand.text,
       condition: _condition,
+      listingType: _listingType,
       sizeOptions: _sizeOptions,
       colorOptions: photos.map((c) => c.name.text.trim()).toList(),
       colorVariants: photos
@@ -463,6 +479,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           context.tr(
             isEdit
                 ? 'seller.editItem'
+                : widget.secondHand
+                ? 'seller.addSecondHandProduct'
                 : widget.dropship != null
                 ? 'seller.addDropshipProduct'
                 : 'seller.addProduct',
@@ -730,7 +748,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _conditionSelector(theme, scheme),
+              if (_listingType == 'second_hand')
+                _secondHandNotice(theme, scheme)
+              else
+                _conditionSelector(theme, scheme),
               const SizedBox(height: 16),
               WTextField(
                 controller: _brand,
@@ -1169,6 +1190,48 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _secondHandNotice(ThemeData theme, ColorScheme scheme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.recycling_rounded, size: 20, color: Colors.green),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.tr('secondHand.sellerNoticeTitle'),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  context.tr(
+                    'secondHand.sellerNotice',
+                    namedArgs: {'condition': _conditionLabel('used')},
+                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

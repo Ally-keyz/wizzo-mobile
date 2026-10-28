@@ -37,6 +37,12 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen> {
             icon: const Icon(Icons.local_shipping_outlined),
           ),
           IconButton(
+            tooltip: context.tr('seller.addSecondHandProduct'),
+            onPressed: () =>
+                context.push('/seller/product/new?type=second_hand'),
+            icon: const Icon(Icons.recycling_rounded),
+          ),
+          IconButton(
             tooltip: context.tr('seller.addProduct'),
             onPressed: () => context.push('/seller/product/new'),
             icon: const Icon(Icons.add_box_outlined),

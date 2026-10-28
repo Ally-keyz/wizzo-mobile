@@ -1085,7 +1085,8 @@
     "videoAttached": "Video attached — buyers can watch this short.",
     "videoTooLong": "Video must be 60 seconds or less",
     "viewAllOrders": "View all orders",
-    "you": "you"
+    "you": "you",
+    "addSecondHandProduct": "Add second hand product"
   },
   "sellers": {
     "attributionCarto": "© OpenStreetMap contributors © CARTO",
@@ -1148,5 +1149,13 @@
     "bannerText": "We use cookies to improve your experience. Do you allow cookies on this site?",
     "deny": "Deny",
     "allow": "Allow"
+  },
+  "secondHand": {
+    "title": "Second Hand Products",
+    "viewAll": "View all",
+    "empty": "No second-hand products listed yet. Check back soon.",
+    "count": "{{count}} pre-owned listings",
+    "sellerNoticeTitle": "Second hand listing",
+    "sellerNotice": "This item will appear in the Second Hand marketplace. Condition is set to {{condition}}."
   }
 }

@@ -1085,7 +1085,8 @@
     "videoAttached": "Video imeambatishwa — wanunuzi wanaweza kuiangalia.",
     "videoTooLong": "Video lazima iwe sekunde 60 au chini",
     "viewAllOrders": "Angalia maagizo yote",
-    "you": "wewe"
+    "you": "wewe",
+    "addSecondHandProduct": "Ongeza bidhaa ya mkono wa pili"
   },
   "sellers": {
     "attributionCarto": "© wachangiaji wa OpenStreetMap © CARTO",
@@ -1148,4 +1149,13 @@
     "bannerText": "Tunatumia vidakuzi kuboresha uzoefu wako. Unakubali vidakuzi kwenye tovuti hii?",
     "deny": "Kataa",
     "allow": "Kubali"
-  }}
+  },
+  "secondHand": {
+    "title": "Bidhaa za Mikono ya Pili",
+    "viewAll": "Tazama zote",
+    "empty": "Hakuna bidhaa za mikono ya pili bado. Angalia tena hivi karibuni.",
+    "count": "{{count}} matangazo ya mikono ya pili",
+    "sellerNoticeTitle": "Tangazo la bidhaa ya mkono wa pili",
+    "sellerNotice": "Bidhaa hii itaonekana kwenye soko la mikono ya pili. Hali imewekwa kuwa {{condition}}."
+  }
+}

@@ -1085,7 +1085,8 @@
     "videoAttached": "Video angehängt – Käufer können dieses Short ansehen.",
     "videoTooLong": "Das Video darf höchstens 60 Sekunden lang sein",
     "viewAllOrders": "Alle Bestellungen ansehen",
-    "you": "dir"
+    "you": "dir",
+    "addSecondHandProduct": "Gebrauchtware hinzufügen"
   },
   "sellers": {
     "attributionCarto": "© OpenStreetMap-Mitwirkende © CARTO",
@@ -1148,4 +1149,13 @@
     "bannerText": "Wir verwenden Cookies, um dein Erlebnis zu verbessern. Erlaubst du Cookies auf dieser Seite?",
     "deny": "Ablehnen",
     "allow": "Akzeptieren"
-  }}
+  },
+  "secondHand": {
+    "title": "Gebrauchtwaren",
+    "viewAll": "Alle ansehen",
+    "empty": "Noch keine gebrauchten Produkte eingestellt. Schau bald wieder vorbei.",
+    "count": "{{count}} gebrauchte Angebote",
+    "sellerNoticeTitle": "Gebrauchtwaren-Angebot",
+    "sellerNotice": "Dieser Artikel erscheint im Second-Hand-Marktplatz. Der Zustand ist auf {{condition}} gesetzt."
+  }
+}
