@@ -104,8 +104,16 @@ workflows:
       - build/ios/ipa/*.ipa
       - build/ios/archive/*.xcarchive
     publishing:
+      email:
+        recipients:
+          - your-email@example.com
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        auth: api_key
+        # Codemagic automatically maps these environment variables when 'api_key' is used:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
         submit_to_testflight: true
+        # Optional: specify if you want it to automatically distribute to groups
+        # beta_groups:
+        #   - Test Group Name
