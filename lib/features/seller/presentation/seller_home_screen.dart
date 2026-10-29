@@ -166,6 +166,11 @@ class SellerDashboard extends ConsumerWidget {
         '/seller/product/new',
       ),
       (
+        Icons.autorenew_rounded,
+        context.tr('seller.listingTypeSecondHand'),
+        '/seller/product/new?type=second_hand',
+      ),
+      (
         Icons.local_shipping_outlined,
         context.tr('seller.dropshipping'),
         '/seller/dropship',

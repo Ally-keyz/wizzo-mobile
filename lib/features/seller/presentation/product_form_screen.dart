@@ -748,6 +748,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              _listingTypeSelector(theme, scheme),
+              const SizedBox(height: 16),
               if (_listingType == 'second_hand')
                 _secondHandNotice(theme, scheme)
               else
@@ -1232,6 +1234,102 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Standard store listing vs pre-owned marketplace listing. Choosing
+  /// second hand publishes with `listingType=second_hand` (condition Used).
+  Widget _listingTypeSelector(ThemeData theme, ColorScheme scheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.tr('seller.listingType'),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _listingTypeOption(
+                theme,
+                scheme,
+                value: 'standard',
+                icon: Icons.storefront_outlined,
+                label: context.tr('seller.listingTypeStandard'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _listingTypeOption(
+                theme,
+                scheme,
+                value: 'second_hand',
+                icon: Icons.autorenew_rounded,
+                label: context.tr('seller.listingTypeSecondHand'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _listingTypeOption(
+    ThemeData theme,
+    ColorScheme scheme, {
+    required String value,
+    required IconData icon,
+    required String label,
+  }) {
+    final selected = _listingType == value;
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => setState(() {
+        _listingType = value;
+        // Pre-owned goods are Used by definition; keep the standard pick
+        // untouched when switching back.
+        if (value == 'second_hand') _condition = 'used';
+      }),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected
+              ? scheme.primaryContainer.withValues(alpha: 0.35)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? scheme.primary : scheme.outlineVariant,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: selected ? scheme.primary : scheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+            if (selected) ...[
+              const SizedBox(width: 6),
+              Icon(Icons.check_circle, size: 18, color: scheme.primary),
+            ],
+          ],
+        ),
       ),
     );
   }

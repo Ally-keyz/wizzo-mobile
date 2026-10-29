@@ -138,15 +138,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final unreadNotifications =
         ref.watch(notificationsUnreadProvider).value ?? 0;
 
-    // Light mode paints the home app bar and the category filter strip in the
-    // same light-zinc tone. Dark mode keeps the plain canvas colour.
-    final barColor = theme.brightness == Brightness.light
-        ? Palette.lightMuted
-        : theme.colorScheme.surface;
-
+    // The home app bar and category strip sit directly on the page canvas.
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: barColor,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         leadingWidth: 52,
         leading: Padding(
@@ -200,6 +197,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
+            // Category filter strip sits directly below the app bar.
+            SliverToBoxAdapter(
+              child: _HomeCategoriesRail(
+                selectedSlug: _categorySlug,
+                onSelected: (category) {
+                  setState(() {
+                    // Tapping the active chip clears the filter.
+                    final isSame =
+                        category != null && category.slug == _categorySlug;
+                    _categorySlug = isSame ? null : category?.slug;
+                    _categoryName = isSame ? null : category?.name;
+                  });
+                },
+              ),
+            ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -228,20 +240,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: _HomeCategoriesRail(
-                selectedSlug: _categorySlug,
-                onSelected: (category) {
-                  setState(() {
-                    // Tapping the active chip clears the filter.
-                    final isSame =
-                        category != null && category.slug == _categorySlug;
-                    _categorySlug = isSame ? null : category?.slug;
-                    _categoryName = isSame ? null : category?.name;
-                  });
-                },
               ),
             ),
             SliverToBoxAdapter(child: _cityBar(context)),
@@ -499,40 +497,35 @@ class _HomeCategoriesRail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final categories = ref.watch(categoriesProvider);
     final list = categories.value ?? const <CategoryNode>[];
-    final bandColor = theme.brightness == Brightness.light
-        ? Palette.lightMuted
-        : theme.colorScheme.surface;
 
     if (list.isEmpty) {
       // Keep the band from flashing while the tree loads; hide it entirely on
       // error (the Categories tab still reaches every category).
       if (categories.hasError) return const SizedBox.shrink();
-      return Container(
+      return const SizedBox(
         height: 56,
-        color: bandColor,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: const Row(
-          children: [
-            WSkeleton(width: 56, height: 34, radius: 17),
-            SizedBox(width: 8),
-            WSkeleton(width: 92, height: 34, radius: 17),
-            SizedBox(width: 8),
-            WSkeleton(width: 76, height: 34, radius: 17),
-          ],
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              WSkeleton(width: 56, height: 34, radius: 17),
+              SizedBox(width: 8),
+              WSkeleton(width: 92, height: 34, radius: 17),
+              SizedBox(width: 8),
+              WSkeleton(width: 76, height: 34, radius: 17),
+            ],
+          ),
         ),
       );
     }
 
-    return Container(
+    return SizedBox(
       height: 56,
-      color: bandColor,
-      padding: const EdgeInsets.symmetric(vertical: 10),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         itemCount: list.length + 1,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
@@ -570,14 +563,14 @@ class _CategoryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final isLight = theme.brightness == Brightness.light;
 
     return Material(
-      color: selected
-          ? Palette.gold
-          : (isLight ? scheme.surface : scheme.surfaceContainerHighest),
+      color: Colors.transparent,
       shape: StadiumBorder(
-        side: BorderSide(color: selected ? Palette.gold : scheme.outline),
+        side: BorderSide(
+          color: selected ? Palette.gold : scheme.outline,
+          width: selected ? 1.5 : 1,
+        ),
       ),
       child: InkWell(
         customBorder: const StadiumBorder(),
@@ -589,7 +582,7 @@ class _CategoryChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.labelLarge?.copyWith(
-              color: selected ? Colors.black : scheme.onSurface,
+              color: scheme.onSurface,
               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
             ),
           ),

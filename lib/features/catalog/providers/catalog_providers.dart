@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_providers.dart';
 
 import '../data/catalog_repository.dart';
+import '../data/second_hand_demo.dart';
 import '../models/deal.dart';
 import '../models/product.dart';
 import '../models/seller.dart';
@@ -121,8 +122,18 @@ final allDealsProductsProvider =
 
 
 /// Second-hand marketplace rail and full listing page.
+///
+/// A fresh marketplace often has no pre-owned listings yet, so an empty result
+/// (or a failed request) falls back to a small local demo set instead of
+/// hiding the section entirely.
 final secondHandProductsProvider = FutureProvider<List<Product>>((ref) async {
-  return ref.watch(catalogRepositoryProvider).secondHandProducts(limit: 24);
+  final repo = ref.watch(catalogRepositoryProvider);
+  try {
+    final products = await repo.secondHandProducts(limit: 24);
+    return products.isEmpty ? secondHandDemoProducts : products;
+  } catch (_) {
+    return secondHandDemoProducts;
+  }
 });
 
 /// Category tree (2 levels).
