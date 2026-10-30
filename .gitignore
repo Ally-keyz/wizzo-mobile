@@ -44,6 +44,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# JVM heap dumps (Android Studio crash captures) — hundreds of MB, never commit
+*.hprof
+
 # Firebase config (contains project ids/keys) — provide via key.properties-style handoff
 /android/app/google-services.json
 

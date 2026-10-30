@@ -120,13 +120,16 @@ final promotedProductsProvider = FutureProvider<List<Product>>((ref) async {
 final allDealsProductsProvider =
     FutureProvider<List<Product>>((ref) => ref.watch(promotedProductsProvider.future));
 
-
 /// Second-hand marketplace rail and full listing page.
 ///
 /// A fresh marketplace often has no pre-owned listings yet, so an empty result
 /// (or a failed request) falls back to a small local demo set instead of
-/// hiding the section entirely.
-final secondHandProductsProvider = FutureProvider<List<Product>>((ref) async {
+/// hiding the section entirely. The real listings win as soon as one exists.
+///
+/// Auto-disposed so the fallback is re-evaluated (and the demos disappear)
+/// whenever the user comes back after publishing a real listing.
+final secondHandProductsProvider =
+    FutureProvider.autoDispose<List<Product>>((ref) async {
   final repo = ref.watch(catalogRepositoryProvider);
   try {
     final products = await repo.secondHandProducts(limit: 24);
@@ -147,7 +150,12 @@ final topSellersProvider = FutureProvider<List<Seller>>((ref) async {
 });
 
 /// Single product detail (watch with the product id).
+///
+/// Bundled second-hand demo listings are resolved locally: they have no record
+/// on the API, so fetching `/products/:id` for them always fails.
 final productProvider = FutureProvider.family<Product, String>((ref, id) async {
+  final local = localSecondHandProduct(id);
+  if (local != null) return local;
   return ref.watch(catalogRepositoryProvider).product(id);
 });
 
@@ -156,6 +164,15 @@ final relatedProductsProvider = FutureProvider.family<List<Product>, String>((
   ref,
   id,
 ) async {
+  final local = localSecondHandProduct(id);
+  if (local != null) {
+    // Nothing to fetch for a demo listing: recommend the rest of the bundled
+    // second-hand set instead.
+    return secondHandDemoProducts
+        .where((p) => p.id != local.id)
+        .take(10)
+        .toList();
+  }
   return ref.watch(catalogRepositoryProvider).related(id);
 });
 

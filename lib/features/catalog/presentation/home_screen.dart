@@ -145,10 +145,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        leadingWidth: 52,
+        // The logo and the city selector share the leading slot, stacked
+        // vertically, so the city of the feed is always visible on the home
+        // screen.
+        leadingWidth: 110,
+        toolbarHeight: 72,
         leading: Padding(
           padding: const EdgeInsets.only(left: 14),
-          child: WAppMark(size: 26),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const WAppMark(size: 22),
+                  const SizedBox(width: 6),
+                  // The wordmark can shrink: the leading slot is fixed-width
+                  // and follows the user's text scale, so an ellipsis is
+                  // better than a striped overflow on narrow screens.
+                  Flexible(
+                    child: Text(
+                      'Wizzo',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              _LocationSelectionToggler(
+                onUseCurrentLocation: _detectAndSaveLocation,
+              ),
+            ],
+          ),
         ),
         titleSpacing: 6,
         // The old full-width search bar moved up here as a compact field.
@@ -242,7 +277,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
-            SliverToBoxAdapter(child: _cityBar(context)),
 
             // Second-hand marketplace rail (above Exclusive Deals)
             SliverToBoxAdapter(
@@ -364,59 +398,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _cityBar(BuildContext context) {
-    final theme = Theme.of(context);
-    final city = ref.watch(lastCityProvider);
-    final label = city.isEmpty ? AppConfig.defaultCity : city;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-      child: GestureDetector(
-        onTap: () => _changeCity(context, label),
-        child: Row(
-          children: [
-            Icon(Icons.location_on, size: 16, color: context.appColors.info),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: context.appColors.info,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, size: 16, color: context.appColors.info),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _changeCity(BuildContext context, String current) async {
-    final picked = await showCityPicker(
-      context,
-      current,
-      onUseCurrentLocation: _detectAndSaveLocation,
-    );
-    if (picked != null && picked.isNotEmpty) {
-      await ref.read(lastCityProvider.notifier).setCity(picked);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              behavior: SnackBarBehavior.floating,
-              content: Text(
-                context.tr('home.browsingCity', namedArgs: {'city': picked}),
-              ),
-              duration: const Duration(milliseconds: 1200),
-            ),
-          );
-      }
-    }
-  }
-
   /// Opens the Wizzo WhatsApp community group.
   static const _whatsAppCommunityUrl =
       'https://chat.whatsapp.com/HEeBCmTxFVKAXLNsU8hbZT?s=cl&p=i&mlu=4&ilr=4';
@@ -479,6 +460,76 @@ class _AppBarSearchField extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact city selector shown under the logo in the home app bar. Tapping it
+/// opens the shared city picker (with "use my current location") and persists
+/// the chosen city, exactly like the old in-page city bar used to.
+class _LocationSelectionToggler extends ConsumerWidget {
+  const _LocationSelectionToggler({required this.onUseCurrentLocation});
+
+  final Future<String?> Function() onUseCurrentLocation;
+
+  Future<void> _pickCity(
+    BuildContext context,
+    WidgetRef ref,
+    String current,
+  ) async {
+    final picked = await showCityPicker(
+      context,
+      current,
+      onUseCurrentLocation: onUseCurrentLocation,
+    );
+    if (picked == null || picked.isEmpty) return;
+    await ref.read(lastCityProvider.notifier).setCity(picked);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            context.tr('home.browsingCity', namedArgs: {'city': picked}),
+          ),
+          duration: const Duration(milliseconds: 1200),
+        ),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final city = ref.watch(lastCityProvider);
+    final label = city.isEmpty ? AppConfig.defaultCity : city;
+    final color = context.appColors.info;
+    return Semantics(
+      button: true,
+      label: context.tr('home.browsingCity', namedArgs: {'city': label}),
+      child: InkWell(
+        onTap: () => _pickCity(context, ref, label),
+        borderRadius: BorderRadius.circular(4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.location_on, size: 11, color: color),
+            const SizedBox(width: 2),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down, size: 12, color: color),
+          ],
         ),
       ),
     );

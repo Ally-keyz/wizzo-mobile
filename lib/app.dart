@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // 1. Added this import for SystemUiOverlayStyle
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/currency/currency_controller.dart';
@@ -25,6 +26,7 @@ class WizzoApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+
     // Keeps the chat socket alive and connected while the user is signed in.
     ref.watch(chatSocketLifecycleProvider);
 
@@ -37,8 +39,29 @@ class WizzoApp extends ConsumerWidget {
         debugShowCheckedModeBanner: false,
         routerConfig: router,
         themeMode: themeMode,
-        theme: buildLightTheme(),
-        darkTheme: buildDarkTheme(),
+        
+        // 2. Updated light theme with transparent status bar background + black text
+        theme: buildLightTheme().copyWith(
+          appBarTheme: const AppBarTheme(
+            systemOverlayStyle: SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,        // Completely removes the status bar background (Android)
+              statusBarIconBrightness: Brightness.dark,   // Black icons for Android
+              statusBarBrightness: Brightness.light,      // Black icons for iOS
+            ),
+          ),
+        ),
+        
+        // 3. Updated dark theme with transparent status bar background + white text
+        darkTheme: buildDarkTheme().copyWith(
+          appBarTheme: const AppBarTheme(
+            systemOverlayStyle: SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,        // Completely removes the status bar background (Android)
+              statusBarIconBrightness: Brightness.light,  // White icons for Android
+              statusBarBrightness: Brightness.dark,       // White icons for iOS
+            ),
+          ),
+        ),
+
         // Flutter's bundled Material/Cupertino localizations do not ship a
         // Kinyarwanda (rw) locale, so the fallback delegates appended below are
         // the only ones that support rw. They load English stock strings while

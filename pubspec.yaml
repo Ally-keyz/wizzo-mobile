@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.4.11+40
+version: 1.4.12+43
 
 environment:
   sdk: ^3.10.4
@@ -85,10 +85,22 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/branding/
+    # Bundle only the branding files the UI actually renders. Launcher/splash
+    # sources (app_icon.png, splash.png, android12_icon.png, logo2.png,
+    # logo_full.png) stay on disk for flutter_launcher_icons /
+    # flutter_native_splash, which consume them at build time — bundling them
+    # would ship ~0.6 MB no screen ever displays.
+    - assets/branding/logo_icon.png
+    - assets/branding/momo-logo.png
+    - assets/branding/card.svg
+    - assets/branding/google_pay.svg
+    - assets/branding/apple_pay.svg
     - assets/images/
     - assets/l10n/
-    - assets/flags/4x3/
+    # Only flags for the currencies (kCurrencies) and UI languages are bundled.
+    # Add the matching SVG here when introducing a new currency/language;
+    # FlagIcon falls back to xx.svg for anything missing.
+    - assets/flags/supported/
 
 flutter_launcher_icons:
   android: true

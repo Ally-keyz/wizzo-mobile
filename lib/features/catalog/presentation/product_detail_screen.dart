@@ -56,27 +56,37 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     final theme = Theme.of(context);
     final product = ref.watch(productProvider(widget.productId));
 
+    // Riverpod keeps failed providers in a retrying `loading` state (with the
+    // error attached) while it backs off. Prefer the error UI so a missing or
+    // invalid listing never sits on the skeleton indefinitely.
+    if (product.hasError) {
+      return Scaffold(body: _errorView(context, theme, product.error!));
+    }
+
     return Scaffold(
       body: product.when(
         loading: () => const _DetailSkeleton(),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
-              const SizedBox(height: 12),
-              Text(context.tr('product.loadFailed')),
-              const SizedBox(height: 4),
-              Text('${e}', style: theme.textTheme.bodySmall),
-              TextButton(
-                onPressed: () =>
-                    ref.invalidate(productProvider(widget.productId)),
-                child: Text(context.tr('common.retry')),
-              ),
-            ],
-          ),
-        ),
+        error: (e, _) => _errorView(context, theme, e),
         data: (p) => _buildProduct(context, theme, p),
+      ),
+    );
+  }
+
+  Widget _errorView(BuildContext context, ThemeData theme, Object error) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
+          const SizedBox(height: 12),
+          Text(context.tr('product.loadFailed')),
+          const SizedBox(height: 4),
+          Text('$error', style: theme.textTheme.bodySmall),
+          TextButton(
+            onPressed: () => ref.invalidate(productProvider(widget.productId)),
+            child: Text(context.tr('common.retry')),
+          ),
+        ],
       ),
     );
   }

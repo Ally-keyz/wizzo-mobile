@@ -455,6 +455,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       if (mounted) {
         ref.invalidate(myProductsProvider);
         ref.invalidate(sellerStatsProvider);
+        ref.invalidate(productProvider(newId));
+        // Drafts stay private; a published listing changes the buyer-facing
+        // catalogue and must retire the bundled second-hand demo listing.
+        if (!draft) _refreshPublicCatalog();
         context.pop();
       }
     } catch (e) {
@@ -465,6 +469,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         });
       }
     }
+  }
+
+  /// Refreshes the buyer-facing catalogue after one of the seller's listings is
+  /// created, edited or deleted. Without it the home feed and the second-hand
+  /// rail keep serving cached results — including the bundled demo listings —
+  /// for the rest of the session, even after the first real listing is live.
+  void _refreshPublicCatalog() {
+    ref.invalidate(homeFeedProvider);
+    ref.invalidate(secondHandProductsProvider);
+    ref.invalidate(promotedProductsProvider);
   }
 
   String? _error;
@@ -524,6 +538,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               .deleteProduct(widget.product!.id);
                           if (mounted) {
                             ref.invalidate(myProductsProvider);
+                            _refreshPublicCatalog();
                             context.pop();
                           }
                         } catch (e) {

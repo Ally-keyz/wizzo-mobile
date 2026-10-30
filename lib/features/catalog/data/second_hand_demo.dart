@@ -253,3 +253,19 @@ const List<Product> secondHandDemoProducts = [
     sellerLocationLabel: 'Kigali, Rwanda',
   ),
 ];
+
+/// The bundled listing whose [Product.id] or [Product.slug] matches
+/// [idOrSlug], if any.
+///
+/// Demo listings live only inside the app, so they are not addressable through
+/// `/products/:id`. Anything that resolves a product by id (detail page,
+/// related rail, reviews) must check this first; otherwise the request fails
+/// with a 400/404 and the screen never leaves its loading state.
+Product? localSecondHandProduct(String idOrSlug) {
+  final key = idOrSlug.trim();
+  if (key.isEmpty) return null;
+  for (final product in secondHandDemoProducts) {
+    if (product.id == key || product.slug == key) return product;
+  }
+  return null;
+}

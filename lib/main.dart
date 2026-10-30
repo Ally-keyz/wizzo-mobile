@@ -6,8 +6,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'core/currency/currency_controller.dart';
+import 'core/network/api_exception.dart';
 import 'core/storage/app_prefs.dart';
 import 'core/utils/crash_logger.dart';
+
+/// Riverpod 3 retries failed providers automatically. Client errors (400, 401,
+/// 403, 404...) can never succeed on a retry, and retrying them keeps screens
+/// on their loading skeleton for tens of seconds — which looks like an
+/// infinite spinner. Only transient failures (timeouts, network drops, 5xx)
+/// are retried.
+Duration? _retryPolicy(int retryCount, Object error) {
+  if (error is ApiException && error.status >= 400 && error.status < 500) {
+    return null;
+  }
+  return ProviderContainer.defaultRetry(retryCount, error);
+}
 
 Future<void> main() async {
   // Catches uncaught errors (zone, Flutter framework, platform dispatcher)
@@ -30,7 +43,7 @@ Future<void> main() async {
           path: 'assets/l10n',
           fallbackLocale: const Locale('en'),
           startLocale: Locale(langCode),
-          child: const ProviderScope(child: WizzoApp()),
+          child: ProviderScope(retry: _retryPolicy, child: const WizzoApp()),
         ),
       );
     },

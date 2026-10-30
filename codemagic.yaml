@@ -90,33 +90,292 @@ workflows:
             --type IOS_APP_STORE \
             --create
 
+      - name: Install provisioning profiles for xcodebuild
+        # fetch-signing-files writes profiles to
+        # ~/Library/Developer/Xcode/UserData/Provisioning Profiles. xcodebuild
+        # resolves manual-signing profiles by name from the legacy
+        # ~/Library/MobileDevice/Provisioning Profiles directory, so install
+        # them in both places before the archive/export.
+        script: |
+          set -e
+          src="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
+          mkdir -p "$src" "$HOME/Library/MobileDevice/Provisioning Profiles"
+          if compgen -G "$src/*.mobileprovision" > /dev/null; then
+            cp -f "$src"/*.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/"
+          fi
+          find "$HOME/Library/MobileDevice/Provisioning Profiles" -name "*.mobileprovision" -print | sort
+
       - name: Import distribution certificate
         script: keychain add-certificates
 
       - name: Apply provisioning profiles to the Xcode project
-        script: xcode-project use-profiles
+        # Only App Store profiles are eligible, so a stale development or ad-hoc
+        # profile can never be applied to the release archive. This also writes
+        # DEVELOPMENT_TEAM / PROVISIONING_PROFILE_SPECIFIER into the project.
+        script: xcode-project use-profiles --archive-method app-store
 
-      - name: Build IPA
+      - name: Check code signing setup
+        # Fail before the expensive archive when the distribution identity or
+        # the profile specifier is missing.
         script: |
-          flutter build ipa --release \
-            --export-method app-store
+          set -e
+          echo "--- signing identities ---"
+          security find-identity -v -p codesigning
+          if ! security find-identity -v -p codesigning | grep -Eq "Apple Distribution|iPhone Distribution"; then
+            echo "No Apple Distribution identity in the keychain."
+            echo "Check CERTIFICATE_PRIVATE_KEY and the 'Import distribution certificate' step."
+            exit 1
+          fi
+          echo "--- Runner release build settings ---"
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
+            -configuration Release -showBuildSettings 2>/dev/null \
+            | grep -E " (CODE_SIGN_IDENTITY|CODE_SIGN_STYLE|DEVELOPMENT_TEAM|PROVISIONING_PROFILE_SPECIFIER|PRODUCT_BUNDLE_IDENTIFIER) =" || true
+          if ! xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
+            -configuration Release -showBuildSettings 2>/dev/null \
+            | grep -q "PROVISIONING_PROFILE_SPECIFIER = ."; then
+            echo "PROVISIONING_PROFILE_SPECIFIER is empty; xcode-project use-profiles did not apply a profile."
+            exit 1
+          fi
+
+      - name: Write signing configuration
+        # `xcodebuild -exportArchive` with `signingStyle: manual` resolves the
+        # profile by NAME from ~/Library/MobileDevice/Provisioning Profiles.
+        # Pin both signing and the fetched App Store profile here, and expose
+        # the same values to the archive/export steps through signing.env.
+        script: |
+          set -euo pipefail
+          rm -rf build/ios/archive build/ios/ipa
+          mkdir -p build/ios
+          python3 - "$BUNDLE_ID" <<'PY'
+          import glob, os, plistlib, re, shlex, subprocess, sys
+          from datetime import datetime, timezone
+
+          bundle_id = sys.argv[1]
+          search_dirs = [
+              os.path.expanduser("~/Library/Developer/Xcode/UserData/Provisioning Profiles"),
+              os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles"),
+              "build/ios_signing",
+              "build/ios_signing/profiles",
+          ]
+          candidates = []
+          for directory in search_dirs:
+              candidates.extend(glob.glob(os.path.join(directory, "*.mobileprovision")))
+
+          now = datetime.now(timezone.utc)
+          chosen = None
+          wildcard = None
+          for path in sorted(set(candidates)):
+              try:
+                  raw = subprocess.check_output(
+                      ["security", "cms", "-D", "-i", path], stderr=subprocess.DEVNULL
+                  )
+                  profile = plistlib.loads(raw)
+              except Exception as exc:  # pragma: no cover - diagnostic only
+                  print("skip {}: {}".format(path, exc))
+                  continue
+              entitlements = profile.get("Entitlements") or {}
+              app_id = entitlements.get("application-identifier", "")
+              expires = profile.get("ExpirationDate")
+              expired = isinstance(expires, datetime) and expires.replace(tzinfo=timezone.utc) < now
+              # Development and ad-hoc profiles set get-task-allow; they can
+              # never export an App Store IPA.
+              development = bool(entitlements.get("get-task-allow", False))
+              exact = app_id == bundle_id or app_id.endswith("." + bundle_id)
+              is_wildcard = app_id.endswith(".*")
+              print(
+                  "profile: {} -> {}{}{}".format(
+                      profile.get("Name"),
+                      app_id,
+                      " (development)" if development else "",
+                      " (expired)" if expired else "",
+                  )
+              )
+              if development or expired or not (exact or is_wildcard):
+                  continue
+              current = chosen if exact else wildcard
+              if current is None or (
+                  isinstance(expires, datetime)
+                  and isinstance(current.get("ExpirationDate"), datetime)
+                  and expires > current["ExpirationDate"]
+              ):
+                  if exact:
+                      chosen = profile
+                  else:
+                      wildcard = profile
+              if chosen is not None:
+                  break
+
+          chosen = chosen or wildcard
+          if chosen is None:
+              sys.exit(
+                  "No usable App Store provisioning profile for {} was found in:\n  ".format(bundle_id)
+                  + "\n  ".join(sorted(set(candidates)) or search_dirs)
+              )
+
+          team_id = (chosen.get("TeamIdentifier") or [""])[0]
+          profile_name = chosen["Name"]
+          profile_uuid = chosen.get("UUID", "")
+          version_text = subprocess.check_output(["xcodebuild", "-version"]).decode()
+          match = re.search(r"Xcode\s+(\d+)(?:\.(\d+))?", version_text)
+          xcode_version = (int(match.group(1)), int(match.group(2) or 0))
+          method = "app-store-connect" if xcode_version >= (15, 4) else "app-store"
+
+          options = {
+              "method": method,
+              "signingStyle": "manual",
+              "teamID": team_id,
+              "provisioningProfiles": {bundle_id: profile_name},
+              "manageAppVersionAndBuildNumber": False,
+              "uploadSymbols": True,
+              "stripSwiftSymbols": True,
+          }
+          with open("build/ios/ExportOptions.plist", "wb") as handle:
+              plistlib.dump(options, handle)
+
+          with open("build/ios/signing.env", "w") as handle:
+              for key, value in (
+                  ("BUNDLE_ID", bundle_id),
+                  ("TEAM_ID", team_id),
+                  ("PROFILE_NAME", profile_name),
+                  ("PROFILE_UUID", profile_uuid),
+              ):
+                  handle.write("export {}={}\n".format(key, shlex.quote(value or "")))
+
+          print("Export method: ", method)
+          print("Team ID:       ", team_id)
+          print("Profile:       ", profile_name, profile_uuid)
+          print("Expires:       ", chosen.get("ExpirationDate"))
+          print("Wrote build/ios/ExportOptions.plist and build/ios/signing.env")
+          PY
+
+      - name: Build signed archive
+        # Do not rely on `flutter build ipa` here: Flutter reports a failed
+        # -exportArchive as success once the .xcarchive exists, which is how CI
+        # ended up with an archive and no .ipa. Run the archive ourselves with
+        # the distribution identity and the App Store profile, and fail unless
+        # the archived app is actually signed for distribution.
+        script: |
+          set -o pipefail
+          mkdir -p /tmp/xcodebuild_logs
+          . build/ios/signing.env
+
+          identity="$(security find-identity -v -p codesigning \
+            | sed -n 's/.*"\(Apple Distribution[^"]*\)".*/\1/p' | head -n 1)"
+          if [ -z "$identity" ]; then
+            identity="$(security find-identity -v -p codesigning \
+              | sed -n 's/.*"\(iPhone Distribution[^"]*\)".*/\1/p' | head -n 1)"
+          fi
+          if [ -z "$identity" ]; then
+            echo "No distribution identity in the keychain."
+            exit 1
+          fi
+          echo "Signing with: $identity"
+          echo "Profile:      $PROFILE_NAME ($PROFILE_UUID)"
+
+          auth=()
+          if [ -n "${APP_STORE_CONNECT_PRIVATE_KEY:-}" ]; then
+            auth_key="/tmp/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8"
+            printf '%s\n' "$APP_STORE_CONNECT_PRIVATE_KEY" > "$auth_key"
+            auth=(
+              -authenticationKeyPath "$auth_key"
+              -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER"
+              -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+            )
+          fi
+
+          # Refresh Generated.xcconfig / plugin registration without compiling;
+          # the Xcode "Run Script" phases invoke `flutter assemble` themselves.
+          flutter build ios --release --config-only
+
+          rm -rf build/ios/archive/Runner.xcarchive
+          mkdir -p build/ios/archive
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -allowProvisioningUpdates \
+            "${auth[@]}" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_IDENTITY="$identity" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            archive 2>&1 | tee /tmp/xcodebuild_logs/archive.log
+
+          app="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+          echo "--- archived signature ---"
+          codesign -dvv "$app" 2>&1 | grep -E "Authority|TeamIdentifier" || true
+          if ! codesign -dvv "$app" 2>&1 | grep -Eq "Apple Distribution|iPhone Distribution"; then
+            echo "The archive was not signed with a distribution certificate."
+            echo "Check CERTIFICATE_PRIVATE_KEY and the 'Check code signing setup' output."
+            exit 1
+          fi
+
+      - name: Export IPA
+        script: |
+          set -o pipefail
+          mkdir -p /tmp/xcodebuild_logs
+          . build/ios/signing.env
+
+          auth=()
+          if [ -n "${APP_STORE_CONNECT_PRIVATE_KEY:-}" ]; then
+            auth_key="/tmp/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8"
+            printf '%s\n' "$APP_STORE_CONNECT_PRIVATE_KEY" > "$auth_key"
+            auth=(
+              -authenticationKeyPath "$auth_key"
+              -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER"
+              -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+            )
+          fi
+
+          rm -rf build/ios/ipa
+          mkdir -p build/ios/ipa
+          export_status=0
+          xcodebuild -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportPath build/ios/ipa \
+            -exportOptionsPlist build/ios/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            "${auth[@]}" \
+            -verbose 2>&1 | tee /tmp/xcodebuild_logs/export.log || export_status=$?
+
+          if [ "$export_status" -eq 0 ] && ls build/ios/ipa/*.ipa >/dev/null 2>&1; then
+            echo "Export succeeded."
+            exit 0
+          fi
+
+          # Print the actionable lines in the step output itself: Codemagic does
+          # not publish artifacts from failed builds, so the log file alone
+          # would not reach the report.
+          echo ""
+          echo "--- export failed (exit $export_status); relevant log lines ---"
+          grep -E "error:|exportArchive|doesn't include|No signing certificate|No profiles for|entitlements" \
+            /tmp/xcodebuild_logs/export.log | tail -n 40 || true
+          exit 1
 
       - name: Verify IPA artifact
         # Codemagic's App Store Connect publisher only uploads .ipa/.pkg files
-        # that were collected as build artifacts. When the export step fails
-        # quietly the publisher logs "no IPAs or PKGs found" and skips the
-        # upload, which looks like a successful build. Fail here instead.
+        # that were collected as build artifacts. Fail here when the export
+        # produced no IPA instead of letting the publisher skip the upload.
         script: |
           set -e
           echo "--- build/ios ---"
           ls -la build/ios || true
+          echo "--- xcarchive ---"
+          ls -la build/ios/archive 2>/dev/null || true
+          app="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+          if [ -d "$app" ]; then
+            echo "--- archived signature ---"
+            codesign -dvv "$app" 2>&1 | grep -E "Authority|TeamIdentifier" || true
+            echo "--- embedded profile ---"
+            security cms -D -i "$app/embedded.mobileprovision" 2>/dev/null \
+              | plutil -extract Name raw - 2>/dev/null || true
+          fi
           echo "--- ipa files ---"
           find build -name "*.ipa" -print || true
           ipa="$(find build -name '*.ipa' -type f | head -n 1)"
           if [ -z "$ipa" ]; then
-            echo "No .ipa was produced. Check the 'Build IPA' step output above:"
-            echo "the archive must finish with 'Built IPA to ...' and the export"
-            echo "needs a valid App Store provisioning profile for $BUNDLE_ID."
+            echo "No .ipa was produced. Check the 'Build signed archive' and 'Export IPA' output above"
+            echo "(/tmp/xcodebuild_logs/archive.log and /tmp/xcodebuild_logs/export.log)."
             exit 1
           fi
           echo "IPA ready: $ipa ($(du -h "$ipa" | cut -f1))"
@@ -132,4 +391,3 @@ workflows:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
-

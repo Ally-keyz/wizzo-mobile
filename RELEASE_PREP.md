@@ -12,22 +12,22 @@ Store listing **app name: KATISHA** (owner's choice), app label stays "Wizzo Mar
 | Item | Value | Status |
 |---|---|---|
 | Flutter | 3.38.5 stable (Dart 3.10.4) | ✔ |
-| AGP / Gradle / Kotlin | 8.11.1 / 8.14 / 2.2.20 (JDK 17 Temurin) | ✔ compatible |
+| AGP / Gradle / Kotlin | 8.13.0 / 8.14 / 2.2.20 (JDK 17 Temurin) | ✔ compatible |
 | minSdk / targetSdk / compileSdk | 24 / **36** / 36 | ✔ meets Play API 36 requirement |
 | Application ID | `app.wizzo.wizzo_market` (real, keep) | ✔ |
-| Version | versionCode 12, versionName 1.1.0 | ✔ keep |
+| Version | versionCode 43, versionName 1.4.12 | ✔ keep |
 | Permissions | INTERNET + ACCESS_NETWORK_STATE + WAKE_LOCK (transitive), no others | ✔ minimal |
 | Cleartext traffic | blocked (network_security_config) | ✔ |
 | Backup rules | auth prefs excluded on Android ≤11 (backup_rules) and 12+ (data_extraction_rules) | ✔ |
 | Firebase / FCM | none | ✔ not required |
 | Release signing | `key.properties` + `wizzo-upload.jks` (both gitignored); signed AAB uses upload key `CN=Wizzo Market, O=Wizzo`, 4096-bit RSA, valid to 2054 | ✔ |
-| App Bundle | `build/app/outputs/bundle/release/app-release.aab` (49.1 MB, 51,536,714 bytes) | ✔ built + verified |
-| Manifest in AAB | package correct, vc=12, vn=1.1.0, target=36, non-debuggable, label "Wizzo Market" | ✔ |
-| Tests | `flutter analyze` (0 errors, 63 info-level only) + `flutter test` → **all 27 pass** | ✔ |
+| App Bundle | `build/app/outputs/bundle/release/app-release.aab` (59.76 MB, 62,662,593 bytes) | ✔ built + verified |
+| Manifest in AAB | package correct, vc=43, vn=1.4.12, target=36, non-debuggable, label "Wizzo Market" | ✔ |
+| Tests | `flutter analyze` (0 errors, 3 pre-existing warnings, 60 info) + `flutter test` → **all 77 pass** | ✔ |
 
 ## 2. Release AAB location & credentials
 
-- **AAB:** `mobile/build/app/outputs/bundle/release/app-release.aab` (49.1 MB)
+- **AAB:** `mobile/build/app/outputs/bundle/release/app-release.aab` (59.8 MB)
 - Signing must NEVER be committed: `android/key.properties` and `android/keystore/wizzo-upload.jks` are gitignored (verified with `git check-ignore`).
 - Only the placeholder template `android/key.properties.example` is tracked. Keep the real file safe and backed up — losing it = losing the ability to upload updates.
 - Keystore cert SHA-256 (used to register upload key in Play Console):
@@ -38,7 +38,9 @@ Store listing **app name: KATISHA** (owner's choice), app label stays "Wizzo Mar
 ## 3. Configuration to RE-CONFIRM for the production build
 
 The AAB above is built with the app's **defaults**. Before the actual Play release build, run
-`flutter build appbundle --release` again with the correct `--dart-define` values:
+`powershell -File tool/build_play_aab.ps1` (or
+`flutter build appbundle --release --obfuscate --split-debug-info=build/symbols`) again with the
+correct `--dart-define` values:
 
 | Dart-define | Default in code | Notes / needed for |
 |---|---|---|
@@ -112,7 +114,7 @@ Suggested Play understanding: disclosures mirror the table above; the app does *
 
 ## 8. Versioning advice (engineer-use)
 
-Keep `versionCode` strictly increasing for every upload (`12` used). Suggest 1.1.0+12 → next release 1.1.1+13. Change name/features → bump `versionName`.
+Keep `versionCode` strictly increasing for every upload (`43` used). The next release is `1.4.13+44`. Change name/features → bump `versionName`.
 
 ## 9. Final report (Phase 13)
 
@@ -124,3 +126,65 @@ Keep `versionCode` strictly increasing for every upload (`12` used). Suggest 1.1
   - Confirm account/data deletion endpoint exists on backend (owner/backend) or document manual deletion.
   - Confirm they opted for Google Play App Signing (recommended).
 - Security notes: no secrets are in the repo; keystore + key.properties must stay local/backed up; auth token is not encrypted at rest (recommended: `flutter_secure_storage` follow-up).
+
+---
+
+## 10. Android download size
+
+Play installs a per-ABI split, so what buyers download is roughly the
+**compressed `arm64-v8a` slice**, not the AAB file. Do not judge size by
+`app-release.aab`: it also carries `BUNDLE-METADATA` (R8 mapping + native debug
+symbols, tens of MB) that Play uses for crash reports and never ships to phones.
+Check Play Console's *Download size*, or run
+`bundletool get-size total --apks=app-release.apks`.
+
+### What is bundled now
+
+| Item | Before | Now |
+|---|---|---|
+| Flag SVGs | 1.91 MB (271 files, all countries) | 0.13 MB (35 files, only the currencies/languages the UI can show) |
+| Branding PNGs | 0.67 MB (launcher/splash sources) | 0.07 MB (`logo_icon`, `momo-logo`, payment marks) |
+| Flutter assets, total | 3.13 MB | 0.88 MB |
+| `libapp.so` (Dart, arm64) | 9.69 MB | 8.13 MB (`--obfuscate` + split debug info) |
+
+Result (measured with `bundletool get-size total`): the compressed
+`arm64-v8a` slice Play delivers is **16.67–17.01 MB** (16,665,017–17,012,244
+bytes, depending on screen density). The AAB file itself is 59.76 MB because
+25.55 MB of it is `BUNDLE-METADATA` — 17.68 MB native debug symbols + 7.85 MB
+R8 mapping — which Play keeps for crash reporting and never sends to devices.
+
+> If Play Console showed ~40 MB, that is the **on-device install size** (or an
+> older universal APK/artifact that contained every ABI). Judge updates by the
+> *Download size* on the release page, not by the AAB file or the installed app
+> size.
+
+The previous build also shipped all 271 flag SVGs and was not obfuscated; those
+are the two real reductions. Native symbols stay in the AAB because Flutter's
+tooling fails a release build without them in `BUNDLE-METADATA`.
+
+Only assets referenced at runtime are declared in `pubspec.yaml`; the
+launcher/splash sources stay on disk for `flutter_launcher_icons` /
+`flutter_native_splash` but are no longer packaged. `FlagIcon` loads
+`assets/flags/supported/<code>.svg` and falls back to `xx.svg`, so adding a
+currency or language needs its SVG copied into that folder.
+
+### Build command
+
+```powershell
+powershell -File tool/build_play_aab.ps1
+# = flutter build appbundle --release --obfuscate --split-debug-info=build/symbols
+```
+
+`build/symbols/` is required to deobfuscate crash reports — archive it with the
+release, but never commit it.
+
+### What still dominates (and why it is hard to trim)
+
+The Stripe Android SDK is ~10,800 of the app's ~12,300 Java classes and ~6.4 MB
+of the compressed arm64 download. `flutter_stripe` ships a
+`-keep class com.stripe.** { *; }` consumer rule, so R8 cannot shrink any of it
+(PaymentSheet, Financial Connections, Link, Customer Sheet, Embedded, 3DS).
+The only way to reclaim that space is to stop using the in-app PaymentSheet —
+e.g. open Stripe's hosted Checkout page instead (the `/orders/stripe/checkout-session`
+endpoints already exist in the server and were used before commit `8fdb2a4`).
+Everything else (Flutter engine + Dart snapshot) is at its practical floor.

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../catalog/data/second_hand_demo.dart';
 import '../../catalog/models/product.dart';
 import '../data/account_repository.dart';
 import '../models/profile.dart';
@@ -38,5 +39,7 @@ final wishlistIdsProvider = Provider<Set<String>>((ref) {
 
 /// Reviews for a specific product (product detail screen).
 final productReviewsProvider = FutureProvider.family<List<Review>, String>((ref, id) {
+  // Bundled second-hand demo listings have no server record to review.
+  if (localSecondHandProduct(id) != null) return const <Review>[];
   return ref.watch(accountRepositoryProvider).productReviews(id);
 });
