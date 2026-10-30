@@ -15,14 +15,14 @@ Store listing **app name: KATISHA** (owner's choice), app label stays "Wizzo Mar
 | AGP / Gradle / Kotlin | 8.13.0 / 8.14 / 2.2.20 (JDK 17 Temurin) | ✔ compatible |
 | minSdk / targetSdk / compileSdk | 24 / **36** / 36 | ✔ meets Play API 36 requirement |
 | Application ID | `app.wizzo.wizzo_market` (real, keep) | ✔ |
-| Version | versionCode 43, versionName 1.4.12 | ✔ keep |
+| Version | versionCode 44, versionName 1.4.12 | ✔ keep |
 | Permissions | INTERNET + ACCESS_NETWORK_STATE + WAKE_LOCK (transitive), no others | ✔ minimal |
 | Cleartext traffic | blocked (network_security_config) | ✔ |
 | Backup rules | auth prefs excluded on Android ≤11 (backup_rules) and 12+ (data_extraction_rules) | ✔ |
 | Firebase / FCM | none | ✔ not required |
 | Release signing | `key.properties` + `wizzo-upload.jks` (both gitignored); signed AAB uses upload key `CN=Wizzo Market, O=Wizzo`, 4096-bit RSA, valid to 2054 | ✔ |
 | App Bundle | `build/app/outputs/bundle/release/app-release.aab` (59.76 MB, 62,662,593 bytes) | ✔ built + verified |
-| Manifest in AAB | package correct, vc=43, vn=1.4.12, target=36, non-debuggable, label "Wizzo Market" | ✔ |
+| Manifest in AAB | package correct, vc=44, vn=1.4.12, target=36, non-debuggable, label "Wizzo Market" | ✔ |
 | Tests | `flutter analyze` (0 errors, 3 pre-existing warnings, 60 info) + `flutter test` → **all 77 pass** | ✔ |
 
 ## 2. Release AAB location & credentials

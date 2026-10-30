@@ -29,7 +29,7 @@ Fixed in this repo:
   would break the build.
 - Set the target device family to **iPhone only** (`TARGETED_DEVICE_FAMILY = 1`)
   so App Review does not require iPad screenshots/UI.
-- Version pinned in `pubspec.yaml` (`1.4.12+43`). Bump the build number before
+- Version pinned in `pubspec.yaml` (`1.4.12+44`). Bump the build number before
   every upload.
 
 ## 1. App Store Connect (one-time)
@@ -136,11 +136,11 @@ Artifacts: `build/ios/ipa/*.ipa`, `build/ios/ipa/*.pkg`,
 `pubspec.yaml` is the single source of truth:
 
 ```yaml
-version: 1.4.12+43   # 1.4.12 = version name, 43 = build number
+version: 1.4.12+44   # 1.4.12 = version name, 44 = build number
 ```
 
 App Store Connect rejects a build number that was already uploaded for the same
-version. For every new upload bump the number (`1.4.12+44`, `1.4.12+45`, …) and,
+version. For every new upload bump the number (`1.4.12+45`, `1.4.12+46`, …) and,
 for a new store version, the name (`1.5.0+44`).
 
 ## 5. If the build fails again
@@ -157,7 +157,7 @@ for a new store version, the name (`1.5.0+44`).
 | `Skip publishing to App Store Connect: no IPAs or PKGs found` | No `.ipa` reached the artifact list, so there was nothing to upload. The "Verify IPA artifact" step now prints `build/ios` and fails the build when the export produced no IPA. Also confirm the run used **this** YAML workflow: *Start new build → Wizzo Market iOS – App Store*. A build configured in the Flutter Workflow Editor ignores `codemagic.yaml` (and its `publishing` block) completely. |
 | Archive exists in `build/ios/archive` but `build/ios/ipa` is missing | `flutter build ipa` reports export failures but still **exits 0** (it counts the archive as success), which is why the Build step looked green. The workflow now builds the archive with `xcodebuild` directly, using the distribution identity + App Store profile, and exports with `-verbose` so the real error is printed. Look for `error: exportArchive:` in the Export IPA step or `/tmp/xcodebuild_logs/export.log`. |
 | `<pod> does not support provisioning profiles` | Signing settings were passed on the `xcodebuild` command line, so they applied to every Pods target too. They belong on the Runner target only — `xcode-project use-profiles` writes them there. Keep `xcodebuild archive` free of `CODE_SIGN_*` / `PROVISIONING_PROFILE_SPECIFIER` overrides. |
-| `The archive was not signed with a distribution certificate` | The profile applied to the Runner target was a development/ad-hoc one, or `CERTIFICATE_PRIVATE_KEY` imported a certificate that is not in the App Store profile. The workflow now passes `--archive-method app-store`, filters `get-task-allow` profiles, and checks the archived signature before export. |
+| `The archive was not signed with a distribution certificate` | Fixed: the check piped `codesign -dvv` into `grep -q` while `set -o pipefail` was active. `grep -q` exits on its first match, `codesign` dies from SIGPIPE (exit 141) and the pipeline was reported as failed **even though the `Authority=Apple Distribution…` lines were printed above it**. The step now captures `codesign` output first and greps a here-string; if it still fails it prints the full codesign output. If that output genuinely has no `Authority=Apple Distribution` line, the profile applied to the Runner target was a development/ad-hoc one, or `CERTIFICATE_PRIVATE_KEY` imported a certificate that is not in the App Store profile. |
 | `No provisioning profile for app.wizzo.wizzoMarket was found` in Write signing configuration | `fetch-signing-files` saves profiles to `~/Library/Developer/Xcode/UserData/Provisioning Profiles`. The workflow reads that directory and installs the profiles into `~/Library/MobileDevice/Provisioning Profiles`; both are searched. If both are empty, the fetch step failed (check the App ID and API-key rights). |
 | `error: exportArchive: ... doesn't include signing certificate` | The fetched profile was issued for a different distribution certificate than the one in the keychain. Re-run with the same `CERTIFICATE_PRIVATE_KEY` used to create the profile, or delete stale distribution certificates in the Apple Developer Portal (Apple allows 3). |
 | `The archive was signed with a development certificate` / export rejects a development profile | `xcode-project use-profiles` picked a non-App Store profile. The workflow now passes `--archive-method app-store`; make sure only App Store profiles are in the `apple store` signing setup. |

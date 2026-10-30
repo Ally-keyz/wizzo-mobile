@@ -120,20 +120,24 @@ workflows:
         # the profile specifier is missing.
         script: |
           set -e
+          # Capture command output before grepping it. Do NOT pipe a command
+          # straight into `grep -q`: under `set -o pipefail` grep exits on the
+          # first match, the producer is killed by SIGPIPE (exit 141), and the
+          # pipeline reports a failure even though the pattern matched.
           echo "--- signing identities ---"
-          security find-identity -v -p codesigning
-          if ! security find-identity -v -p codesigning | grep -Eq "Apple Distribution|iPhone Distribution"; then
+          identities="$(security find-identity -v -p codesigning || true)"
+          printf '%s\n' "$identities"
+          if ! grep -Eq "Apple Distribution|iPhone Distribution" <<<"$identities"; then
             echo "No Apple Distribution identity in the keychain."
             echo "Check CERTIFICATE_PRIVATE_KEY and the 'Import distribution certificate' step."
             exit 1
           fi
           echo "--- Runner release build settings ---"
-          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
-            -configuration Release -showBuildSettings 2>/dev/null \
+          settings="$(xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
+            -configuration Release -showBuildSettings 2>/dev/null || true)"
+          printf '%s\n' "$settings" \
             | grep -E " (CODE_SIGN_IDENTITY|CODE_SIGN_STYLE|DEVELOPMENT_TEAM|PROVISIONING_PROFILE_SPECIFIER|PRODUCT_BUNDLE_IDENTIFIER) =" || true
-          if ! xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
-            -configuration Release -showBuildSettings 2>/dev/null \
-            | grep -q "PROVISIONING_PROFILE_SPECIFIER = ."; then
+          if ! grep -q "PROVISIONING_PROFILE_SPECIFIER = ." <<<"$settings"; then
             echo "PROVISIONING_PROFILE_SPECIFIER is empty; xcode-project use-profiles did not apply a profile."
             exit 1
           fi
@@ -307,12 +311,23 @@ workflows:
 
           app="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
           echo "--- archived signature ---"
-          codesign -dvv "$app" 2>&1 | grep -E "Authority|TeamIdentifier" || true
-          if ! codesign -dvv "$app" 2>&1 | grep -Eq "Apple Distribution|iPhone Distribution"; then
+          # Capture codesign's output first. `codesign -dvv "$app" | grep -q ...`
+          # already failed every build: with `set -o pipefail`, grep -q exits on
+          # its first match, codesign is killed by SIGPIPE (141) and the
+          # pipeline looks failed even though the archive was signed for
+          # distribution. The output is grepped from a here-string instead.
+          signature="$(codesign -dvv "$app" 2>&1 || true)"
+          printf '%s\n' "$signature" | grep -E "Authority|TeamIdentifier" || true
+          if ! grep -Eq "Authority=(Apple Distribution|iPhone Distribution)" <<<"$signature"; then
+            echo ""
+            echo "Full codesign output:"
+            printf '%s\n' "$signature"
+            echo ""
             echo "The archive was not signed with a distribution certificate."
             echo "Check CERTIFICATE_PRIVATE_KEY and the 'Check code signing setup' output."
             exit 1
           fi
+          echo "Archive is signed for distribution."
 
       - name: Export IPA
         script: |

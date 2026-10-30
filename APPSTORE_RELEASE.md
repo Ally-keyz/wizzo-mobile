@@ -237,12 +237,12 @@ for the review build.
 3. Add yourself as an **internal tester**, install via TestFlight and smoke-test:
    sign-up (buyer + seller), sign-in, categories tab, product → cart → checkout,
    chat/report/block, delete account (use a throwaway account).
-4. Back in App Store Connect: create version **1.4.11**, attach build 42, fill
+4. Back in App Store Connect: create version **1.4.12**, attach build 44, fill
    §4–§7, upload screenshots, save.
 5. **Add for Review** → answer the final questions (ads: no; content rights: you
    own/have rights; encryption: no) → **Submit**.
 6. Review usually takes 24–48 h. If rejected, fix and upload a new build
-   (build number must increase: 1.4.11+43).
+   (build number must increase: 1.4.12+45).
 7. On approval choose **Manually release** so you control the go-live moment.
 
 ---
@@ -265,4 +265,4 @@ for the review build.
 - **iPad**: not applicable — the build is iPhone-only (`TARGETED_DEVICE_FAMILY = 1`).
 - **Name**: "Wizzo Market" must be available on the App Store; otherwise use the
   KATISHA listing name already planned for Google Play.
-- **Version**: build number must increase for every upload (36 now).
+- **Version**: build number must increase for every upload (44 now).
