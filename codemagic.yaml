@@ -460,3 +460,9 @@ workflows:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
+        # Apple allows only one build per version ("train") in beta review. A new
+        # submission otherwise fails with
+        #   422: Another build is in review. - Another build in the same train is
+        #   already in beta review. Please submit it again once it gets completed.
+        # Expire the build that is still in review/waiting before submitting.
+        expire_build_submitted_for_review: true

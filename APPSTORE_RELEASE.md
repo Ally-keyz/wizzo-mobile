@@ -243,6 +243,14 @@ for the review build.
 > App Review Information** contact (first name, last name, phone with country
 > code, email). It is app level, so once is enough for all later builds.
 
+> **One build per version in beta review:** Apple allows only one build of a
+> version in beta review. Uploading build 46 while build 45 is still in review
+> fails with *"Another build is in review. - Another build in the same train is
+> already in beta review."* Wait for the review to finish, or expire build 45 in
+> TestFlight → the build → **Expire Build**. The workflow now sets
+> `expire_build_submitted_for_review: true`, so the next run does it
+> automatically.
+
 1. Upload the archive (§3). Wait 10–30 min for processing in App Store Connect →
    TestFlight.
 2. Answer **Export Compliance**: "No" (the app only uses standard HTTPS; already
