@@ -98,30 +98,34 @@ The workflow:
 2. `pod install`
 3. `flutter analyze --no-fatal-infos --no-fatal-warnings`
 4. verify that the four `apple store` variables are non-empty (fail fast)
-5. `keychain initialize`
-6. `app-store-connect fetch-signing-files app.wizzo.wizzoMarket --type IOS_APP_STORE --create`
-7. copy the fetched profiles into `~/Library/MobileDevice/Provisioning Profiles`
+5. `app-store-connect apps list` — fail fast when App Store Connect has no app
+   record for the bundle id, and print the ids the API key can see (this is the
+   only cause of altool's `Cannot determine the Apple ID from Bundle ID … (19)`
+   at publish time)
+6. `keychain initialize`
+7. `app-store-connect fetch-signing-files app.wizzo.wizzoMarket --type IOS_APP_STORE --create`
+8. copy the fetched profiles into `~/Library/MobileDevice/Provisioning Profiles`
    as well (`xcodebuild -exportArchive` resolves manual-signing profiles there)
-8. `keychain add-certificates`
-9. `xcode-project use-profiles --archive-method app-store`
-10. fail early when no `Apple Distribution` identity is in the keychain or the
+9. `keychain add-certificates`
+10. `xcode-project use-profiles --archive-method app-store`
+11. fail early when no `Apple Distribution` identity is in the keychain or the
     Runner Release config has no `PROVISIONING_PROFILE_SPECIFIER`
-11. pick the App Store profile (exact bundle id, not expired, not a development
+12. pick the App Store profile (exact bundle id, not expired, not a development
     profile) and write both `build/ios/ExportOptions.plist` (manual signing,
     explicit profile name, export method chosen for the installed Xcode
     version) and `build/ios/signing.env`
-12. `flutter build ios --release --config-only` then `xcodebuild archive`.
+13. `flutter build ios --release --config-only` then `xcodebuild archive`.
     Signing settings are **not** passed on the xcodebuild command line: they
     would be inherited by every Pods target and fail with "*does not support
     provisioning profiles*". The Runner target is configured by
     `xcode-project use-profiles` (manual signing, team, profile specifier).
-13. verify the archived `Runner.app` is signed by an Apple Distribution
+14. verify the archived `Runner.app` is signed by an Apple Distribution
     certificate (fails here, not in the export, if it is not)
-14. `xcodebuild -exportArchive -verbose` authenticated with the App Store
+15. `xcodebuild -exportArchive -verbose` authenticated with the App Store
     Connect key
-15. checks that an `.ipa` was actually produced, and prints the archived
+16. checks that an `.ipa` was actually produced, and prints the archived
     signature/embedded profile, before failing the build
-16. uploads to TestFlight (`submit_to_testflight: true`).
+17. uploads to TestFlight (`submit_to_testflight: true`).
 
 The archive/export is done with `xcodebuild` directly rather than
 `flutter build ipa` because Flutter **exits 0 when `-exportArchive` fails** (it
@@ -150,6 +154,7 @@ for a new store version, the name (`1.5.0+44`).
 | `argument --private-key: Missing value PRIVATE_KEY` | The API key is not reaching the step. Add `APP_STORE_CONNECT_PRIVATE_KEY` (full `.p8` text, not a file path) to the `apple store` group, or reference the integration with `integrations: app_store_connect: <name>`. The "Verify App Store Connect credentials" step lists what is missing. |
 | `No valid code signing certificates were found` | The `keychain` steps are missing, or `CERTIFICATE_PRIVATE_KEY` is not set/does not match the certificate. Check the "Fetch App Store signing files" step output. |
 | `No matching profiles found` | The App ID `app.wizzo.wizzoMarket` does not exist, or the API key lacks App Manager rights. Create the App ID and app record first. |
+| Publishing: `ERROR: Cannot determine the Apple ID from Bundle ID 'app.wizzo.wizzoMarket' and platform 'IOS'. (19)` / `ExitFailure (31)` | The archive, export and signing all worked; **App Store Connect has no app record for that bundle id**. An App ID in the developer portal is not enough — altool looks up *My Apps*. Create it: appstoreconnect.apple.com → Apps → `+` → New App, platform iOS, bundle id **exactly** `app.wizzo.wizzoMarket` (bundle ids are case sensitive; the Android id is `app.wizzo.wizzo_market`). Also make sure the API key belongs to the team that owns the app (`G5Q564NWLL`) and has the App Manager role. The "Verify App Store Connect app record" step now lists every bundle id the key can see and fails before the archive. |
 | `401 ... Authentication credentials are missing or invalid` | The Key ID and the `.p8` do not belong together (Apple names the file `AuthKey_<KEY_ID>.p8` — they must match), the key was revoked, the Issuer ID is from another team, or a value has quotes/whitespace. Check the "Inspect App Store Connect credentials" step: brackets must be tight, `p8 chars` above ~200. |
 | `The provided entity includes an attribute with a value that has already been used` | The build number was already uploaded. Bump it in `pubspec.yaml`. |
 | `Invalid Bundle. The bundle at ... does not support the minimum OS Version` | Deployment target must stay at 15.0 in the Xcode project and `AppFrameworkInfo.plist`. |

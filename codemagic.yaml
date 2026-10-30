@@ -81,6 +81,34 @@ workflows:
           fi
           printf '%s\n' "$APP_STORE_CONNECT_PRIVATE_KEY" | sed -n '1p;$p'
 
+      - name: Verify App Store Connect app record
+        # altool (used by `app-store-connect publish`) fails with
+        #   ERROR: Cannot determine the Apple ID from Bundle ID
+        #          'app.wizzo.wizzoMarket' and platform 'IOS'. (19)
+        # when no App Store Connect app record uses that exact bundle id, when
+        # the record was created with a different id (case matters — the
+        # Android id is app.wizzo.wizzo_market), or when the API key belongs to
+        # another team. An App ID in the developer portal is NOT enough: the
+        # record in My Apps is what altool looks up. Check it in ~10 s instead
+        # of after the ~20 min archive, and print the ids the key can see so the
+        # mismatch is obvious. Non-fatal if the CLI cannot list apps.
+        script: |
+          status=0
+          apps_json="$(app-store-connect apps list --json 2>&1)" || status=$?
+          echo "--- App Store Connect app records visible to this API key ---"
+          printf '%s\n' "$apps_json"
+          if [ "$status" -ne 0 ]; then
+            echo "WARNING: could not list app records (exit $status); skipping the check."
+          elif ! grep -qF "\"$BUNDLE_ID\"" <<<"$apps_json"; then
+            echo ""
+            echo "No App Store Connect app record uses the bundle id $BUNDLE_ID (case sensitive)."
+            echo "Create it before rebuilding: appstoreconnect.apple.com -> Apps -> + -> New App,"
+            echo "platform iOS, bundle id exactly $BUNDLE_ID."
+            exit 1
+          else
+            echo "App record found for $BUNDLE_ID."
+          fi
+
       - name: Initialise signing keychain
         script: keychain initialize
 

@@ -4,7 +4,7 @@ Everything the iOS app needs before it goes to App Store Connect, plus the exact
 steps to build, upload and submit it. Android/Play details stay in
 [`RELEASE_PREP.md`](RELEASE_PREP.md).
 
-Current version: **1.4.11 (build 42)** — `pubspec.yaml`. Bundle id:
+Current version: **1.4.12 (build 44)** — `pubspec.yaml`. Bundle id:
 **`app.wizzo.wizzoMarket`**. Apple Developer Program: paid team required.
 
 ---
@@ -60,6 +60,10 @@ Hard requirements still owned by you:
    store), primary language English, bundle id `app.wizzo.wizzoMarket`, SKU
    `wizzo-market-ios`, full access.
 3. Note the app's Apple ID (numeric) — useful for links.
+4. This record is **required** for uploads. Without it, Codemagic's publish step
+   fails with `ERROR: Cannot determine the Apple ID from Bundle ID
+   'app.wizzo.wizzoMarket' and platform 'IOS'. (19)` even though signing and the
+   `.ipa` export succeeded. The bundle id must match exactly, including case.
 
 ### 2.3 Signing
 1. On the Mac: Xcode → Settings → Accounts → add the Apple ID of the team.
