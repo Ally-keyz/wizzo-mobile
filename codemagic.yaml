@@ -110,9 +110,10 @@ workflows:
 
       - name: Apply provisioning profiles to the Xcode project
         # Only App Store profiles are eligible, so a stale development or ad-hoc
-        # profile can never be applied to the release archive. This also writes
-        # DEVELOPMENT_TEAM / PROVISIONING_PROFILE_SPECIFIER into the project.
-        script: xcode-project use-profiles --archive-method app-store
+        # profile can never be applied to the release archive. This writes
+        # CODE_SIGN_STYLE / DEVELOPMENT_TEAM / PROVISIONING_PROFILE_SPECIFIER
+        # into the Runner target only (never the Pods targets).
+        script: xcode-project use-profiles --archive-method app-store --code-signing-setup-verbose-logging
 
       - name: Check code signing setup
         # Fail before the expensive archive when the distribution identity or
@@ -251,10 +252,17 @@ workflows:
       - name: Build signed archive
         # Do not rely on `flutter build ipa` here: Flutter reports a failed
         # -exportArchive as success once the .xcarchive exists, which is how CI
-        # ended up with an archive and no .ipa. Run the archive ourselves with
-        # the distribution identity and the App Store profile, and fail unless
-        # the archived app is actually signed for distribution.
+        # ended up with an archive and no .ipa.
+        #
+        # Signing settings must NOT be passed on the xcodebuild command line:
+        # they are inherited by every target in the workspace, and the Pods
+        # framework targets reject a provisioning profile ("<pod> does not
+        # support provisioning profiles"). `xcode-project use-profiles
+        # --archive-method app-store` above already sets CODE_SIGN_STYLE=Manual,
+        # DEVELOPMENT_TEAM and PROVISIONING_PROFILE_SPECIFIER on the Runner
+        # target only, so the archive signs automatically from that profile.
         script: |
+          set -e
           set -o pipefail
           mkdir -p /tmp/xcodebuild_logs
           . build/ios/signing.env
@@ -269,8 +277,8 @@ workflows:
             echo "No distribution identity in the keychain."
             exit 1
           fi
-          echo "Signing with: $identity"
-          echo "Profile:      $PROFILE_NAME ($PROFILE_UUID)"
+          echo "Expected identity: $identity"
+          echo "Profile:           $PROFILE_NAME ($PROFILE_UUID)"
 
           auth=()
           if [ -n "${APP_STORE_CONNECT_PRIVATE_KEY:-}" ]; then
@@ -295,10 +303,6 @@ workflows:
             -archivePath build/ios/archive/Runner.xcarchive \
             -allowProvisioningUpdates \
             "${auth[@]}" \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            CODE_SIGN_IDENTITY="$identity" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             archive 2>&1 | tee /tmp/xcodebuild_logs/archive.log
 
           app="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
@@ -312,6 +316,7 @@ workflows:
 
       - name: Export IPA
         script: |
+          set -e
           set -o pipefail
           mkdir -p /tmp/xcodebuild_logs
           . build/ios/signing.env
