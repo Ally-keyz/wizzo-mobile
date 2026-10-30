@@ -29,8 +29,7 @@ Fixed in this repo:
   would break the build.
 - Set the target device family to **iPhone only** (`TARGETED_DEVICE_FAMILY = 1`)
   so App Review does not require iPad screenshots/UI.
-- Version pinned in `pubspec.yaml` (`1.4.12+44`). Bump the build number before
-  every upload.
+- Version pinned in `pubspec.yaml`. Bump the build number before every upload.
 
 ## 1. App Store Connect (one-time)
 
@@ -160,12 +159,12 @@ Artifacts: `build/ios/ipa/*.ipa`, `build/ios/ipa/*.pkg`,
 `pubspec.yaml` is the single source of truth:
 
 ```yaml
-version: 1.4.12+44   # 1.4.12 = version name, 44 = build number
+version: 1.4.12+45   # 1.4.12 = version name, 45 = build number
 ```
 
 App Store Connect rejects a build number that was already uploaded for the same
-version. For every new upload bump the number (`1.4.12+45`, `1.4.12+46`, …) and,
-for a new store version, the name (`1.5.0+44`).
+version. For every new upload bump the number (`1.4.12+46`, `1.4.12+47`, …) and,
+for a new store version, the name (`1.5.0+45`).
 
 ## 5. If the build fails again
 

@@ -114,7 +114,9 @@ Suggested Play understanding: disclosures mirror the table above; the app does *
 
 ## 8. Versioning advice (engineer-use)
 
-Keep `versionCode` strictly increasing for every upload (`43` used). The next release is `1.4.13+44`. Change name/features → bump `versionName`.
+Keep `versionCode` strictly increasing for every upload; it is the build number
+in `pubspec.yaml` (`1.4.12+45` → versionCode 45). Change name/features → bump
+`versionName`.
 
 ## 9. Final report (Phase 13)
 

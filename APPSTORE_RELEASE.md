@@ -4,7 +4,7 @@ Everything the iOS app needs before it goes to App Store Connect, plus the exact
 steps to build, upload and submit it. Android/Play details stay in
 [`RELEASE_PREP.md`](RELEASE_PREP.md).
 
-Current version: **1.4.12 (build 44)** — `pubspec.yaml`. Bundle id:
+Current version: **1.4.12 (build 45)** - `pubspec.yaml`. Bundle id:
 **`app.wizzo.wizzoMarket`**. Apple Developer Program: paid team required.
 
 ---
@@ -249,12 +249,12 @@ for the review build.
 3. Add yourself as an **internal tester**, install via TestFlight and smoke-test:
    sign-up (buyer + seller), sign-in, categories tab, product → cart → checkout,
    chat/report/block, delete account (use a throwaway account).
-4. Back in App Store Connect: create version **1.4.12**, attach build 44, fill
+4. Back in App Store Connect: create version **1.4.12**, attach build 45, fill
    §4–§7, upload screenshots, save.
 5. **Add for Review** → answer the final questions (ads: no; content rights: you
    own/have rights; encryption: no) → **Submit**.
 6. Review usually takes 24–48 h. If rejected, fix and upload a new build
-   (build number must increase: 1.4.12+45).
+   (build number must increase: 1.4.12+46).
 7. On approval choose **Manually release** so you control the go-live moment.
 
 ---
