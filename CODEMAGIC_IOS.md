@@ -45,6 +45,23 @@ Fixed in this repo:
    App Store Connect API → `+`. Access level **App Manager**. Download the
    `AuthKey_XXXXXXXXXX.p8` file (only downloadable once). Note the **Key ID**
    and the **Issuer ID**.
+4. **TestFlight Test Information** — appstoreconnect.apple.com → Apps →
+   `Wizzo Marketplace` → TestFlight → **Test Information**. Fill this before
+   the first build that is submitted to beta review:
+   - Beta App Information → **Feedback Email** (e.g. `support@wizzo.com`); this
+     is where testers' feedback is sent, so use a monitored mailbox.
+   - Beta App Review Information → **First Name**, **Last Name**, **Phone
+     Number** (include the country code, e.g. `+250…`) and **Email** of a real
+     person who can answer Apple's beta review questions.
+   - Sign-in required: the demo account and reviewer notes from
+     [`APPSTORE_RELEASE.md`](APPSTORE_RELEASE.md) §7.
+
+   These fields are **app level**, not per build, so once is enough for every
+   later upload. They are required for **external** testing only: Codemagic's
+   `submit_to_testflight: true` fails with *"Complete test information is
+   required to submit application … for external testing"* while they are
+   empty. Internal-only testing does not need them (set
+   `submit_to_testflight: false`).
 
 ## 2. Codemagic environment variables
 
@@ -102,30 +119,33 @@ The workflow:
    record for the bundle id, and print the ids the API key can see (this is the
    only cause of altool's `Cannot determine the Apple ID from Bundle ID … (19)`
    at publish time)
-6. `keychain initialize`
-7. `app-store-connect fetch-signing-files app.wizzo.wizzoMarket --type IOS_APP_STORE --create`
-8. copy the fetched profiles into `~/Library/MobileDevice/Provisioning Profiles`
+6. `node tool/check_testflight_info.mjs` — fail fast when TestFlight → Test
+   Information is incomplete (external beta review needs a Feedback Email and
+   the beta review contact person), instead of after the archive and upload
+7. `keychain initialize`
+8. `app-store-connect fetch-signing-files app.wizzo.wizzoMarket --type IOS_APP_STORE --create`
+9. copy the fetched profiles into `~/Library/MobileDevice/Provisioning Profiles`
    as well (`xcodebuild -exportArchive` resolves manual-signing profiles there)
-9. `keychain add-certificates`
-10. `xcode-project use-profiles --archive-method app-store`
-11. fail early when no `Apple Distribution` identity is in the keychain or the
+10. `keychain add-certificates`
+11. `xcode-project use-profiles --archive-method app-store`
+12. fail early when no `Apple Distribution` identity is in the keychain or the
     Runner Release config has no `PROVISIONING_PROFILE_SPECIFIER`
-12. pick the App Store profile (exact bundle id, not expired, not a development
+13. pick the App Store profile (exact bundle id, not expired, not a development
     profile) and write both `build/ios/ExportOptions.plist` (manual signing,
     explicit profile name, export method chosen for the installed Xcode
     version) and `build/ios/signing.env`
-13. `flutter build ios --release --config-only` then `xcodebuild archive`.
+14. `flutter build ios --release --config-only` then `xcodebuild archive`.
     Signing settings are **not** passed on the xcodebuild command line: they
     would be inherited by every Pods target and fail with "*does not support
     provisioning profiles*". The Runner target is configured by
     `xcode-project use-profiles` (manual signing, team, profile specifier).
-14. verify the archived `Runner.app` is signed by an Apple Distribution
+15. verify the archived `Runner.app` is signed by an Apple Distribution
     certificate (fails here, not in the export, if it is not)
-15. `xcodebuild -exportArchive -verbose` authenticated with the App Store
+16. `xcodebuild -exportArchive -verbose` authenticated with the App Store
     Connect key
-16. checks that an `.ipa` was actually produced, and prints the archived
+17. checks that an `.ipa` was actually produced, and prints the archived
     signature/embedded profile, before failing the build
-17. uploads to TestFlight (`submit_to_testflight: true`).
+18. uploads to TestFlight (`submit_to_testflight: true`).
 
 The archive/export is done with `xcodebuild` directly rather than
 `flutter build ipa` because Flutter **exits 0 when `-exportArchive` fails** (it
@@ -160,6 +180,7 @@ for a new store version, the name (`1.5.0+44`).
 | `Invalid Bundle. The bundle at ... does not support the minimum OS Version` | Deployment target must stay at 15.0 in the Xcode project and `AppFrameworkInfo.plist`. |
 | `Provisioning profile ... doesn't include signing certificate` | `keychain add-certificates` did not run or imported the wrong certificate. |
 | `Skip publishing to App Store Connect: no IPAs or PKGs found` | No `.ipa` reached the artifact list, so there was nothing to upload. The "Verify IPA artifact" step now prints `build/ios` and fails the build when the export produced no IPA. Also confirm the run used **this** YAML workflow: *Start new build → Wizzo Market iOS – App Store*. A build configured in the Flutter Workflow Editor ignores `codemagic.yaml` (and its `publishing` block) completely. |
+| `Failure: Complete test information is required to submit application Wizzo Marketplace build for external testing.` / `App is missing required Beta App Information: Feedback Email.` / `App is missing required Beta App Review Information: First Name, Last Name, Phone Number, Email.` | The build, signing and upload all worked; **TestFlight → Test Information** is incomplete. Fill it once at appstoreconnect.apple.com → Apps → `Wizzo Marketplace` → TestFlight → Test Information: Feedback Email under *Beta App Information*, and the contact person (first/last name, phone **with country code**, email) under *Beta App Review Information*. These values are app level, so every later build reuses them. No rebuild is required to fix the already-uploaded build — submit it manually in TestFlight, or re-run the workflow. If you only test internally, set `submit_to_testflight: false` (external beta review is what requires this info). The "Verify TestFlight test information" step now catches it before the archive. |
 | Archive exists in `build/ios/archive` but `build/ios/ipa` is missing | `flutter build ipa` reports export failures but still **exits 0** (it counts the archive as success), which is why the Build step looked green. The workflow now builds the archive with `xcodebuild` directly, using the distribution identity + App Store profile, and exports with `-verbose` so the real error is printed. Look for `error: exportArchive:` in the Export IPA step or `/tmp/xcodebuild_logs/export.log`. |
 | `<pod> does not support provisioning profiles` | Signing settings were passed on the `xcodebuild` command line, so they applied to every Pods target too. They belong on the Runner target only — `xcode-project use-profiles` writes them there. Keep `xcodebuild archive` free of `CODE_SIGN_*` / `PROVISIONING_PROFILE_SPECIFIER` overrides. |
 | `The archive was not signed with a distribution certificate` | Fixed: the check piped `codesign -dvv` into `grep -q` while `set -o pipefail` was active. `grep -q` exits on its first match, `codesign` dies from SIGPIPE (exit 141) and the pipeline was reported as failed **even though the `Authority=Apple Distribution…` lines were printed above it**. The step now captures `codesign` output first and greps a here-string; if it still fails it prints the full codesign output. If that output genuinely has no `Authority=Apple Distribution` line, the profile applied to the Runner target was a development/ad-hoc one, or `CERTIFICATE_PRIVATE_KEY` imported a certificate that is not in the App Store profile. |

@@ -234,6 +234,14 @@ for the review build.
 
 ## 8. Upload → TestFlight → Submit
 
+> **Before the first upload:** fill **TestFlight → Test Information**
+> (appstoreconnect.apple.com → Apps → Wizzo Marketplace → TestFlight → Test
+> Information). External testing is rejected with *"Complete test information
+> is required … App is missing required Beta App Information: Feedback Email"*
+> until you add a **Feedback Email** (e.g. `support@wizzo.com`) and the **Beta
+> App Review Information** contact (first name, last name, phone with country
+> code, email). It is app level, so once is enough for all later builds.
+
 1. Upload the archive (§3). Wait 10–30 min for processing in App Store Connect →
    TestFlight.
 2. Answer **Export Compliance**: "No" (the app only uses standard HTTPS; already
