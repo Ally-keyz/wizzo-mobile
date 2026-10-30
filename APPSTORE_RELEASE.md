@@ -4,7 +4,7 @@ Everything the iOS app needs before it goes to App Store Connect, plus the exact
 steps to build, upload and submit it. Android/Play details stay in
 [`RELEASE_PREP.md`](RELEASE_PREP.md).
 
-Current version: **1.4.12 (build 45)** - `pubspec.yaml`. Bundle id:
+Current version: **1.4.12 (build 46)** - `pubspec.yaml`. Bundle id:
 **`app.wizzo.wizzoMarket`**. Apple Developer Program: paid team required.
 
 ---
@@ -20,6 +20,7 @@ Current version: **1.4.12 (build 45)** - `pubspec.yaml`. Bundle id:
 | **Report user** + **Block user** in chat (guideline 1.2, UGC) | conversation screen ⋮ menu → `POST /reports/user`, `POST /users/me/blocks` | ✔ |
 | Privacy manifest (`PrivacyInfo.xcprivacy`) with required-reason APIs + collected data | `ios/Runner/PrivacyInfo.xcprivacy`, added to the Runner target resources | ✔ |
 | Usage strings for camera, photos, mic, location | `ios/Runner/Info.plist` | ✔ |
+| CoreLocation "always" purpose string (ITMS-90683) | `Info.plist` (`NSLocationAlwaysAndWhenInUseUsageDescription`) | ✔ required by Apple's scan even though the app only asks for when-in-use |
 | Export-compliance flag (HTTPS only, no custom crypto) | `ITSAppUsesNonExemptEncryption = false` in `Info.plist` | ✔ |
 | `LSApplicationQueriesSchemes` for WhatsApp/mail/tel links | `Info.plist` | ✔ |
 | Declared app languages en/fr/rw/de/sw | `CFBundleLocalizations` in `Info.plist` | ✔ |
@@ -249,18 +250,23 @@ for the review build.
 3. Add yourself as an **internal tester**, install via TestFlight and smoke-test:
    sign-up (buyer + seller), sign-in, categories tab, product → cart → checkout,
    chat/report/block, delete account (use a throwaway account).
-4. Back in App Store Connect: create version **1.4.12**, attach build 45, fill
+4. Back in App Store Connect: create version **1.4.12**, attach build 46, fill
    §4–§7, upload screenshots, save.
 5. **Add for Review** → answer the final questions (ads: no; content rights: you
    own/have rights; encryption: no) → **Submit**.
 6. Review usually takes 24–48 h. If rejected, fix and upload a new build
-   (build number must increase: 1.4.12+46).
+   (build number must increase: 1.4.12+47).
 7. On approval choose **Manually release** so you control the go-live moment.
 
 ---
 
 ## 9. Known risks / last checks before submitting
 
+- **ITMS-90683 (missing purpose string)**: Apple's scan sees CoreLocation's
+  always-authorization symbols in `geolocator` and asks for
+  `NSLocationAlwaysAndWhenInUseUsageDescription` even though the app only
+  requests when-in-use access. The key is set in `Info.plist`; keep it while
+  the plugin is used. A new build number is required after changing it.
 - **Stripe test key in `AppConfig`**: card payments will not charge real money.
   Either point the build at live keys or hide the card tile for review.
 - **Apple Pay**: only works after the merchant id + entitlement steps in §2.1.

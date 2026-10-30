@@ -115,7 +115,7 @@ Suggested Play understanding: disclosures mirror the table above; the app does *
 ## 8. Versioning advice (engineer-use)
 
 Keep `versionCode` strictly increasing for every upload; it is the build number
-in `pubspec.yaml` (`1.4.12+45` → versionCode 45). Change name/features → bump
+in `pubspec.yaml` (`1.4.12+46` → versionCode 46). Change name/features → bump
 `versionName`.
 
 ## 9. Final report (Phase 13)

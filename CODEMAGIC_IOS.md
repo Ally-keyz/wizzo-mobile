@@ -159,11 +159,11 @@ Artifacts: `build/ios/ipa/*.ipa`, `build/ios/ipa/*.pkg`,
 `pubspec.yaml` is the single source of truth:
 
 ```yaml
-version: 1.4.12+45   # 1.4.12 = version name, 45 = build number
+version: 1.4.12+46   # 1.4.12 = version name, 46 = build number
 ```
 
 App Store Connect rejects a build number that was already uploaded for the same
-version. For every new upload bump the number (`1.4.12+46`, `1.4.12+47`, …) and,
+version. For every new upload bump the number (`1.4.12+47`, `1.4.12+48`, …) and,
 for a new store version, the name (`1.5.0+45`).
 
 ## 5. If the build fails again

@@ -76,6 +76,11 @@
 		<string>Wizzo uses the microphone when recording product videos.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Wizzo uses your location to show nearby sellers and delivery areas on the map.</string>
+		<!-- The geolocator plugin links CoreLocation's always-authorization symbols,
+		     so App Store Connect requires this key even though the app only asks
+		     for when-in-use access (ITMS-90683). -->
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>Wizzo uses your location to show nearby sellers and delivery areas on the map. Location is only accessed while you are using the app.</string>
 		<!-- Google Sign-In was removed from the app, so no custom URL scheme is
 		     registered here. Add the reversed iOS OAuth client id back only if
 		     Google login is reintroduced. -->
