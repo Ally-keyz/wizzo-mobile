@@ -15,7 +15,7 @@ Store listing **app name: KATISHA** (owner's choice), app label stays "Wizzo Mar
 | AGP / Gradle / Kotlin | 8.13.0 / 8.14 / 2.2.20 (JDK 17 Temurin) | ✔ compatible |
 | minSdk / targetSdk / compileSdk | 24 / **36** / 36 | ✔ meets Play API 36 requirement |
 | Application ID | `app.wizzo.wizzo_market` (real, keep) | ✔ |
-| Version | versionCode 44, versionName 1.4.12 | ✔ keep |
+| Version | versionCode 49, versionName 1.4.13 | ✔ keep |
 | Permissions | INTERNET + ACCESS_NETWORK_STATE + WAKE_LOCK (transitive), no others | ✔ minimal |
 | Cleartext traffic | blocked (network_security_config) | ✔ |
 | Backup rules | auth prefs excluded on Android ≤11 (backup_rules) and 12+ (data_extraction_rules) | ✔ |

@@ -49,19 +49,23 @@ class AppConfig {
   static const String webUrl = 'https://wizzomarketplace.com';
   static const String supportEmail = 'support@wizzo.com';
 
-  /// Stripe publishable key for Google Pay on mobile (test mode).
+  /// Stripe publishable key (public by design). This is the LIVE key shared
+  /// with the web storefront; the production API returns the same key in its
+  /// payment-intent responses, so this only acts as a fallback. Override with
+  /// `--dart-define=STRIPE_PUBLISHABLE_KEY=...` when testing against staging.
   static const String stripePublishableKey = String.fromEnvironment(
     'STRIPE_PUBLISHABLE_KEY',
     defaultValue:
-        'pk_test_51UE1ZQ1HGKUHOr34tixbSjZVi5MCBHbdhJLHKeaT2ntl55iIAnmklzBtEU3XLkxaJmgRH42qTipbnQANqb13kWZk00kFInznQI',
+        'pk_live_51UE1Yq1s5alI3joSctpI76PQpyve0sopNbHMBgpBiVChgAST4ZFh94Xjbm7yx670X8gMNYbfuc61fUuLuENScOHE00dTCmnA3N',
   );
 
-  /// Apple Pay merchant identifier (iOS only). Apple Pay is only attached to
-  /// the Stripe PaymentSheet when this is set — passing an Apple Pay config
-  /// without a merchant identifier trips flutter_stripe's assertion.
-  /// Configure with `--dart-define=APPLE_PAY_MERCHANT_ID=merchant.com.example`.
+  /// Apple Pay merchant identifier (iOS only). Apple Pay is presented through
+  /// Stripe's native wallet sheet and needs this merchant id (created in the
+  /// Apple Developer portal and added to the Stripe dashboard) to work.
+  /// Override with `--dart-define=APPLE_PAY_MERCHANT_ID=merchant.com.example`.
   static const String applePayMerchantId = String.fromEnvironment(
     'APPLE_PAY_MERCHANT_ID',
+    defaultValue: 'merchant.com.wizzomarketplace',
   );
 
   /// ISO-3166 country of the Stripe account that owns the publishable key.
@@ -73,8 +77,8 @@ class AppConfig {
   );
 
   /// Whether the baked-in Stripe key is a test key. Drives Google Pay's
-  /// `testEnv` flag instead of `kReleaseMode`, because release builds currently
-  /// ship the test publishable key.
+  /// `testEnv` flag instead of `kReleaseMode`, because a release build can
+  /// still be pointed at a test key via `--dart-define`.
   static bool get stripeTestMode => stripePublishableKey.startsWith('pk_test_');
 
   /// Upper bound for API calls. Kept generous because the free-tier Render

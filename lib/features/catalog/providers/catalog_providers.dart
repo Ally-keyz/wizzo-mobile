@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_providers.dart';
 
 import '../data/catalog_repository.dart';
-import '../data/second_hand_demo.dart';
 import '../models/deal.dart';
 import '../models/product.dart';
 import '../models/seller.dart';
@@ -122,21 +121,14 @@ final allDealsProductsProvider =
 
 /// Second-hand marketplace rail and full listing page.
 ///
-/// A fresh marketplace often has no pre-owned listings yet, so an empty result
-/// (or a failed request) falls back to a small local demo set instead of
-/// hiding the section entirely. The real listings win as soon as one exists.
-///
-/// Auto-disposed so the fallback is re-evaluated (and the demos disappear)
-/// whenever the user comes back after publishing a real listing.
+/// Always sourced from the server: the pre-owned listings are seeded into the
+/// database (`npm run seed:second-hand`), so an empty result means there are
+/// genuinely no second-hand listings yet — not that the app should fall back
+/// to a local demo set.
 final secondHandProductsProvider =
     FutureProvider.autoDispose<List<Product>>((ref) async {
   final repo = ref.watch(catalogRepositoryProvider);
-  try {
-    final products = await repo.secondHandProducts(limit: 24);
-    return products.isEmpty ? secondHandDemoProducts : products;
-  } catch (_) {
-    return secondHandDemoProducts;
-  }
+  return repo.secondHandProducts(limit: 24);
 });
 
 /// Category tree (2 levels).
@@ -151,11 +143,9 @@ final topSellersProvider = FutureProvider<List<Seller>>((ref) async {
 
 /// Single product detail (watch with the product id).
 ///
-/// Bundled second-hand demo listings are resolved locally: they have no record
-/// on the API, so fetching `/products/:id` for them always fails.
+/// Always fetched from the API: second-hand listings are now real database
+/// records, so `/products/:id` resolves them like any other product.
 final productProvider = FutureProvider.family<Product, String>((ref, id) async {
-  final local = localSecondHandProduct(id);
-  if (local != null) return local;
   return ref.watch(catalogRepositoryProvider).product(id);
 });
 
@@ -164,15 +154,6 @@ final relatedProductsProvider = FutureProvider.family<List<Product>, String>((
   ref,
   id,
 ) async {
-  final local = localSecondHandProduct(id);
-  if (local != null) {
-    // Nothing to fetch for a demo listing: recommend the rest of the bundled
-    // second-hand set instead.
-    return secondHandDemoProducts
-        .where((p) => p.id != local.id)
-        .take(10)
-        .toList();
-  }
   return ref.watch(catalogRepositoryProvider).related(id);
 });
 

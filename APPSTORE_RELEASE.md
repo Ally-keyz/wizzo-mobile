@@ -4,7 +4,7 @@ Everything the iOS app needs before it goes to App Store Connect, plus the exact
 steps to build, upload and submit it. Android/Play details stay in
 [`RELEASE_PREP.md`](RELEASE_PREP.md).
 
-Current version: **1.4.12 (build 46)** - `pubspec.yaml`. Bundle id:
+Current version: **1.4.13 (build 49)** - `pubspec.yaml`. Bundle id:
 **`app.wizzo.wizzoMarket`**. Apple Developer Program: paid team required.
 
 ---
@@ -47,13 +47,20 @@ Hard requirements still owned by you:
    `app.wizzo.wizzoMarket`.
 3. Capabilities: leave default (no Push, no IAP needed — the app sells physical
    goods and uses external payment methods, which Apple allows under 3.1.3(e)).
-4. If you want **Apple Pay** in the app, also:
-   - Identifiers → Merchant IDs → **+** → e.g. `merchant.com.wizzomarketplace`.
-   - Add the **Apple Pay** capability to the App ID and select that merchant id.
-   - Build with `--dart-define=APPLE_PAY_MERCHANT_ID=merchant.com.wizzomarketplace`
-     and enable the Apple Pay capability in Xcode for the Runner target
-     (adds `com.apple.developer.in-app-payments` to the entitlements).
-   - Without these steps Apple Pay stays hidden; cards still work via Stripe.
+4. If you want **Apple Pay** in the app (the code is already wired for it), the
+   merchant id `merchant.com.wizzomarketplace` is baked in as the app default and
+   the entitlements file `ios/Runner/Runner.entitlements` is committed + referenced
+   by `CODE_SIGN_ENTITLEMENTS`. You still must do the one-time Apple portal setup:
+   - Identifiers → Merchant IDs → **+** → `merchant.com.wizzomarketplace`.
+   - Add the **Apple Pay** capability to the App ID `app.wizzo.wizzoMarket` and
+     select that merchant id (adds `com.apple.developer.in-app-payments`).
+   - Add `merchant.com.wizzomarketplace` to the Stripe dashboard (Settings →
+     Payments → Apple Pay) and register the domain.
+   - **Until the capability is enabled on the App ID, the archive fails at
+     signing** with an `in-app-payments` entitlement error — the App Store
+     provisioning profile cannot carry an entitlement the App ID does not have.
+     If you need to build before Apple Pay is set up, remove the
+     `CODE_SIGN_ENTITLEMENTS` line from `ios/Runner.xcodeproj/project.pbxproj`.
 
 ### 2.2 App Store Connect app
 1. <https://appstoreconnect.apple.com> → My Apps → **+** → New App.
