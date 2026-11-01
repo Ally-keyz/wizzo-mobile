@@ -37,10 +37,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _greetingKey = 'home.greetingGoodDay';
 
-  /// Category currently filtering the home feed; `null` means "All".
-  String? _categorySlug;
-  String? _categoryName;
-
   @override
   void initState() {
     super.initState();
@@ -217,34 +213,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          final jobs = <Future<dynamic>>[
+          await Future.wait([
             ref.refresh(homeFeedProvider.future),
             ref.refresh(homeDealsProvider.future),
             ref.refresh(promotedProductsProvider.future),
             ref.refresh(topSellersProvider.future),
-          ];
-          final slug = _categorySlug;
-          if (slug != null) {
-            jobs.add(ref.refresh(categoryProductsProvider(slug).future));
-          }
-          await Future.wait(jobs);
+          ]);
         },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // Category filter strip sits directly below the app bar.
+            // Category strip sits directly below the app bar. Tapping a
+            // category opens its dedicated category (browse) page instead of
+            // filtering the home feed in place.
             SliverToBoxAdapter(
               child: _HomeCategoriesRail(
-                selectedSlug: _categorySlug,
-                onSelected: (category) {
-                  setState(() {
-                    // Tapping the active chip clears the filter.
-                    final isSame =
-                        category != null && category.slug == _categorySlug;
-                    _categorySlug = isSame ? null : category?.slug;
-                    _categoryName = isSame ? null : category?.name;
-                  });
-                },
+                onSelected: (category) =>
+                    context.push('/browse/${category.slug}'),
+                onAll: () => context.go('/categories'),
               ),
             ),
             SliverToBoxAdapter(
@@ -334,7 +320,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
 
-            // For You section — the grid follows the active category chip.
+            // For You section.
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -342,7 +328,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        _categoryName ?? context.tr('home.forYou'),
+                        context.tr('home.forYou'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleLarge?.copyWith(
@@ -351,11 +337,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => context.push(
-                        _categorySlug == null
-                            ? '/search'
-                            : '/browse/$_categorySlug',
-                      ),
+                      onPressed: () => context.push('/search'),
                       child: Text(
                         context.tr('common.seeAll'),
                         maxLines: 1,
@@ -366,14 +348,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
-            if (_categorySlug == null)
-              _ForYouSection()
-            else
-              _CategoryFeedSection(slug: _categorySlug!),
+            _ForYouSection(),
 
             // Continue viewing CTA — keeps the endless For You scroll going.
-            if (_categorySlug == null)
-              const SliverToBoxAdapter(child: _ContinueViewingButton()),
+            const SliverToBoxAdapter(child: _ContinueViewingButton()),
 
             // Top sellers rail
             SliverToBoxAdapter(
@@ -536,15 +514,13 @@ class _LocationSelectionToggler extends ConsumerWidget {
   }
 }
 
-/// Horizontally scrolling category chips that filter the home feed in place.
+/// Horizontally scrolling category chips below the home app bar. Each chip
+/// opens that category's dedicated browse page.
 class _HomeCategoriesRail extends ConsumerWidget {
-  const _HomeCategoriesRail({
-    required this.selectedSlug,
-    required this.onSelected,
-  });
+  const _HomeCategoriesRail({required this.onSelected, required this.onAll});
 
-  final String? selectedSlug;
-  final ValueChanged<CategoryNode?> onSelected;
+  final ValueChanged<CategoryNode> onSelected;
+  final VoidCallback onAll;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -583,14 +559,14 @@ class _HomeCategoriesRail extends ConsumerWidget {
           if (index == 0) {
             return _CategoryChip(
               label: context.tr('home.all'),
-              selected: selectedSlug == null,
-              onTap: () => onSelected(null),
+              selected: false,
+              onTap: onAll,
             );
           }
           final category = list[index - 1];
           return _CategoryChip(
             label: category.name,
-            selected: selectedSlug == category.slug,
+            selected: false,
             onTap: () => onSelected(category),
           );
         },
@@ -640,54 +616,6 @@ class _CategoryChip extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Product grid for the selected home category (the "For You" grid while a
-/// category chip is active).
-class _CategoryFeedSection extends ConsumerWidget {
-  const _CategoryFeedSection({required this.slug});
-
-  final String slug;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final products = ref.watch(categoryProductsProvider(slug));
-
-    if (products.isLoading && products.value == null) {
-      return const SliverToBoxAdapter(child: ProductGridSkeleton());
-    }
-
-    if (products.hasError && products.value == null) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 32),
-          child: WAsyncView(
-            value: products,
-            onRetry: () => ref.invalidate(categoryProductsProvider(slug)),
-            builder: (_, _) => const SizedBox(),
-          ),
-        ),
-      );
-    }
-
-    final list = products.value ?? const <Product>[];
-    if (list.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
-          child: Text(
-            context.tr('home.noCategoryProducts'),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return SliverProductGrid(products: list);
   }
 }
 
@@ -763,21 +691,16 @@ class _SecondHandSection extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: 3,
                     separatorBuilder: (_, _) => const SizedBox(width: 12),
-                    itemBuilder: (_, _) => const WSkeleton(
-                      width: 156,
-                      height: 292,
-                      radius: 12,
-                    ),
+                    itemBuilder: (_, _) =>
+                        const WSkeleton(width: 156, height: 292, radius: 12),
                   )
                 : ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: products.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 12),
-                    itemBuilder: (context, i) => ProductCard(
-                      product: products[i],
-                      width: 156,
-                    ),
+                    itemBuilder: (context, i) =>
+                        ProductCard(product: products[i], width: 156),
                   ),
           ),
         ],

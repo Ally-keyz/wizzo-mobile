@@ -9,13 +9,15 @@ import '../../../cart/models/cart.dart';
 import '../../models/checkout.dart';
 
 /// Localized display label for a payment method.
-String paymentKindLabel(BuildContext context, PaymentKind kind) => switch (kind) {
+String paymentKindLabel(BuildContext context, PaymentKind kind) =>
+    switch (kind) {
       PaymentKind.momo => context.tr('checkout.payment.momo.name'),
       PaymentKind.bank => context.tr('checkout.payment.bank.name'),
       PaymentKind.cashOnDelivery => context.tr('checkout.payment.cod.name'),
       PaymentKind.card => context.tr('checkout.payment.card.name'),
       PaymentKind.googlePay => context.tr('checkout.payment.googlePay.name'),
       PaymentKind.applePay => context.tr('checkout.payment.applePay.name'),
+      PaymentKind.paypal => context.tr('checkout.payment.paypal.name'),
     };
 
 /// Localized one-line description for a payment method.
@@ -27,6 +29,33 @@ String paymentKindDescription(BuildContext context, PaymentKind kind) =>
       PaymentKind.card => context.tr('checkout.payment.card.desc'),
       PaymentKind.googlePay => context.tr('checkout.payment.googlePay.desc'),
       PaymentKind.applePay => context.tr('checkout.payment.applePay.desc'),
+      PaymentKind.paypal => context.tr('checkout.payment.paypal.desc'),
+    };
+
+/// Label for the pay button for the selected method. Manual methods keep the
+/// generic "Place Order • total"; Stripe methods name the flow explicitly.
+String paymentKindPayLabel(
+  BuildContext context,
+  PaymentKind? kind, {
+  required String total,
+}) => switch (kind) {
+  PaymentKind.card => context.tr('checkout.payment.card.payButton'),
+  PaymentKind.googlePay => context.tr('checkout.payment.googlePay.payButton'),
+  PaymentKind.applePay => context.tr('checkout.payment.applePay.payButton'),
+  PaymentKind.paypal => context.tr('checkout.payment.paypal.payButton'),
+  _ => context.tr('checkout.placeOrder', namedArgs: {'total': total}),
+};
+
+/// One-line explanation shown under the payment tiles for the selected method.
+String? paymentKindRedirectHint(BuildContext context, PaymentKind? kind) =>
+    switch (kind) {
+      PaymentKind.card => context.tr('checkout.payment.card.redirect'),
+      PaymentKind.googlePay => context.tr(
+        'checkout.payment.googlePay.redirect',
+      ),
+      PaymentKind.applePay => context.tr('checkout.payment.applePay.redirect'),
+      PaymentKind.paypal => context.tr('checkout.payment.paypal.redirect'),
+      _ => null,
     };
 
 /// Shows the seller's pay-in details for a manual payment — the mobile
@@ -421,13 +450,8 @@ class CheckoutGroupLine extends StatelessWidget {
                             item.variantSize != null) ...[
                           const SizedBox(height: 2),
                           Text(
-                            [
-                              item.variantColor,
-                              item.variantSize,
-                            ]
-                                .where(
-                                  (e) => e != null && e.isNotEmpty,
-                                )
+                            [item.variantColor, item.variantSize]
+                                .where((e) => e != null && e.isNotEmpty)
                                 .join(' • '),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -486,8 +510,9 @@ class CheckoutPaymentTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? context.appColors.goldSoft.withValues(alpha: 0.5)
-              : theme.colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.3),
+              : theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -500,6 +525,7 @@ class CheckoutPaymentTile extends StatelessWidget {
                 PaymentKind.cashOnDelivery => Icons.payments_outlined,
                 PaymentKind.googlePay => Icons.g_mobiledata,
                 PaymentKind.applePay => Icons.apple,
+                PaymentKind.paypal => Icons.account_balance_wallet_outlined,
               },
               color: selected
                   ? context.appColors.onGoldSoft
@@ -614,9 +640,7 @@ class CheckoutBottomNav extends StatelessWidget {
         16,
         MediaQuery.of(context).padding.bottom + 8 + kSellButtonOverhang,
       ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-      ),
+      decoration: BoxDecoration(color: theme.colorScheme.surface),
       child: Row(
         children: [
           if (canGoBack) ...[

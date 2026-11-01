@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Address;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/currency/currency_controller.dart';
@@ -30,10 +33,10 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   List<String> _stepLabels(BuildContext context) => [
-        context.tr('checkout.stepCart'),
-        context.tr('checkout.stepShipping'),
-        context.tr('checkout.stepPayment'),
-      ];
+    context.tr('checkout.stepCart'),
+    context.tr('checkout.stepShipping'),
+    context.tr('checkout.stepPayment'),
+  ];
 
   int _step = 0;
   bool _creating = false;
@@ -55,7 +58,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         'city': draft.city,
         'street': draft.street,
       });
-      if (id.isEmpty) throw Exception('The server did not return an address id');
+      if (id.isEmpty)
+        throw Exception('The server did not return an address id');
       ref.invalidate(addressesProvider);
       if (mounted) {
         setState(() {
@@ -69,8 +73,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         setState(() => _creating = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(context.tr('addresses.saveFailed',
-                  namedArgs: {'error': '$e'}))),
+            content: Text(
+              context.tr('addresses.saveFailed', namedArgs: {'error': '$e'}),
+            ),
+          ),
         );
       }
     }
@@ -116,14 +122,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Address? _effectiveAddress(AddressBook book) {
     final id = _effectiveAddressId(book);
     if (id == null) return null;
-    return book.addresses
-        .firstWhere((a) => a.id == id, orElse: () => book.addresses.first);
+    return book.addresses.firstWhere(
+      (a) => a.id == id,
+      orElse: () => book.addresses.first,
+    );
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   num _deliveryFee() =>
@@ -144,7 +152,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Future<void> _placeOrder(CartData cart) async {
     final address = _effectiveAddress(
-        ref.read(addressesProvider).value ?? AddressBook());
+      ref.read(addressesProvider).value ?? AddressBook(),
+    );
     if (address == null) {
       _showError(context.tr('checkout.selectAddressFirst'));
       return;
@@ -154,17 +163,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _showError(context.tr('checkout.selectPaymentMethod'));
       return;
     }
-    final isMomo = method == PaymentKind.momo;
+    final momoPhoneInvalid = context.tr('checkout.momoPhoneInvalid');
 
-    // Card, Google Pay and Apple Pay all settle on Stripe's in-app
-    // PaymentSheet — nothing leaves the app for a hosted page.
-    if (method.isStripe) {
-      await _payWithCard(cart);
-      return;
+    // Every Stripe method has its own native flow: cards get the card
+    // PaymentSheet, wallets get their own native sheet, PayPal gets a hosted
+    // PayPal page. They must never fall through to one shared modal.
+    switch (method) {
+      case PaymentKind.card:
+        await _payWithCard(cart);
+        return;
+      case PaymentKind.googlePay:
+      case PaymentKind.applePay:
+        await _payWithWallet(cart, method);
+        return;
+      case PaymentKind.paypal:
+        await _payWithPaypal(cart);
+        return;
+      case PaymentKind.momo:
+      case PaymentKind.bank:
+      case PaymentKind.cashOnDelivery:
+        break;
     }
 
+    final isMomo = method == PaymentKind.momo;
     if (isMomo && _momoDigits().length != 9) {
-      _showError(context.tr('checkout.momoPhoneInvalid'));
+      _showError(momoPhoneInvalid);
       return;
     }
 
@@ -186,37 +209,32 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final momoDigits = _momoDigits();
       final Map<String, dynamic>? paymentDetails =
           isMomo && momoDigits.isNotEmpty
-              ? {'momoPhone': '+250$momoDigits'}
-              : null;
+          ? {'momoPhone': '+250$momoDigits'}
+          : null;
 
-      final summary = await ref.read(checkoutRepositoryProvider).placeOrder(
+      final summary = await ref
+          .read(checkoutRepositoryProvider)
+          .placeOrder(
             sellerPayments: selection,
             deliveryOption: deliveryOption,
-            deliveryAddressId:
-                _delivery == DeliveryKind.pickup ? null : address.id,
+            deliveryAddressId: _delivery == DeliveryKind.pickup
+                ? null
+                : address.id,
             paymentMethod: onlineMethod,
             paymentDetails: paymentDetails,
           );
-      await ref.read(cartProvider.notifier).clear();
-      ref.invalidate(cartProvider);
-      if (!mounted) return;
-      context.pushReplacement('/order-confirmation', extra: summary);
+      await _completeOrder(summary);
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _placing = false;
-          _error = e.toString();
-        });
-      }
+      _fail(e);
     }
   }
 
-  /// Card, Google Pay and Apple Pay are charged through an in-app Stripe
-  /// PaymentSheet (the same Stripe-backed custom UI the web uses) � the
-  /// buyer never leaves the app for a hosted Stripe page.
+  /// Card entry only: the Stripe PaymentSheet is initialised without wallet
+  /// config, so Apple Pay / Google Pay tiles inside the sheet are disabled.
   Future<void> _payWithCard(CartData cart) async {
     final address = _effectiveAddress(
-        ref.read(addressesProvider).value ?? AddressBook());
+      ref.read(addressesProvider).value ?? AddressBook(),
+    );
     if (address == null) {
       _showError(context.tr('checkout.selectAddressFirst'));
       return;
@@ -227,57 +245,28 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _error = null;
     });
     try {
-      final deliveryOption = _delivery.apiValue;
-      final selection = [
-        for (final g in cart.groups)
-          {'sellerId': g.sellerId, 'paymentMethod': _method!.apiValue},
-      ];
-
       final intent = await ref
           .read(checkoutRepositoryProvider)
           .createStripePaymentIntent(
-            sellerPayments: selection,
-            deliveryOption: deliveryOption,
-            deliveryAddressId:
-                _delivery == DeliveryKind.pickup ? null : address.id,
+            sellerPayments: _sellerSelection(cart, PaymentKind.card),
+            deliveryOption: _delivery.apiValue,
+            deliveryAddressId: _delivery == DeliveryKind.pickup
+                ? null
+                : address.id,
             currency: currencyController.value.code.toLowerCase(),
+            stripeMethod: 'card',
           );
 
-      // The server echoes its own publishable key; fall back to the key baked
-      // into the build when the API isn't configured with one.
-      Stripe.publishableKey = intent.publishableKey.isNotEmpty
-          ? intent.publishableKey
-          : AppConfig.stripePublishableKey;
-      await Stripe.instance.applySettings();
-
-      // Google Pay is Android-only and Apple Pay is iOS-only. Apple Pay also
-      // requires a merchant identifier — flutter_stripe asserts otherwise, so
-      // only attach it when one is configured (see AppConfig.applePayMerchantId).
-      final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
-      final isAndroid = defaultTargetPlatform == TargetPlatform.android;
-      final applePayMerchantId = AppConfig.applePayMerchantId;
-      final applePayEnabled = isIOS && applePayMerchantId.isNotEmpty;
-      if (applePayEnabled) {
-        Stripe.merchantIdentifier = applePayMerchantId;
-        await Stripe.instance.applySettings();
-      }
+      await _prepareStripe(intent.publishableKey);
 
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
-          merchantDisplayName: 'Wizzo',
+          merchantDisplayName: AppConfig.appName,
           paymentIntentClientSecret: intent.clientSecret,
           style: ThemeMode.system,
-          googlePay: isAndroid
-              ? PaymentSheetGooglePay(
-                  merchantCountryCode: 'RW',
-                  testEnv: !kReleaseMode,
-                  currencyCode: intent.currency.toUpperCase(),
-                )
-              : null,
-          applePay: applePayEnabled
-              ? const PaymentSheetApplePay(merchantCountryCode: 'RW')
-              : null,
-          allowsDelayedPaymentMethods: true,
+          // No applePay / googlePay config: this sheet must show card entry
+          // only. The wallets have dedicated tiles and native flows.
+          allowsDelayedPaymentMethods: false,
         ),
       );
       try {
@@ -290,29 +279,240 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         rethrow;
       }
 
-      final result = await ref
+      await _confirmStripeIntent(intent.intentId);
+    } catch (e) {
+      _fail(e);
+    }
+  }
+
+  /// Apple Pay / Google Pay: opens the native wallet sheet directly against a
+  /// card PaymentIntent. No Stripe payment-method picker is shown in between.
+  Future<void> _payWithWallet(CartData cart, PaymentKind wallet) async {
+    final address = _effectiveAddress(
+      ref.read(addressesProvider).value ?? AddressBook(),
+    );
+    if (address == null) {
+      _showError(context.tr('checkout.selectAddressFirst'));
+      return;
+    }
+    final unavailableMessage = context.tr(
+      wallet == PaymentKind.applePay
+          ? 'checkout.payment.applePayUnavailable'
+          : 'checkout.payment.googlePayUnavailable',
+    );
+
+    setState(() {
+      _placing = true;
+      _error = null;
+    });
+    try {
+      // RWF and several local currencies cannot be presented by the wallet
+      // sheets, so charge the equivalent in USD (same rule as the web app).
+      final currency = walletCheckoutCurrency(currencyController.value.code);
+      final intent = await ref
           .read(checkoutRepositoryProvider)
-          .confirmStripePaymentIntent(intent.intentId);
+          .createStripePaymentIntent(
+            sellerPayments: _sellerSelection(cart, PaymentKind.card),
+            deliveryOption: _delivery.apiValue,
+            deliveryAddressId: _delivery == DeliveryKind.pickup
+                ? null
+                : address.id,
+            currency: currency.toLowerCase(),
+            stripeMethod: 'card',
+          );
+
+      final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+      final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+      final isApplePay = wallet == PaymentKind.applePay;
+      await _prepareStripe(intent.publishableKey, applePay: isApplePay);
+
+      final testEnv = _stripeTestMode(intent);
+      final supported = isApplePay
+          ? isIOS && await Stripe.instance.isPlatformPaySupported()
+          : isAndroid &&
+                await Stripe.instance.isPlatformPaySupported(
+                  googlePay: IsGooglePaySupportedParams(testEnv: testEnv),
+                );
+      if (!supported) {
+        throw Exception(unavailableMessage);
+      }
+
+      final currencyCode = intent.currency.toUpperCase();
+      if (isApplePay) {
+        await Stripe.instance.confirmPlatformPayPaymentIntent(
+          clientSecret: intent.clientSecret,
+          confirmParams: PlatformPayConfirmParams.applePay(
+            applePay: ApplePayParams(
+              merchantCountryCode: AppConfig.stripeMerchantCountry,
+              currencyCode: currencyCode,
+              cartItems: [
+                ApplePayCartSummaryItem.immediate(
+                  label: AppConfig.appName,
+                  amount: _walletAmount(intent.chargeTotal ?? 0, currencyCode),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        await Stripe.instance.confirmPlatformPayPaymentIntent(
+          clientSecret: intent.clientSecret,
+          confirmParams: PlatformPayConfirmParams.googlePay(
+            googlePay: GooglePayParams(
+              merchantCountryCode: AppConfig.stripeMerchantCountry,
+              currencyCode: currencyCode,
+              merchantName: AppConfig.appName,
+              testEnv: testEnv,
+            ),
+          ),
+        );
+      }
+
+      await _confirmStripeIntent(intent.intentId);
+    } on StripeException catch (e) {
+      if (e.error.code == FailureCode.Canceled) {
+        if (mounted) setState(() => _placing = false);
+        return;
+      }
+      _fail(e);
+    } catch (e) {
+      _fail(e);
+    }
+  }
+
+  /// PayPal: the mobile Stripe SDKs cannot present a PayPal sheet, so start a
+  /// PayPal-only Stripe-hosted Checkout session (same integration as the web),
+  /// open it in the browser and poll the order status until it is paid.
+  Future<void> _payWithPaypal(CartData cart) async {
+    final address = _effectiveAddress(
+      ref.read(addressesProvider).value ?? AddressBook(),
+    );
+    if (address == null) {
+      _showError(context.tr('checkout.selectAddressFirst'));
+      return;
+    }
+    final startFailed = context.tr('checkout.payment.paypalStartFailed');
+
+    setState(() {
+      _placing = true;
+      _error = null;
+    });
+    try {
+      final session = await ref
+          .read(checkoutRepositoryProvider)
+          .createStripeCheckout(
+            sellerPayments: _sellerSelection(cart, PaymentKind.card),
+            deliveryOption: _delivery.apiValue,
+            deliveryAddressId: _delivery == DeliveryKind.pickup
+                ? null
+                : address.id,
+            paymentMethodType: 'paypal',
+            stripeMethod: 'paypal',
+            currency: currencyController.value.code,
+          );
+      if (session.url.isEmpty) {
+        throw Exception(startFailed);
+      }
+      final launched = await launchUrl(
+        Uri.parse(session.url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        throw Exception(startFailed);
+      }
       if (!mounted) return;
-      if (result.status == 'paid' && result.summary != null) {
-        await ref.read(cartProvider.notifier).clear();
-        ref.invalidate(cartProvider);
-        if (!mounted) return;
-        context.pushReplacement('/order-confirmation', extra: result.summary);
+
+      final summary = await showDialog<PlacementSummary?>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => _PaypalWaitDialog(intentId: session.intentId),
+      );
+      if (!mounted) return;
+      if (summary != null) {
+        await _completeOrder(summary);
         return;
       }
       setState(() {
         _placing = false;
-        _error = context.tr('checkout.payment.notCompleted');
+        _error = context.tr('checkout.payment.paypalNotCompleted');
       });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _placing = false;
-          _error = e.toString();
-        });
-      }
+      _fail(e);
     }
+  }
+
+  /// Seller selection for a Stripe payment. Wallets and PayPal settle as a
+  /// card charge on the server; only the intent's top-level method differs.
+  List<Map<String, dynamic>> _sellerSelection(
+    CartData cart,
+    PaymentKind kind,
+  ) => [
+    for (final g in cart.groups)
+      {'sellerId': g.sellerId, 'paymentMethod': kind.apiValue},
+  ];
+
+  /// Applies the publishable key (and Apple Pay merchant id when needed) to
+  /// the Stripe SDK before presenting a native sheet.
+  Future<void> _prepareStripe(String serverKey, {bool applePay = false}) async {
+    Stripe.publishableKey = serverKey.isNotEmpty
+        ? serverKey
+        : AppConfig.stripePublishableKey;
+    if (applePay) {
+      final merchantId = AppConfig.applePayMerchantId;
+      if (merchantId.isEmpty) {
+        throw Exception(context.tr('checkout.payment.applePayNotConfigured'));
+      }
+      Stripe.merchantIdentifier = merchantId;
+    }
+    await Stripe.instance.applySettings();
+  }
+
+  bool _stripeTestMode(StripePaymentIntentResult intent) {
+    final key = intent.publishableKey.isNotEmpty
+        ? intent.publishableKey
+        : AppConfig.stripePublishableKey;
+    return key.startsWith('pk_test_');
+  }
+
+  /// Apple Pay wants a decimal amount string, without minor units.
+  String _walletAmount(num amount, String currency) {
+    const zeroDecimal = {'JPY'};
+    if (zeroDecimal.contains(currency.toUpperCase())) {
+      return amount.round().toString();
+    }
+    return amount.toStringAsFixed(2);
+  }
+
+  /// Verifies the PaymentIntent server-side and places the order.
+  Future<void> _confirmStripeIntent(String intentId) async {
+    final result = await ref
+        .read(checkoutRepositoryProvider)
+        .confirmStripePaymentIntent(intentId);
+    if (!mounted) return;
+    if (result.status == 'paid' && result.summary != null) {
+      await _completeOrder(result.summary!);
+      return;
+    }
+    setState(() {
+      _placing = false;
+      _error = context.tr('checkout.payment.notCompleted');
+    });
+  }
+
+  /// Clears the cart and shows the placed order. Shared by every Stripe flow.
+  Future<void> _completeOrder(PlacementSummary summary) async {
+    await ref.read(cartProvider.notifier).clear();
+    ref.invalidate(cartProvider);
+    if (!mounted) return;
+    context.pushReplacement('/order-confirmation', extra: summary);
+  }
+
+  void _fail(Object error) {
+    if (!mounted) return;
+    setState(() {
+      _placing = false;
+      _error = error.toString();
+    });
   }
 
   /// Lets the buyer pick a store from the cart and opens a chat with that
@@ -326,8 +526,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
     if (selected == null || !mounted) return;
     try {
-      final conversation =
-          await ref.read(chatRepositoryProvider).start(selected.sellerId);
+      final conversation = await ref
+          .read(chatRepositoryProvider)
+          .start(selected.sellerId);
       if (!mounted) return;
       if (conversation.id.isEmpty) {
         throw Exception(context.tr('orders.noSellerToChat'));
@@ -335,8 +536,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       context.push('/conversation/${conversation.id}');
     } catch (e) {
       if (mounted) {
-        _showError(
-            context.tr('orders.chatFailed', namedArgs: {'error': '$e'}));
+        _showError(context.tr('orders.chatFailed', namedArgs: {'error': '$e'}));
       }
     }
   }
@@ -345,11 +545,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.tr('checkout.title'),
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w800)),
+        title: Text(
+          context.tr('checkout.title'),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+        ),
       ),
       body: _buildBody(),
     );
@@ -383,8 +584,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
         return Column(
           children: [
-            CheckoutStepIndicator(
-                current: _step, labels: _stepLabels(context)),
+            CheckoutStepIndicator(current: _step, labels: _stepLabels(context)),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(16),
@@ -400,8 +600,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       onSelectAddress: (a) =>
                           setState(() => _selectedAddressId = a.id),
                       onCreateAddress: _createAddress,
-                      onDeliveryChanged: (d) =>
-                          setState(() => _delivery = d),
+                      onDeliveryChanged: (d) => setState(() => _delivery = d),
                     )
                   else
                     PaymentStep(
@@ -445,24 +644,32 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       children: [
         WPageTitle(
           context.tr('checkout.orderSummary'),
-          subtitle: context.tr('checkout.itemCountFromSellers', namedArgs: {
-            'itemCount': '${cart.itemCount}',
-            'sellerCount': '${cart.groups.length}',
-          }),
+          subtitle: context.tr(
+            'checkout.itemCountFromSellers',
+            namedArgs: {
+              'itemCount': '${cart.itemCount}',
+              'sellerCount': '${cart.groups.length}',
+            },
+          ),
         ),
         const SizedBox(height: 14),
         for (final g in cart.groups) CheckoutGroupLine(group: g),
         SectionCard(
           child: Row(
             children: [
-              Icon(Icons.inventory_2_outlined,
-                  size: 18, color: theme.colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   context.tr('checkout.sellersPaidSeparately'),
                   style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant, height: 1.4),
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
@@ -492,8 +699,9 @@ class _SellerChatSheet extends StatelessWidget {
           children: [
             Text(
               context.tr('checkout.chatSheetTitle'),
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -532,14 +740,18 @@ class _SellerChatSheet extends StatelessWidget {
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     subtitle: Text(
-                      context.tr('checkout.storeItemCount',
-                          namedArgs: {'count': '${group.items.length}'}),
+                      context.tr(
+                        'checkout.storeItemCount',
+                        namedArgs: {'count': '${group.items.length}'},
+                      ),
                       style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant),
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     trailing: const Icon(Icons.forum_outlined, size: 20),
                     onTap: () => Navigator.of(context).pop(group),
@@ -554,3 +766,99 @@ class _SellerChatSheet extends StatelessWidget {
   }
 }
 
+/// Waits for the Stripe-hosted PayPal session to be paid. The buyer completes
+/// the payment in the external browser; once the webhook places the order this
+/// dialog closes with the placed-order summary.
+class _PaypalWaitDialog extends ConsumerStatefulWidget {
+  const _PaypalWaitDialog({required this.intentId});
+
+  final String intentId;
+
+  @override
+  ConsumerState<_PaypalWaitDialog> createState() => _PaypalWaitDialogState();
+}
+
+class _PaypalWaitDialogState extends ConsumerState<_PaypalWaitDialog> {
+  Timer? _timer;
+  bool _checking = false;
+  int _attempts = 0;
+
+  /// ~10 minutes at 3 second intervals.
+  static const int _maxAttempts = 200;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) => _check());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _check() async {
+    if (_checking) return;
+    _checking = true;
+    try {
+      final result = await ref
+          .read(checkoutRepositoryProvider)
+          .getStripeCheckoutStatus(widget.intentId);
+      if (!mounted) return;
+      if (result.isPaid && result.summary != null) {
+        _timer?.cancel();
+        Navigator.of(context).pop(result.summary);
+        return;
+      }
+      if (result.isExpired) {
+        _timer?.cancel();
+        Navigator.of(context).pop();
+        return;
+      }
+    } catch (_) {
+      // A transient network error should not stop the poll loop.
+    } finally {
+      _checking = false;
+    }
+
+    _attempts++;
+    if (_attempts >= _maxAttempts) {
+      _timer?.cancel();
+      if (mounted) Navigator.of(context).pop();
+    }
+  }
+
+  void _cancel() {
+    _timer?.cancel();
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(context.tr('checkout.payment.paypalWaitingTitle')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const LinearProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(
+            context.tr('checkout.payment.paypalWaitingBody'),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _checking ? null : _check,
+          child: Text(context.tr('checkout.payment.paypalCheckNow')),
+        ),
+        TextButton(
+          onPressed: _cancel,
+          child: Text(context.tr('common.cancel')),
+        ),
+      ],
+    );
+  }
+}

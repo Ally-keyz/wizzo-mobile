@@ -26,16 +26,25 @@ class Address {
   final bool isDefault;
 
   String get display {
-    final parts = [label, fullName, [street, district, city].where((e) => e != null && e.isNotEmpty).join(', ')]
-        .where((e) => e != null && e.toString().trim().isNotEmpty)
-        .toList();
+    final parts = [
+      label,
+      fullName,
+      [
+        street,
+        district,
+        city,
+      ].where((e) => e != null && e.isNotEmpty).join(', '),
+    ].where((e) => e != null && e.toString().trim().isNotEmpty).toList();
     return parts.join(' • ');
   }
 
   factory Address.fromApi(dynamic json) {
-    if (json is! Map<String, dynamic>) throw const FormatException('Invalid address');
+    if (json is! Map<String, dynamic>)
+      throw const FormatException('Invalid address');
     return Address(
-      id: json['id']?.toString() ?? '',
+      // The API serialises MongoDB documents with `_id`; older/other
+      // endpoints may use `id`.
+      id: (json['id'] ?? json['_id'])?.toString() ?? '',
       label: json['label']?.toString(),
       fullName: (json['fullName'] ?? json['name'])?.toString(),
       phone: (json['phone'] ?? json['phoneNumber'])?.toString(),
@@ -78,16 +87,47 @@ class PaymentMethod {
   final bool mobileMoney;
 
   static const defaults = [
-    PaymentMethod(id: 'mpesa', name: 'M-Pesa', mobileMoney: true, description: 'Vodafone / Safaricom mobile money'),
-    PaymentMethod(id: 'airtel_money', name: 'Airtel Money', mobileMoney: true, description: 'Airtel mobile money'),
-    PaymentMethod(id: 't_kash', name: 'T-Kash', mobileMoney: true, description: 'Tigo mobile money'),
-    PaymentMethod(id: 'pesalink', name: 'PesaLink', mobileMoney: false, description: 'Bank to bank instant transfer'),
-    PaymentMethod(id: 'bank_transfer', name: 'Bank Transfer', mobileMoney: false, description: 'Direct bank transfer'),
-    PaymentMethod(id: 'card', name: 'Card', mobileMoney: false, description: 'Debit / credit card'),
+    PaymentMethod(
+      id: 'mpesa',
+      name: 'M-Pesa',
+      mobileMoney: true,
+      description: 'Vodafone / Safaricom mobile money',
+    ),
+    PaymentMethod(
+      id: 'airtel_money',
+      name: 'Airtel Money',
+      mobileMoney: true,
+      description: 'Airtel mobile money',
+    ),
+    PaymentMethod(
+      id: 't_kash',
+      name: 'T-Kash',
+      mobileMoney: true,
+      description: 'Tigo mobile money',
+    ),
+    PaymentMethod(
+      id: 'pesalink',
+      name: 'PesaLink',
+      mobileMoney: false,
+      description: 'Bank to bank instant transfer',
+    ),
+    PaymentMethod(
+      id: 'bank_transfer',
+      name: 'Bank Transfer',
+      mobileMoney: false,
+      description: 'Direct bank transfer',
+    ),
+    PaymentMethod(
+      id: 'card',
+      name: 'Card',
+      mobileMoney: false,
+      description: 'Debit / credit card',
+    ),
   ];
 
   factory PaymentMethod.fromApi(dynamic json) {
-    if (json is! Map<String, dynamic>) throw const FormatException('Invalid payment method');
+    if (json is! Map<String, dynamic>)
+      throw const FormatException('Invalid payment method');
     final name = (json['name'] ?? json['label'])?.toString() ?? '';
     return PaymentMethod(
       id: json['id']?.toString() ?? name.toLowerCase().replaceAll(' ', '_'),
@@ -111,7 +151,9 @@ class Wallet {
     return Wallet(
       balance: (json['balance'] as num?)?.toDouble() ?? 0,
       points: (json['points'] as num?)?.toInt() ?? 0,
-      membership: json['membershipBundle']?.toString() ?? json['membership']?.toString(),
+      membership:
+          json['membershipBundle']?.toString() ??
+          json['membership']?.toString(),
     );
   }
 }
@@ -136,12 +178,13 @@ class Review {
   final String? sellerName;
 
   factory Review.fromApi(dynamic json) {
-    if (json is! Map<String, dynamic>) throw const FormatException('Invalid review');
+    if (json is! Map<String, dynamic>)
+      throw const FormatException('Invalid review');
     final author = json['author'] is Map<String, dynamic>
         ? json['author'] as Map<String, dynamic>
         : json['authorId'] is Map<String, dynamic>
-            ? json['authorId'] as Map<String, dynamic>
-            : const <String, dynamic>{};
+        ? json['authorId'] as Map<String, dynamic>
+        : const <String, dynamic>{};
     // On /reviews/my the server populates `targetId` with the reviewed item:
     //   product → { name, slug, images }, seller → { storeName, storeSlug, logoUrl }.
     final target = json['targetId'] is Map<String, dynamic>
@@ -153,8 +196,10 @@ class Review {
       comment: json['comment']?.toString(),
       createdAt: tryParseDate(json['createdAt']),
       authorName: (author['fullName'] ?? author['name'])?.toString(),
-      productName: json['productName']?.toString() ?? target['name']?.toString(),
-      sellerName: json['sellerName']?.toString() ?? target['storeName']?.toString(),
+      productName:
+          json['productName']?.toString() ?? target['name']?.toString(),
+      sellerName:
+          json['sellerName']?.toString() ?? target['storeName']?.toString(),
     );
   }
 }

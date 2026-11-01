@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../currency/currency_controller.dart';
 import '../../features/account/presentation/about_screen.dart';
 import '../../features/account/presentation/account_screen.dart';
 import '../../features/account/presentation/addresses_screen.dart';
@@ -68,6 +69,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final goRouter = GoRouter(
     initialLocation: '/home',
     observers: [appRouteObserver],
+    // Rebuild the current route when the display currency (or its rates)
+    // changes. Without this, MaterialApp.router rebuilds but the cached route
+    // pages keep their old prices until the user navigates away and back.
+    refreshListenable: currencyController,
     redirect: (context, state) {
       final loggedIn = ref.read(authControllerProvider).isSignedIn;
       final path = state.matchedLocation;

@@ -88,7 +88,15 @@
     "emptyHint": "Ajoutez une adresse de livraison pour accélérer le paiement.",
     "loadFailed": "Impossible de charger les adresses",
     "saveFailed": "Impossible d'enregistrer l'adresse : {error}",
-    "title": "Adresse de livraison"
+    "title": "Adresse de livraison",
+    "currentLocationLabel": "Position actuelle",
+    "detectingLocation": "Recherche de votre position...",
+    "setDefault": "D?finir par d?faut",
+    "defaultUpdated": "Adresse par d?faut mise ? jour",
+    "deleted": "Adresse supprim?e",
+    "deleteConfirmTitle": "Supprimer cette adresse ?",
+    "deleteConfirmBody": "Cette adresse sera supprim?e de votre compte.",
+    "requiredFields": "Veuillez indiquer votre nom, votre ville et votre pays."
   },
   "appearance": {
     "chooseLook": "Choisissez un thème pour Wizzo. Le clair est lumineux et agréable ; le sombre est plus doux pour les yeux.",
@@ -344,7 +352,9 @@
       },
       "card": {
         "name": "Visa/Mastercard",
-        "desc": "Payez en toute sécurité par carte de débit ou de crédit"
+        "desc": "Payez en toute sécurité par carte de débit ou de crédit",
+        "payButton": "Payer par carte",
+        "redirect": "Saisissez vos informations de carte en toute s?curit? ? les paiements sont trait?s par Stripe."
       },
       "bank": {
         "name": "Virement bancaire",
@@ -356,13 +366,32 @@
       },
       "googlePay": {
         "name": "Google Pay",
-        "desc": "Payez avec votre compte Google"
+        "desc": "Payez avec votre compte Google",
+        "payButton": "Payer avec Google Pay",
+        "redirect": "La fen?tre Google Pay s'ouvrira pour confirmer votre paiement."
       },
       "applePay": {
         "name": "Apple Pay",
-        "desc": "Payez avec Face ID ou Touch ID"
+        "desc": "Payez avec Face ID ou Touch ID",
+        "payButton": "Payer avec Apple Pay",
+        "redirect": "La fen?tre Apple Pay s'ouvrira pour confirmer votre paiement."
       },
-      "notCompleted": "Paiement non effectue."
+      "paypal": {
+        "name": "PayPal",
+        "desc": "Payez avec votre compte PayPal",
+        "payButton": "Payer avec PayPal",
+        "redirect": "Vous serez redirig? vers PayPal pour approuver le paiement, puis de retour dans l'application."
+      },
+      "notCompleted": "Paiement non effectue.",
+      "paypalWaitingTitle": "En attente de PayPal",
+      "paypalWaitingBody": "Terminez le paiement dans votre navigateur, puis revenez dans cette application. Nous confirmerons votre commande automatiquement.",
+      "paypalCheckNow": "V?rifier maintenant",
+      "paypalNotCompleted": "Le paiement PayPal n'a pas ?t? effectu?.",
+      "paypalStartFailed": "Impossible d'ouvrir PayPal. Veuillez r?essayer.",
+      "applePayNotConfigured": "Apple Pay n'est pas configur? pour cette version. Utilisez une carte ou un autre moyen.",
+      "applePayUnavailable": "Apple Pay n'est pas disponible sur cet appareil. Utilisez une carte ou un autre moyen.",
+      "googlePayUnavailable": "Google Pay n'est pas disponible sur cet appareil. Utilisez une carte ou un autre moyen.",
+      "walletCurrencyNote": "Votre portefeuille est d?bit? en {{currency}} (?quivalent du total de la commande)."
     },
     "totalToPay": "Total à payer",
     "wizzoCollectsNote": "Vous payez Wizzo une seule fois. Nous versons sa part à chaque vendeur et lui transmettons la partie de commande à fournir.",
@@ -983,7 +1012,8 @@
     "pauseListing": "Mettre en pause l'annonce",
     "payment": {
       "mobileMoney": "Mobile Money",
-      "bankAccount": "Compte bancaire"
+      "bankAccount": "Compte bancaire",
+      "paypal": "PayPal"
     },
     "paymentAccountRemoved": "Compte de paiement supprimé",
     "paymentAccounts": "Comptes de paiement",
@@ -1089,7 +1119,10 @@
     "videoTooLong": "La vidéo doit durer 60 secondes ou moins",
     "viewAllOrders": "Voir toutes les commandes",
     "you": "vous",
-    "addSecondHandProduct": "Ajouter un produit d occasion"
+    "addSecondHandProduct": "Ajouter un produit d occasion",
+    "paypalEmail": "E-mail PayPal",
+    "paypalEmailHint": "vous@exemple.com",
+    "errorPaypalEmailInvalid": "Saisissez l'adresse e-mail li?e ? votre compte PayPal."
   },
   "sellers": {
     "attributionCarto": "© contributeurs d'OpenStreetMap © CARTO",

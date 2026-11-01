@@ -52,7 +52,8 @@ class AppConfig {
   /// Stripe publishable key for Google Pay on mobile (test mode).
   static const String stripePublishableKey = String.fromEnvironment(
     'STRIPE_PUBLISHABLE_KEY',
-    defaultValue: 'pk_test_51UE1ZQ1HGKUHOr34tixbSjZVi5MCBHbdhJLHKeaT2ntl55iIAnmklzBtEU3XLkxaJmgRH42qTipbnQANqb13kWZk00kFInznQI',
+    defaultValue:
+        'pk_test_51UE1ZQ1HGKUHOr34tixbSjZVi5MCBHbdhJLHKeaT2ntl55iIAnmklzBtEU3XLkxaJmgRH42qTipbnQANqb13kWZk00kFInznQI',
   );
 
   /// Apple Pay merchant identifier (iOS only). Apple Pay is only attached to
@@ -62,6 +63,20 @@ class AppConfig {
   static const String applePayMerchantId = String.fromEnvironment(
     'APPLE_PAY_MERCHANT_ID',
   );
+
+  /// ISO-3166 country of the Stripe account that owns the publishable key.
+  /// Apple Pay / Google Pay reject a mismatch, so this must match the account
+  /// (the web app uses `VITE_STRIPE_MERCHANT_COUNTRY=DE`), not the buyer.
+  static const String stripeMerchantCountry = String.fromEnvironment(
+    'STRIPE_MERCHANT_COUNTRY',
+    defaultValue: 'DE',
+  );
+
+  /// Whether the baked-in Stripe key is a test key. Drives Google Pay's
+  /// `testEnv` flag instead of `kReleaseMode`, because release builds currently
+  /// ship the test publishable key.
+  static bool get stripeTestMode => stripePublishableKey.startsWith('pk_test_');
+
   /// Upper bound for API calls. Kept generous because the free-tier Render
   /// hosting sleeps after idle and can take 30-60s to cold start.
   static const int requestTimeoutSeconds = 90;

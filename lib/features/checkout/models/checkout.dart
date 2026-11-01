@@ -1,4 +1,4 @@
-﻿import '../../account/models/profile.dart';
+import '../../account/models/profile.dart';
 
 /// Buyer-selected delivery method.
 enum DeliveryKind {
@@ -8,10 +8,10 @@ enum DeliveryKind {
 
   /// Value sent to the backend checkout endpoint.
   String get apiValue => switch (this) {
-        DeliveryKind.standard => 'delivery',
-        DeliveryKind.express => 'delivery',
-        DeliveryKind.pickup => 'pickup',
-      };
+    DeliveryKind.standard => 'delivery',
+    DeliveryKind.express => 'delivery',
+    DeliveryKind.pickup => 'pickup',
+  };
 }
 
 class DeliveryOption {
@@ -57,31 +57,73 @@ enum PaymentKind {
   cashOnDelivery,
   card,
   googlePay,
-  applePay;
+  applePay,
+  paypal;
 
   /// What the seller order records as its settlement method.
   ///
-  /// The wallets settle through Stripe's hosted Checkout page as a card
-  /// charge, so they record as `card`. Sending `google_pay` instead would route
-  /// the order to the gateway path, which expects a `pm_` payment-method token
-  /// the app never produces — it would fail at charge time.
+  /// Apple Pay and Google Pay settle as a card charge on Stripe, so they record
+  /// as `card`. Sending `google_pay` instead would route the order to the
+  /// gateway path, which expects a `pm_` payment-method token the app never
+  /// produces — it would fail at charge time. PayPal records as `paypal`.
   String get apiValue => switch (this) {
-        PaymentKind.momo => 'momo',
-        PaymentKind.bank => 'bank',
-        PaymentKind.cashOnDelivery => 'cash_on_delivery',
-        PaymentKind.card => 'card',
-        PaymentKind.googlePay => 'card',
-        PaymentKind.applePay => 'card',
-      };
+    PaymentKind.momo => 'momo',
+    PaymentKind.bank => 'bank',
+    PaymentKind.cashOnDelivery => 'cash_on_delivery',
+    PaymentKind.card => 'card',
+    PaymentKind.googlePay => 'card',
+    PaymentKind.applePay => 'card',
+    PaymentKind.paypal => 'paypal',
+  };
 
-  /// Wallets are offered on Stripe's hosted page, exactly like [card].
+  /// Native wallets settle as a Stripe card charge.
+  bool get isWallet =>
+      this == PaymentKind.googlePay || this == PaymentKind.applePay;
+
+  bool get isPaypal => this == PaymentKind.paypal;
+
+  /// Methods paid through Stripe (card, native wallets and PayPal).
   bool get isStripe => switch (this) {
-        PaymentKind.card ||
-        PaymentKind.googlePay ||
-        PaymentKind.applePay =>
-          true,
-        _ => false,
-      };
+    PaymentKind.card ||
+    PaymentKind.googlePay ||
+    PaymentKind.applePay ||
+    PaymentKind.paypal => true,
+    _ => false,
+  };
+}
+
+/// Currencies the native wallet sheets can present. RWF (the app's base unit)
+/// and several local currencies are not supported by Google Pay / Apple Pay,
+/// so wallets are charged in USD instead of failing with "wallet unavailable".
+/// Mirrors the web `walletCheckoutCurrency` helper.
+const Set<String> _walletCurrencies = {
+  'USD',
+  'EUR',
+  'GBP',
+  'CAD',
+  'AUD',
+  'JPY',
+  'CHF',
+  'SEK',
+  'NOK',
+  'DKK',
+  'PLN',
+  'NZD',
+  'SGD',
+  'HKD',
+  'ZAR',
+  'AED',
+  'SAR',
+  'QAR',
+  'INR',
+  'BRL',
+  'MXN',
+};
+
+/// Currency to charge a wallet in (falls back to USD when unsupported).
+String walletCheckoutCurrency(String code) {
+  final upper = code.trim().toUpperCase();
+  return _walletCurrencies.contains(upper) ? upper : 'USD';
 }
 
 class PaymentOption {
@@ -124,6 +166,12 @@ class PaymentOption {
       description: 'Pay with Face ID or Touch ID',
       providers: ['Apple Pay'],
     ),
+    PaymentOption(
+      kind: PaymentKind.paypal,
+      label: 'PayPal',
+      description: 'Pay with your PayPal account',
+      providers: ['PayPal'],
+    ),
   ];
 }
 
@@ -144,7 +192,8 @@ class SellerPaymentAccount {
   final String? instructions;
 
   factory SellerPaymentAccount.fromApi(dynamic json) {
-    if (json is! Map<String, dynamic>) throw const FormatException('Invalid account');
+    if (json is! Map<String, dynamic>)
+      throw const FormatException('Invalid account');
     return SellerPaymentAccount(
       method: _kindFrom(json['method']?.toString()) ?? PaymentKind.momo,
       provider: json['provider']?.toString(),
@@ -170,7 +219,8 @@ class SellerPaymentInfo {
   final List<SellerPaymentAccount> paymentAccounts;
 
   factory SellerPaymentInfo.fromApi(dynamic json) {
-    if (json is! Map<String, dynamic>) throw const FormatException('Invalid payment info');
+    if (json is! Map<String, dynamic>)
+      throw const FormatException('Invalid payment info');
     final raw = json['paymentAccounts'];
     return SellerPaymentInfo(
       sellerUserId: json['sellerUserId']?.toString() ?? '',
@@ -200,7 +250,8 @@ class SellerOrderReceipt {
   bool get isCashOnDelivery => paymentMethod == PaymentKind.cashOnDelivery;
 
   factory SellerOrderReceipt.fromApi(dynamic json) {
-    if (json is! Map<String, dynamic>) throw const FormatException('Invalid seller order');
+    if (json is! Map<String, dynamic>)
+      throw const FormatException('Invalid seller order');
     return SellerOrderReceipt(
       id: (json['id'] ?? json['_id']).toString(),
       sellerUserId: (json['sellerUserId'] ?? json['sellerId']).toString(),
@@ -216,13 +267,17 @@ PaymentKind? _kindFrom(String? raw) {
   if (v.contains('momo')) return PaymentKind.momo;
   if (v.contains('bank')) return PaymentKind.bank;
   if (v.contains('cash')) return PaymentKind.cashOnDelivery;
+  if (v.contains('paypal')) return PaymentKind.paypal;
   // Cards are paid via the Stripe-hosted checkout page (replaces Google Pay);
   // legacy orders still report 'google_pay'.
   if (v.contains('card') ||
       v.contains('stripe') ||
       v.contains('google_pay') ||
       v.contains('googlepay') ||
-      v.contains('google')) {
+      v.contains('google') ||
+      v.contains('apple_pay') ||
+      v.contains('applepay') ||
+      v.contains('apple')) {
     return PaymentKind.card;
   }
   return null;
@@ -293,12 +348,15 @@ class PlacementSummary {
         : const <SellerOrderReceipt>[];
     final kindRaw =
         (json['paymentKind'] ?? order['paymentMethod'])?.toString() ?? '';
-    final kind = _kindFrom(kindRaw) ??
+    final kind =
+        _kindFrom(kindRaw) ??
         sellerOrders.map((o) => o.paymentMethod).firstOrNull;
-    final statusRaw = (json['paymentStatus'] ?? order['paymentStatus'] ?? order['status'])
-        ?.toString();
+    final statusRaw =
+        (json['paymentStatus'] ?? order['paymentStatus'] ?? order['status'])
+            ?.toString();
     return PlacementSummary(
-      orderId: (json['orderId'] ?? order['id'] ?? order['_id'])?.toString() ?? '',
+      orderId:
+          (json['orderId'] ?? order['id'] ?? order['_id'])?.toString() ?? '',
       orderNumber: (json['orderNumber'] ?? order['orderNumber'])?.toString(),
       total: (json['total'] ?? order['total'] ?? json['grandTotal']) is num
           ? (json['total'] ?? order['total'] ?? json['grandTotal']) as num
@@ -346,8 +404,9 @@ class StripePaymentIntentResult {
       publishableKey: json['publishableKey']?.toString() ?? '',
       grandTotal: json['grandTotal'] is num ? json['grandTotal'] as num : null,
       currency: json['currency']?.toString() ?? 'rwf',
-      chargeTotal:
-          json['chargeTotal'] is num ? json['chargeTotal'] as num : null,
+      chargeTotal: json['chargeTotal'] is num
+          ? json['chargeTotal'] as num
+          : null,
     );
   }
 }
@@ -373,10 +432,7 @@ class StripeCheckoutResult {
 
 /// Result of polling `GET /orders/stripe/checkout/status/:intentId`.
 class StripeCheckoutStatusResult {
-  const StripeCheckoutStatusResult({
-    required this.status,
-    this.summary,
-  });
+  const StripeCheckoutStatusResult({required this.status, this.summary});
 
   /// open | processing | paid | expired
   final String status;
@@ -391,8 +447,9 @@ class StripeCheckoutStatusResult {
     if (json is! Map<String, dynamic>) {
       return const StripeCheckoutStatusResult(status: 'open');
     }
-    final summary =
-        json['status'] == 'paid' ? PlacementSummary.fromApi(json) : null;
+    final summary = json['status'] == 'paid'
+        ? PlacementSummary.fromApi(json)
+        : null;
     return StripeCheckoutStatusResult(
       status: json['status']?.toString() ?? 'open',
       summary: summary,

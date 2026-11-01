@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/currency/currencies.dart';
 import '../../../core/currency/currency_controller.dart';
@@ -42,9 +43,14 @@ class _CurrencyScreenState extends ConsumerState<CurrencyScreen> {
       namedArgs: {'currency': def.name},
     );
     await currencyController.setCurrency(def.code);
+    if (!mounted) return;
     messenger
       ..removeCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(toast)));
+    // Take the user straight back to the home feed. The router listens to
+    // currencyController, so home (and every other visible page) is rebuilt
+    // with the new currency immediately — no manual refresh required.
+    context.go('/home');
   }
 
   @override

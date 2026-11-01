@@ -88,7 +88,15 @@
     "emptyHint": "Ongeraho aderesi yo kugezaho kugira ngo kwishyura byihute.",
     "loadFailed": "Ntibyashobotse gupakira aderesi",
     "saveFailed": "Ntabwo hashoboye kubika aderesi: {error}",
-    "title": "Aderesi yo Kugezaho"
+    "title": "Aderesi yo Kugezaho",
+    "currentLocationLabel": "Aho ndi ubu",
+    "detectingLocation": "Turashaka aho uherereye...",
+    "setDefault": "Shyira nk'iy'ibanze",
+    "defaultUpdated": "Aderesi y'ibanze yahinduwe",
+    "deleted": "Aderesi yasibwe",
+    "deleteConfirmTitle": "Gusiba iyi aderesi?",
+    "deleteConfirmBody": "Iyi aderesi izasibwa kuri konti yawe.",
+    "requiredFields": "Uzuza izina ryawe, umujyi n'igihugu."
   },
   "appearance": {
     "chooseLook": "Hitamo imiterere ya Wizzo. Umuruki uramye kandi woroshye; umwijima ukomeza amaso.",
@@ -344,7 +352,9 @@
       },
       "card": {
         "name": "Visa/Mastercard",
-        "desc": "Shyura mu mutekano ukoresheje ikarita ya banki cyangwa y'inguzanyo"
+        "desc": "Shyura mu mutekano ukoresheje ikarita ya banki cyangwa y'inguzanyo",
+        "payButton": "Shyura ukoresheje ikarita",
+        "redirect": "Injiza amakuru y'ikarita yawe mu mutekano - ubwishyu bukorwa na Stripe."
       },
       "bank": {
         "name": "Kohereza ku Banki",
@@ -356,13 +366,32 @@
       },
       "googlePay": {
         "name": "Google Pay",
-        "desc": "Paya ukoresheje k'akaunti kawe k'Google"
+        "desc": "Paya ukoresheje k'akaunti kawe k'Google",
+        "payButton": "Shyura ukoresheje Google Pay",
+        "redirect": "Urufunguzo rwa Google Pay ruzafunguka kugira ngo wemeze ubwishyu."
       },
       "applePay": {
         "name": "Apple Pay",
-        "desc": "Paya ukoresheje Face ID cyangwa Touch ID"
+        "desc": "Paya ukoresheje Face ID cyangwa Touch ID",
+        "payButton": "Shyura ukoresheje Apple Pay",
+        "redirect": "Urufunguzo rwa Apple Pay ruzafunguka kugira ngo wemeze ubwishyu."
       },
-      "notCompleted": "Kwishyura ntibirangiye."
+      "paypal": {
+        "name": "PayPal",
+        "desc": "Shyura ukoresheje konti yawe ya PayPal",
+        "payButton": "Shyura ukoresheje PayPal",
+        "redirect": "Uzajyanwa kuri PayPal kwemeza ubwishyu, hanyuma usubire mu porogaramu."
+      },
+      "notCompleted": "Kwishyura ntibirangiye.",
+      "paypalWaitingTitle": "Tegereza PayPal",
+      "paypalWaitingBody": "Rangiza ubwishyu mu mushakisha wawe, hanyuma usubire muri iyi porogaramu. Tuzemeza itumiza ryawe mu buryo bwikora.",
+      "paypalCheckNow": "Reba ubu",
+      "paypalNotCompleted": "Ubwishyu bwa PayPal ntibwarangiye.",
+      "paypalStartFailed": "Ntibyakunze gufungura PayPal. Ongera ugerageze.",
+      "applePayNotConfigured": "Apple Pay ntabwo yashyizweho muri iyi verisiyo. Koresha ikarita cyangwa ubundi buryo.",
+      "applePayUnavailable": "Apple Pay ntaboneka kuri iyi telefoni. Koresha ikarita cyangwa ubundi buryo.",
+      "googlePayUnavailable": "Google Pay ntaboneka kuri iyi telefoni. Koresha ikarita cyangwa ubundi buryo.",
+      "walletCurrencyNote": "Portefeuille yawe yishyurwa muri {{currency}} (ingana n'igiteranyo cy'itumiza)."
     },
     "totalToPay": "Igiteranyo cyo kwishyura",
     "wizzoCollectsNote": "Wishyura Wizzo rimwe. Twishyura buri mucuruzi umugabane we hanyuma tumwohereze igice cy'ubuyoboze agomba gutanga.",
@@ -983,7 +1012,8 @@
     "pauseListing": "Hagarika kwamamaza",
     "payment": {
       "mobileMoney": "Mobile Money",
-      "bankAccount": "Konti ya banki"
+      "bankAccount": "Konti ya banki",
+      "paypal": "PayPal"
     },
     "paymentAccountRemoved": "Konti yo kwishyura yasibwe",
     "paymentAccounts": "Konti zo kwishyura",
@@ -1089,7 +1119,10 @@
     "videoTooLong": "Video igomba kuba ihagaze isegonde 60 cyangwa munsi",
     "viewAllOrders": "Reba orders zose",
     "you": "wowe",
-    "addSecondHandProduct": "Ongeraho igicuruzwa cyakoreshejwe"
+    "addSecondHandProduct": "Ongeraho igicuruzwa cyakoreshejwe",
+    "paypalEmail": "Imeyili ya PayPal",
+    "paypalEmailHint": "wowe@urugero.com",
+    "errorPaypalEmailInvalid": "Injiza imeyili ihujwe na konti yawe ya PayPal."
   },
   "sellers": {
     "attributionCarto": "© abashyikirije OpenStreetMap © CARTO",

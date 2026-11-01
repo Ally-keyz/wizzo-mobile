@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 enum PaymentMethodKind {
   mobileMoney,
   bank,
+  paypal,
   cashOnDelivery;
 
   static PaymentMethodKind fromApi(dynamic v) {
@@ -13,6 +14,8 @@ enum PaymentMethodKind {
         return PaymentMethodKind.mobileMoney;
       case 'bank':
         return PaymentMethodKind.bank;
+      case 'paypal':
+        return PaymentMethodKind.paypal;
       case 'cash_on_delivery':
         return PaymentMethodKind.cashOnDelivery;
       default:
@@ -23,12 +26,14 @@ enum PaymentMethodKind {
   String get apiValue => switch (this) {
     PaymentMethodKind.mobileMoney => 'momo',
     PaymentMethodKind.bank => 'bank',
+    PaymentMethodKind.paypal => 'paypal',
     PaymentMethodKind.cashOnDelivery => 'cash_on_delivery',
   };
 
   String label(BuildContext context) => switch (this) {
     PaymentMethodKind.mobileMoney => context.tr('seller.payment.mobileMoney'),
     PaymentMethodKind.bank => context.tr('seller.payment.bankAccount'),
+    PaymentMethodKind.paypal => context.tr('seller.payment.paypal'),
     PaymentMethodKind.cashOnDelivery => context.tr('orders.cashOnDelivery'),
   };
 }

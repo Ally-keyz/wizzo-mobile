@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_providers.dart';
@@ -17,16 +17,19 @@ class CheckoutRepository {
     String? paymentMethod,
     Map<String, dynamic>? paymentDetails,
   }) async {
-    final data = await _api.post('/orders/checkout', body: {
-      'sellerPaymentSelection': sellerPayments,
-      'deliveryOption': deliveryOption,
-      if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
-        'deliveryAddressId': deliveryAddressId,
-      if (paymentMethod != null && paymentMethod.isNotEmpty)
-        'paymentMethod': paymentMethod,
-      if (paymentDetails != null && paymentDetails.isNotEmpty)
-        'paymentDetails': paymentDetails,
-    });
+    final data = await _api.post(
+      '/orders/checkout',
+      body: {
+        'sellerPaymentSelection': sellerPayments,
+        'deliveryOption': deliveryOption,
+        if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
+          'deliveryAddressId': deliveryAddressId,
+        if (paymentMethod != null && paymentMethod.isNotEmpty)
+          'paymentMethod': paymentMethod,
+        if (paymentDetails != null && paymentDetails.isNotEmpty)
+          'paymentDetails': paymentDetails,
+      },
+    );
     return PlacementSummary.fromApi(data);
   }
 
@@ -52,15 +55,21 @@ class CheckoutRepository {
     String deliveryOption = 'delivery',
     String? deliveryAddressId,
     String? currency,
+    String? stripeMethod,
   }) async {
-    final data = await _api.post('/orders/stripe/payment-intent', body: {
-      'sellerPaymentSelection': sellerPayments,
-      'deliveryOption': deliveryOption,
-      if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
-        'deliveryAddressId': deliveryAddressId,
-      if (currency != null && currency.isNotEmpty)
-        'currency': currency.toLowerCase(),
-    });
+    final data = await _api.post(
+      '/orders/stripe/payment-intent',
+      body: {
+        'sellerPaymentSelection': sellerPayments,
+        'deliveryOption': deliveryOption,
+        if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
+          'deliveryAddressId': deliveryAddressId,
+        if (currency != null && currency.isNotEmpty)
+          'currency': currency.toLowerCase(),
+        if (stripeMethod != null && stripeMethod.isNotEmpty)
+          'stripeMethod': stripeMethod,
+      },
+    );
     return StripePaymentIntentResult.fromApi(data);
   }
 
@@ -77,18 +86,31 @@ class CheckoutRepository {
 
   /// Starts a Stripe-hosted Checkout session for the whole cart and returns
   /// the page to open. Nothing is charged until the buyer pays on Stripe's
-  /// page; the webhook then places the order automatically.
+  /// page; the webhook then places the order automatically. PayPal is paid this
+  /// way because the mobile SDKs cannot present a native PayPal sheet.
   Future<StripeCheckoutResult> createStripeCheckout({
     required List<Map<String, dynamic>> sellerPayments,
     String deliveryOption = 'delivery',
     String? deliveryAddressId,
+    String? paymentMethodType,
+    String? stripeMethod,
+    String? currency,
   }) async {
-    final data = await _api.post('/orders/stripe/checkout-session', body: {
-      'sellerPaymentSelection': sellerPayments,
-      'deliveryOption': deliveryOption,
-      if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
-        'deliveryAddressId': deliveryAddressId,
-    });
+    final data = await _api.post(
+      '/orders/stripe/checkout-session',
+      body: {
+        'sellerPaymentSelection': sellerPayments,
+        'deliveryOption': deliveryOption,
+        if (deliveryAddressId != null && deliveryAddressId.isNotEmpty)
+          'deliveryAddressId': deliveryAddressId,
+        if (paymentMethodType != null && paymentMethodType.isNotEmpty)
+          'paymentMethodType': paymentMethodType,
+        if (stripeMethod != null && stripeMethod.isNotEmpty)
+          'stripeMethod': stripeMethod,
+        if (currency != null && currency.isNotEmpty)
+          'currency': currency.toLowerCase(),
+      },
+    );
     return StripeCheckoutResult.fromApi(data);
   }
 
@@ -98,9 +120,7 @@ class CheckoutRepository {
   Future<StripeCheckoutStatusResult> getStripeCheckoutStatus(
     String intentId,
   ) async {
-    final data = await _api.get(
-      '/orders/stripe/checkout/status/$intentId',
-    );
+    final data = await _api.get('/orders/stripe/checkout/status/$intentId');
     return StripeCheckoutStatusResult.fromApi(data);
   }
 }

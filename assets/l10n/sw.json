@@ -88,7 +88,15 @@
     "emptyHint": "Ongeza anwani ya kuwasilishia ili kuharakisha malipo.",
     "loadFailed": "Imeshindwa kupakia anwani",
     "saveFailed": "Imeshindwa kuhifadhi anwani: {error}",
-    "title": "Anwani ya Kuwasilishia"
+    "title": "Anwani ya Kuwasilishia",
+    "currentLocationLabel": "Eneo la sasa",
+    "detectingLocation": "Inatafuta eneo lako...",
+    "setDefault": "Weka kama chaguo-msingi",
+    "defaultUpdated": "Anwani chaguo-msingi imesasishwa",
+    "deleted": "Anwani imefutwa",
+    "deleteConfirmTitle": "Futa anwani hii?",
+    "deleteConfirmBody": "Anwani hii itaondolewa kwenye akaunti yako.",
+    "requiredFields": "Tafadhali jaza jina lako, mji na nchi."
   },
   "appearance": {
     "chooseLook": "Chagua mwonekano wa Wizzo. Nyepesi ni angavu na rahisi; Giza ni rafiki wa macho.",
@@ -344,7 +352,9 @@
       },
       "card": {
         "name": "Visa/Mastercard",
-        "desc": "Lipa kwa usalama kwa kadi ya benki au ya mkopo"
+        "desc": "Lipa kwa usalama kwa kadi ya benki au ya mkopo",
+        "payButton": "Lipa kwa Kadi",
+        "redirect": "Weka maelezo ya kadi yako kwa usalama - malipo yanachakatwa na Stripe."
       },
       "bank": {
         "name": "Uhamisho wa Benki",
@@ -356,13 +366,32 @@
       },
       "googlePay": {
         "name": "Google Pay",
-        "desc": "Lipa kwa kutumia akaunti yako ya Google"
+        "desc": "Lipa kwa kutumia akaunti yako ya Google",
+        "payButton": "Lipa kwa Google Pay",
+        "redirect": "Dirisha la Google Pay litafunguka ili uthibitishe malipo yako."
       },
       "applePay": {
         "name": "Apple Pay",
-        "desc": "Lipa kwa kutumia Face ID au Touch ID"
+        "desc": "Lipa kwa kutumia Face ID au Touch ID",
+        "payButton": "Lipa kwa Apple Pay",
+        "redirect": "Dirisha la Apple Pay litafunguka ili uthibitishe malipo yako."
       },
-      "notCompleted": "Malipo hayakukamilika."
+      "paypal": {
+        "name": "PayPal",
+        "desc": "Lipa kwa akaunti yako ya PayPal",
+        "payButton": "Lipa kwa PayPal",
+        "redirect": "Utapelekwa PayPal kuidhinisha malipo, kisha urudi kwenye programu."
+      },
+      "notCompleted": "Malipo hayakukamilika.",
+      "paypalWaitingTitle": "Inasubiri PayPal",
+      "paypalWaitingBody": "Kamilisha malipo kwenye kivinjari chako, kisha rudi kwenye programu hii. Tutathibitisha agizo lako kiotomatiki.",
+      "paypalCheckNow": "Angalia sasa",
+      "paypalNotCompleted": "Malipo ya PayPal hayakukamilika.",
+      "paypalStartFailed": "Imeshindwa kufungua PayPal. Tafadhali jaribu tena.",
+      "applePayNotConfigured": "Apple Pay haijasanidiwa kwa toleo hili. Tumia kadi au njia nyingine.",
+      "applePayUnavailable": "Apple Pay haipatikani kwenye kifaa hiki. Tumia kadi au njia nyingine.",
+      "googlePayUnavailable": "Google Pay haipatikani kwenye kifaa hiki. Tumia kadi au njia nyingine.",
+      "walletCurrencyNote": "Pochi yako inatozwa kwa {{currency}} (sawa na jumla ya agizo)."
     },
     "totalToPay": "Jumla ya kulipa",
     "wizzoCollectsNote": "Unamlipa Wizzo mara moja. Tunamlipa kila muuzaji sehemu yake na kumtuma sehemu ya agizo analopaswa kuandaa.",
@@ -983,7 +1012,8 @@
     "pauseListing": "Simamisha listing",
     "payment": {
       "mobileMoney": "Mobile Money",
-      "bankAccount": "Akaunti ya benki"
+      "bankAccount": "Akaunti ya benki",
+      "paypal": "PayPal"
     },
     "paymentAccountRemoved": "Akaunti ya malipo imeondolewa",
     "paymentAccounts": "Akaunti za malipo",
@@ -1089,7 +1119,10 @@
     "videoTooLong": "Video lazima iwe sekunde 60 au chini",
     "viewAllOrders": "Angalia maagizo yote",
     "you": "wewe",
-    "addSecondHandProduct": "Ongeza bidhaa ya mkono wa pili"
+    "addSecondHandProduct": "Ongeza bidhaa ya mkono wa pili",
+    "paypalEmail": "Barua pepe ya PayPal",
+    "paypalEmailHint": "wewe@mfano.com",
+    "errorPaypalEmailInvalid": "Weka barua pepe iliyounganishwa na akaunti yako ya PayPal."
   },
   "sellers": {
     "attributionCarto": "© wachangiaji wa OpenStreetMap © CARTO",

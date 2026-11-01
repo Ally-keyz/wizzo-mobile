@@ -1,7 +1,9 @@
-﻿import 'package:easy_localization/easy_localization.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/currency/currency_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/w_widgets.dart';
@@ -40,9 +42,31 @@ class PaymentStep extends StatelessWidget {
   final VoidCallback onChatWithSellers;
   final VoidCallback onPayNow;
 
-  /// All payment options: MoMo, Visa/Mastercard (Stripe), Google Pay and
-  /// Apple Pay. Apple Pay must always be visible alongside Google Pay.
-  List<PaymentOption> _visibleOptions() => PaymentOption.all;
+  /// Payment options for this device. Native wallets are platform-specific:
+  /// Google Pay only exists on Android, Apple Pay only on iOS. Momo, card and
+  /// PayPal are always offered.
+  List<PaymentOption> _visibleOptions() {
+    final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+    final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+    return PaymentOption.all.where((o) {
+      if (o.kind == PaymentKind.googlePay) return isAndroid;
+      if (o.kind == PaymentKind.applePay) return isIOS;
+      return true;
+    }).toList();
+  }
+
+  /// Explains that wallets are charged in USD when the selected display
+  /// currency isn't supported by the native sheet.
+  String? _walletCurrencyNote(BuildContext context) {
+    if (method == null || !method!.isWallet) return null;
+    final selected = currencyController.value.code;
+    final wallet = walletCheckoutCurrency(selected);
+    if (wallet == selected.toUpperCase()) return null;
+    return context.tr(
+      'checkout.payment.walletCurrencyNote',
+      namedArgs: {'currency': wallet},
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,12 +75,16 @@ class PaymentStep extends StatelessWidget {
     final subtotal = cart.groups.fold<num>(0, (sum, g) => sum + g.subtotal);
     final delivery = totalAmount - subtotal;
     final needsPhone = method == PaymentKind.momo;
+    final redirectHint = paymentKindRedirectHint(context, method);
+    final walletNote = _walletCurrencyNote(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        WPageTitle(context.tr('checkout.paymentTitle'),
-            subtitle: context.tr('checkout.paymentHint')),
+        WPageTitle(
+          context.tr('checkout.paymentTitle'),
+          subtitle: context.tr('checkout.paymentHint'),
+        ),
         const SizedBox(height: 16),
 
         // ── Combined total for the whole order ───────────────────────────
@@ -84,8 +112,9 @@ class PaymentStep extends StatelessWidget {
                   Expanded(
                     child: Text(
                       context.tr('checkout.totalToPay'),
-                      style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w800),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   Text(
@@ -105,8 +134,9 @@ class PaymentStep extends StatelessWidget {
         // ── Single payment method for the whole order ────────────────────
         Text(
           context.tr('checkout.paymentMethod'),
-          style: theme.textTheme.titleSmall
-              ?.copyWith(fontWeight: FontWeight.w800),
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
         ),
         const SizedBox(height: 10),
         GridView.count(
@@ -125,6 +155,26 @@ class PaymentStep extends StatelessWidget {
               ),
           ],
         ),
+        if (redirectHint != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            redirectHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ],
+        if (walletNote != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            walletNote,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ],
         if (needsPhone) ...[
           const SizedBox(height: 4),
           TextField(
@@ -140,11 +190,15 @@ class PaymentStep extends StatelessWidget {
               prefixText: '+250 ',
               helperText: context.tr('checkout.momoStkHint'),
               helperMaxLines: 2,
-              prefixIcon:
-                  Icon(Icons.phone_outlined, size: 20, color: colors.gold),
+              prefixIcon: Icon(
+                Icons.phone_outlined,
+                size: 20,
+                color: colors.gold,
+              ),
               filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.45),
+              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.45,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: theme.colorScheme.outline),
@@ -157,8 +211,10 @@ class PaymentStep extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Palette.gold, width: 1.5),
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
             onChanged: onMomoPhoneChanged,
           ),
@@ -191,9 +247,12 @@ class PaymentStep extends StatelessWidget {
               color: theme.colorScheme.errorContainer,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(error!,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onErrorContainer)),
+            child: Text(
+              error!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onErrorContainer,
+              ),
+            ),
           ),
         SizedBox(
           width: double.infinity,
@@ -212,15 +271,20 @@ class PaymentStep extends StatelessWidget {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.black),
+                      strokeWidth: 2,
+                      color: Colors.black,
+                    ),
                   )
                 : Text(
-                    context.tr(
-                      'checkout.placeOrder',
-                      namedArgs: {'total': formatMoney(totalAmount)},
+                    paymentKindPayLabel(
+                      context,
+                      method,
+                      total: formatMoney(totalAmount),
                     ),
                     style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 16),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
                   ),
           ),
         ),
@@ -285,8 +349,9 @@ class _PaymentMethodTile extends StatelessWidget {
               child: Text(
                 paymentKindLabel(context, option.kind),
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -313,16 +378,17 @@ class _PaymentIcon extends StatelessWidget {
         return GooglePayMark(height: size * 0.6);
       case PaymentKind.applePay:
         return ApplePayMark(height: size * 0.6);
+      case PaymentKind.paypal:
+        return PayPalMark(height: size * 0.55);
       case PaymentKind.bank:
       case PaymentKind.cashOnDelivery:
         return Container(
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest
-                .withValues(alpha: 0.5),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(10),
           ),
           alignment: Alignment.center,

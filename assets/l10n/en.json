@@ -88,7 +88,15 @@
     "emptyHint": "Add a delivery address to speed up checkout.",
     "loadFailed": "Could not load addresses",
     "saveFailed": "Could not save address: {error}",
-    "title": "Delivery Address"
+    "title": "Delivery Address",
+    "currentLocationLabel": "Current location",
+    "detectingLocation": "Finding your location...",
+    "setDefault": "Set as default",
+    "defaultUpdated": "Default address updated",
+    "deleted": "Address deleted",
+    "deleteConfirmTitle": "Delete this address?",
+    "deleteConfirmBody": "This address will be removed from your account.",
+    "requiredFields": "Please fill in your name, city and country."
   },
   "appearance": {
     "chooseLook": "Pick a look for Wizzo. Light is bright and easy; Dark is kind on the eyes.",
@@ -344,7 +352,9 @@
       },
       "card": {
         "name": "Visa/Mastercard",
-        "desc": "Pay securely by debit or credit card"
+        "desc": "Pay securely by debit or credit card",
+        "payButton": "Pay with Card",
+        "redirect": "Enter your card details securely - payments are processed by Stripe."
       },
       "bank": {
         "name": "Bank Transfer",
@@ -356,13 +366,32 @@
       },
       "googlePay": {
         "name": "Google Pay",
-        "desc": "Pay with your Google account"
+        "desc": "Pay with your Google account",
+        "payButton": "Pay with Google Pay",
+        "redirect": "The Google Pay sheet will open so you can confirm your payment."
       },
       "applePay": {
         "name": "Apple Pay",
-        "desc": "Pay with Face ID or Touch ID"
+        "desc": "Pay with Face ID or Touch ID",
+        "payButton": "Pay with Apple Pay",
+        "redirect": "The Apple Pay sheet will open so you can confirm your payment."
       },
-      "notCompleted": "Payment was not completed."
+      "paypal": {
+        "name": "PayPal",
+        "desc": "Pay with your PayPal account",
+        "payButton": "Pay with PayPal",
+        "redirect": "You'll be taken to PayPal to approve the payment, then returned to the app."
+      },
+      "notCompleted": "Payment was not completed.",
+      "paypalWaitingTitle": "Waiting for PayPal",
+      "paypalWaitingBody": "Complete the payment in your browser, then come back to this app. We'll confirm your order automatically.",
+      "paypalCheckNow": "Check now",
+      "paypalNotCompleted": "PayPal payment was not completed.",
+      "paypalStartFailed": "Could not open PayPal. Please try again.",
+      "applePayNotConfigured": "Apple Pay isn't configured for this build. Use a card or another method.",
+      "applePayUnavailable": "Apple Pay isn't available on this device. Use a card or another method.",
+      "googlePayUnavailable": "Google Pay isn't available on this device. Use a card or another method.",
+      "walletCurrencyNote": "Your wallet is charged in {{currency}} (the equivalent of the order total)."
     },
     "totalToPay": "Total to pay",
     "wizzoCollectsNote": "You pay Wizzo once. We pay each seller their share and send them their part of the order to supply.",
@@ -983,7 +1012,8 @@
     "pauseListing": "Pause listing",
     "payment": {
       "mobileMoney": "Mobile Money",
-      "bankAccount": "Bank account"
+      "bankAccount": "Bank account",
+      "paypal": "PayPal"
     },
     "paymentAccountRemoved": "Payment account removed",
     "paymentAccounts": "Payment accounts",
@@ -1089,7 +1119,10 @@
     "videoTooLong": "Video must be 60 seconds or less",
     "viewAllOrders": "View all orders",
     "you": "you",
-    "addSecondHandProduct": "Add second hand product"
+    "addSecondHandProduct": "Add second hand product",
+    "paypalEmail": "PayPal email",
+    "paypalEmailHint": "you@example.com",
+    "errorPaypalEmailInvalid": "Enter the email address linked to your PayPal account."
   },
   "sellers": {
     "attributionCarto": "© OpenStreetMap contributors © CARTO",

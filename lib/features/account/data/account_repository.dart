@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_providers.dart';
 
@@ -32,17 +32,54 @@ class AccountRepository {
 
   Future<AddressBook> addresses() async {
     final data = await _api.get('/users/me/addresses');
-    final items = data is List ? data : (data is Map ? (data['addresses'] ?? const []) : const <dynamic>[]);
+    final items = data is List
+        ? data
+        : (data is Map ? (data['addresses'] ?? const []) : const <dynamic>[]);
     return AddressBook.parse(items);
   }
 
   /// Adds a delivery address and returns its server-assigned id.
+  ///
+  /// Every `/users/me/addresses` endpoint responds with the **full updated
+  /// address array** (not a single address), so the newly added entry is the
+  /// last one — prefer it when it matches the submitted label/city.
   Future<String> addAddress(Map<String, dynamic> body) async {
     final data = await _api.post('/users/me/addresses', body: body);
+    if (data is List) {
+      final addresses = AddressBook.parse(
+        data,
+      ).addresses.where((a) => a.id.isNotEmpty).toList();
+      if (addresses.isEmpty) return '';
+      final label = body['label']?.toString();
+      final city = body['city']?.toString();
+      for (final address in addresses.reversed) {
+        if (address.label == label && address.city == city) return address.id;
+      }
+      return addresses.last.id;
+    }
     if (data is Map<String, dynamic>) {
-      return data['id']?.toString() ?? data['_id']?.toString() ?? '';
+      // Tolerate servers that wrap the array in an object or return the new
+      // address directly.
+      final nested = data['addresses'];
+      if (nested is List) {
+        final addresses = AddressBook.parse(
+          nested,
+        ).addresses.where((a) => a.id.isNotEmpty).toList();
+        if (addresses.isNotEmpty) return addresses.last.id;
+      }
+      return (data['id'] ?? data['_id'])?.toString() ?? '';
     }
     return '';
+  }
+
+  /// Updates an existing delivery address (PATCH).
+  Future<void> updateAddress(String id, Map<String, dynamic> body) async {
+    await _api.patch('/users/me/addresses/$id', body: body);
+  }
+
+  /// Deletes a saved delivery address.
+  Future<void> deleteAddress(String id) async {
+    await _api.delete('/users/me/addresses/$id');
   }
 
   // -- Orders ---------------------------------------------------------------
@@ -50,7 +87,9 @@ class AccountRepository {
     final data = await _api.get('/orders');
     final items = data is List
         ? data
-        : (data is Map ? (data['orders'] ?? data['items'] ?? data['data']) : const []);
+        : (data is Map
+              ? (data['orders'] ?? data['items'] ?? data['data'])
+              : const []);
     if (items is! List) return const [];
     return items.map(Order.fromApi).toList();
   }
@@ -61,9 +100,10 @@ class AccountRepository {
   }
 
   Future<void> cancelOrder(String id, {String? reason}) async {
-    await _api.post('/orders/$id/cancel', body: {
-      if (reason != null && reason.isNotEmpty) 'reason': reason,
-    });
+    await _api.post(
+      '/orders/$id/cancel',
+      body: {if (reason != null && reason.isNotEmpty) 'reason': reason},
+    );
   }
 
   Future<void> confirmDelivery(String id) async {
@@ -71,9 +111,10 @@ class AccountRepository {
   }
 
   Future<void> requestReturn(String id, {String? reason}) async {
-    await _api.post('/orders/$id/return', body: {
-      if (reason != null && reason.isNotEmpty) 'reason': reason,
-    });
+    await _api.post(
+      '/orders/$id/return',
+      body: {if (reason != null && reason.isNotEmpty) 'reason': reason},
+    );
   }
 
   // -- Wishlist ---------------------------------------------------------------
@@ -82,7 +123,9 @@ class AccountRepository {
     final data = await _api.get('/wishlist');
     final items = data is List
         ? data
-        : (data is Map ? (data['items'] ?? const <dynamic>[]) : const <dynamic>[]);
+        : (data is Map
+              ? (data['items'] ?? const <dynamic>[])
+              : const <dynamic>[]);
     if (items is! List) return const [];
     final products = <Product>[];
     for (final e in items) {
@@ -140,7 +183,9 @@ class AccountRepository {
     final data = await _api.get('/reviews/my');
     final items = data is List
         ? data
-        : (data is Map ? (data['reviews'] ?? data['items'] ?? data['data'] ?? const []) : const <dynamic>[]);
+        : (data is Map
+              ? (data['reviews'] ?? data['items'] ?? data['data'] ?? const [])
+              : const <dynamic>[]);
     if (items is! List) return const [];
     return items.map(Review.fromApi).toList();
   }
@@ -153,7 +198,9 @@ class AccountRepository {
     );
     final items = data is List
         ? data
-        : (data is Map ? (data['reviews'] ?? data['items'] ?? data['data'] ?? const []) : const <dynamic>[]);
+        : (data is Map
+              ? (data['reviews'] ?? data['items'] ?? data['data'] ?? const [])
+              : const <dynamic>[]);
     if (items is! List) return const [];
     return items.map(Review.fromApi).toList();
   }
@@ -164,12 +211,16 @@ class AccountRepository {
     required int rating,
     String? comment,
   }) async {
-    await _api.post('/reviews', body: {
-      'type': 'product',
-      'targetId': productId,
-      'rating': rating,
-      if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim(),
-    });
+    await _api.post(
+      '/reviews',
+      body: {
+        'type': 'product',
+        'targetId': productId,
+        'rating': rating,
+        if (comment != null && comment.trim().isNotEmpty)
+          'comment': comment.trim(),
+      },
+    );
   }
 }
 

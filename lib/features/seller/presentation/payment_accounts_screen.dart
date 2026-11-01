@@ -50,6 +50,8 @@ class _PaymentAccountsScreenState extends ConsumerState<PaymentAccountsScreen> {
                             ? Icons.phone_android
                             : account.method == PaymentMethodKind.bank
                             ? Icons.account_balance_outlined
+                            : account.method == PaymentMethodKind.paypal
+                            ? Icons.account_balance_wallet_outlined
                             : Icons.payments_outlined,
                         color: scheme.primary,
                       ),
@@ -268,7 +270,8 @@ class _AccountSheetState extends ConsumerState<_AccountSheet> {
               ],
             ),
             const SizedBox(height: 16),
-            if (_method != PaymentMethodKind.cashOnDelivery) ...[
+            if (_method == PaymentMethodKind.mobileMoney ||
+                _method == PaymentMethodKind.bank) ...[
               TextField(
                 controller: _provider,
                 decoration: InputDecoration(
@@ -296,14 +299,24 @@ class _AccountSheetState extends ConsumerState<_AccountSheet> {
             const SizedBox(height: 14),
             TextField(
               controller: _accountNumber,
-              keyboardType: TextInputType.number,
+              keyboardType: _method == PaymentMethodKind.paypal
+                  ? TextInputType.emailAddress
+                  : TextInputType.number,
               decoration: InputDecoration(
                 labelText: _method == PaymentMethodKind.mobileMoney
                     ? context.tr('seller.momoNumber')
+                    : _method == PaymentMethodKind.paypal
+                    ? context.tr('seller.paypalEmail')
                     : context.tr('seller.accountNumber'),
-                hintText: context.tr('seller.accountNumberHint'),
+                hintText: _method == PaymentMethodKind.paypal
+                    ? context.tr('seller.paypalEmailHint')
+                    : context.tr('seller.accountNumberHint'),
                 border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.numbers_outlined),
+                prefixIcon: Icon(
+                  _method == PaymentMethodKind.paypal
+                      ? Icons.email_outlined
+                      : Icons.numbers_outlined,
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -345,10 +358,22 @@ class _AccountSheetState extends ConsumerState<_AccountSheet> {
       );
       return;
     }
+    if (_method == PaymentMethodKind.paypal) {
+      final email = _accountNumber.text.trim();
+      final valid = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+      if (!valid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.tr('seller.errorPaypalEmailInvalid'))),
+        );
+        return;
+      }
+    }
     setState(() => _busy = true);
     final account = PaymentAccount(
       method: _method,
-      provider: _method == PaymentMethodKind.cashOnDelivery
+      provider:
+          _method == PaymentMethodKind.cashOnDelivery ||
+              _method == PaymentMethodKind.paypal
           ? null
           : _provider.text,
       accountName: _accountName.text.trim(),
