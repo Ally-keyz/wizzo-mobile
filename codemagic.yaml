@@ -20,13 +20,11 @@
 # Version/build number come from pubspec.yaml. Bump the build number before
 # every upload (App Store Connect rejects a build number it has already seen).
 #
-# Apple Pay: the Runner target is wired with `CODE_SIGN_ENTITLEMENTS =
-# Runner/Runner.entitlements` (merchant id `merchant.com.wizzomarketplace`).
-# This requires the Apple Pay capability to be enabled on the App ID
-# `app.wizzo.wizzoMarket` with that merchant id in the Apple Developer portal,
-# otherwise the archive fails at signing with an `in-app-payments` entitlement
-# error. To build before Apple Pay is set up, remove the CODE_SIGN_ENTITLEMENTS
-# line from ios/Runner.xcodeproj/project.pbxproj.
+# Apple Pay: the iOS entitlement is intentionally NOT wired yet (the App ID
+# `app.wizzo.wizzoMarket` does not have the Apple Pay capability). Enabling it
+# early makes the archive fail at signing with an `in-app-payments` entitlement
+# error. See APPSTORE_RELEASE.md §2.1 for the exact re-enable steps once the
+# merchant id is created in the Apple Developer portal.
 workflows:
   wizzo-ios-workflow:
     name: Wizzo Market iOS – App Store

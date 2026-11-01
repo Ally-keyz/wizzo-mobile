@@ -47,20 +47,26 @@ Hard requirements still owned by you:
    `app.wizzo.wizzoMarket`.
 3. Capabilities: leave default (no Push, no IAP needed — the app sells physical
    goods and uses external payment methods, which Apple allows under 3.1.3(e)).
-4. If you want **Apple Pay** in the app (the code is already wired for it), the
-   merchant id `merchant.com.wizzomarketplace` is baked in as the app default and
-   the entitlements file `ios/Runner/Runner.entitlements` is committed + referenced
-   by `CODE_SIGN_ENTITLEMENTS`. You still must do the one-time Apple portal setup:
-   - Identifiers → Merchant IDs → **+** → `merchant.com.wizzomarketplace`.
-   - Add the **Apple Pay** capability to the App ID `app.wizzo.wizzoMarket` and
-     select that merchant id (adds `com.apple.developer.in-app-payments`).
-   - Add `merchant.com.wizzomarketplace` to the Stripe dashboard (Settings →
-     Payments → Apple Pay) and register the domain.
-   - **Until the capability is enabled on the App ID, the archive fails at
-     signing** with an `in-app-payments` entitlement error — the App Store
-     provisioning profile cannot carry an entitlement the App ID does not have.
-     If you need to build before Apple Pay is set up, remove the
-     `CODE_SIGN_ENTITLEMENTS` line from `ios/Runner.xcodeproj/project.pbxproj`.
+4. If you want **Apple Pay** in the app, the Dart side is already ready — the
+   merchant id `merchant.com.wizzomarketplace` is baked in as the app default
+   (`AppConfig.applePayMerchantId`). But the iOS *entitlement* is deliberately
+   NOT wired yet, because the App Store provisioning profile cannot carry the
+   `com.apple.developer.in-app-payments` entitlement until the App ID actually
+   has the Apple Pay capability. Re-enable it in this order:
+   1. Identifiers → Merchant IDs → **+** → `merchant.com.wizzomarketplace`.
+   2. Add the **Apple Pay** capability to the App ID `app.wizzo.wizzoMarket` and
+      select that merchant id.
+   3. Re-fetch/regenerate the App Store provisioning profile (Codemagic does this
+      with `app-store-connect fetch-signing-files`).
+   4. Create `ios/Runner/Runner.entitlements` with the `com.apple.developer.in-app-payments`
+      array containing `merchant.com.wizzomarketplace`, add it to the Runner group,
+      and set `CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;` on the Runner
+      target in `project.pbxproj`.
+   5. Add `merchant.com.wizzomarketplace` to the Stripe dashboard (Settings →
+      Payments → Apple Pay) and register the domain.
+   - **If you build while the entitlements file is wired but the capability is not
+     yet on the App ID, the archive fails at signing** with an
+     `in-app-payments` entitlement error.
 
 ### 2.2 App Store Connect app
 1. <https://appstoreconnect.apple.com> → My Apps → **+** → New App.
