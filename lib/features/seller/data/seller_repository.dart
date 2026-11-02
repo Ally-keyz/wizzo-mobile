@@ -28,6 +28,7 @@ class ProductInput {
     this.subcategoryId,
     required this.description,
     required this.price,
+    this.currency = 'EUR',
     this.discountPrice,
     this.discountEndsAt,
     required this.stock,
@@ -49,7 +50,14 @@ class ProductInput {
   final String categoryId;
   final String? subcategoryId;
   final String description;
+
+  /// Seller-entered selling price in [currency]. The backend derives the
+  /// canonical RWF amount, so this must never be pre-converted.
   final num price;
+
+  /// Currency [price] and [discountPrice] are expressed in.
+  final String currency;
+
   final num? discountPrice;
   final DateTime? discountEndsAt;
   final int stock;
@@ -76,6 +84,7 @@ class ProductInput {
           'subcategoryId': subcategoryId,
         'description': description.trim(),
         'price': price,
+        'currency': currency,
         if (discountPrice != null && discountPrice! > 0)
           'discountPrice': discountPrice,
         if (discountEndsAt != null) 'discountEndsAt': discountEndsAt!.toIso8601String(),

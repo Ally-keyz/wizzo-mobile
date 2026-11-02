@@ -208,8 +208,25 @@ void main() {
       expect(json['categoryId'], 'cat-1');
       expect(json['discountPrice'], 12000);
       expect(json['price'], 15000);
+      expect(json['currency'], 'EUR');
       expect(json['stock'], 5);
       expect(json.containsKey('subcategoryId'), isFalse);
+    });
+
+    test('sends the seller currency alongside the unconverted amount', () {
+      const usd = ProductInput(
+        name: 'Camera lens',
+        categoryId: 'cat-1',
+        description: 'Second-hand 50mm lens',
+        price: 120.5,
+        currency: 'USD',
+        stock: 1,
+        images: ['https://res.cloudinary.com/x/a.jpg'],
+      );
+      final json = usd.toJson();
+      // The backend converts; sending RWF here would convert it a second time.
+      expect(json['price'], 120.5);
+      expect(json['currency'], 'USD');
     });
 
     test('update clears a zeroed discount price to null', () {

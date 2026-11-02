@@ -405,6 +405,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       _busy = true;
       _error = null;
     });
+    // Send the amount exactly as the seller typed it together with its
+    // currency. The backend owns the RWF conversion; sending an
+    // already-converted amount used to get converted a second time.
+    final price = num.parse(_price.text.trim());
     final discount = num.tryParse(_discountPrice.text.trim());
     final baseDiscount = discount == null ? null : _basePriceOf(_discountPrice);
     final photos = _colorPhotos
@@ -415,8 +419,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       categoryId: _categoryId!,
       subcategoryId: _subcategoryId,
       description: _description.text,
-      price: _basePriceOf(_price)!,
-      discountPrice: baseDiscount,
+      price: price,
+      currency: _priceCurrency,
+      discountPrice: discount,
       discountEndsAt: discount != null && baseDiscount != null && baseDiscount > 0
           ? _discountEndsAt
           : null,
