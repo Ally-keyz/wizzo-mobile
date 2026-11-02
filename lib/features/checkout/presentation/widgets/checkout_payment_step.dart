@@ -42,18 +42,24 @@ class PaymentStep extends StatelessWidget {
   final VoidCallback onChatWithSellers;
   final VoidCallback onPayNow;
 
-  /// Payment options for this device. Native wallets are platform-specific:
-  /// Google Pay only exists on Android, Apple Pay only on iOS. Momo, card and
-  /// PayPal are always offered.
-  List<PaymentOption> _visibleOptions() {
+  /// Native wallets are platform-specific: Google Pay only exists on Android,
+  /// Apple Pay only on iOS. Both tiles stay visible on every platform so buyers
+  /// can see the option exists; the unsupported one is dimmed and explains why
+  /// instead of silently disappearing (Apple Pay was invisible on Android).
+  bool _isUnavailable(PaymentKind kind) {
     final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
     final isAndroid = defaultTargetPlatform == TargetPlatform.android;
-    return PaymentOption.all.where((o) {
-      if (o.kind == PaymentKind.googlePay) return isAndroid;
-      if (o.kind == PaymentKind.applePay) return isIOS;
-      return true;
-    }).toList();
+    return switch (kind) {
+      PaymentKind.googlePay => !isAndroid,
+      PaymentKind.applePay => !isIOS,
+      _ => false,
+    };
   }
+
+  String _availabilityNote(BuildContext context, PaymentKind kind) =>
+      kind == PaymentKind.applePay
+      ? context.tr('checkout.payment.iphoneOnly')
+      : context.tr('checkout.payment.androidOnly');
 
   /// Explains that wallets are charged in USD when the selected display
   /// currency isn't supported by the native sheet.
@@ -147,11 +153,33 @@ class PaymentStep extends StatelessWidget {
           crossAxisSpacing: 10,
           childAspectRatio: 3.4,
           children: [
-            for (final option in _visibleOptions())
+            for (final option in PaymentOption.all)
               _PaymentMethodTile(
                 option: option,
                 selected: method == option.kind,
-                onTap: () => onMethodSelected(option.kind),
+                available: !_isUnavailable(option.kind),
+                note: _isUnavailable(option.kind)
+                    ? _availabilityNote(context, option.kind)
+                    : null,
+                onTap: () {
+                  if (_isUnavailable(option.kind)) {
+                    ScaffoldMessenger.of(context)
+                      ..hideCurrentSnackBar()
+                      ..showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            context.tr(
+                              option.kind == PaymentKind.applePay
+                                  ? 'checkout.payment.applePayUnavailable'
+                                  : 'checkout.payment.googlePayUnavailable',
+                            ),
+                          ),
+                        ),
+                      );
+                    return;
+                  }
+                  onMethodSelected(option.kind);
+                },
               ),
           ],
         ),
@@ -314,10 +342,14 @@ class _PaymentMethodTile extends StatelessWidget {
     required this.option,
     required this.selected,
     required this.onTap,
+    this.available = true,
+    this.note,
   });
 
   final PaymentOption option;
   final bool selected;
+  final bool available;
+  final String? note;
   final VoidCallback onTap;
 
   @override
@@ -325,36 +357,62 @@ class _PaymentMethodTile extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = context.appColors;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: selected
-              ? colors.goldSoft.withValues(alpha: 0.6)
-              : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: selected ? Palette.gold : theme.colorScheme.outlineVariant,
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _PaymentIcon(kind: option.kind, size: 24),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                paymentKindLabel(context, option.kind),
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+    return Semantics(
+      enabled: available,
+      button: true,
+      label: paymentKindLabel(context, option.kind),
+      child: Opacity(
+        opacity: available ? 1 : 0.55,
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: selected
+                  ? colors.goldSoft.withValues(alpha: 0.6)
+                  : theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: selected
+                    ? Palette.gold
+                    : theme.colorScheme.outlineVariant,
+                width: selected ? 1.5 : 1,
               ),
             ),
-          ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _PaymentIcon(kind: option.kind, size: 24),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        paymentKindLabel(context, option.kind),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (note != null)
+                        Text(
+                          note!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

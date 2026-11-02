@@ -23,6 +23,7 @@ import '../models/checkout.dart';
 import 'widgets/checkout_payment_step.dart';
 import 'widgets/checkout_shared.dart';
 import 'widgets/checkout_shipping_step.dart';
+import 'widgets/checkout_wallet_sheet.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -285,8 +286,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
   }
 
-  /// Apple Pay / Google Pay: opens the native wallet sheet directly against a
-  /// card PaymentIntent. No Stripe payment-method picker is shown in between.
+  /// Apple Pay / Google Pay: opens a modal with Stripe's own wallet button. The
+  /// button is rendered by the Stripe SDK, so the native wallet sheet and the
+  /// card payment method both come from Stripe. When the device cannot present
+  /// that wallet (or the merchant is not approved for it), the modal offers
+  /// Stripe's hosted checkout page instead.
   Future<void> _payWithWallet(CartData cart, PaymentKind wallet) async {
     final address = _effectiveAddress(
       ref.read(addressesProvider).value ?? AddressBook(),
@@ -295,11 +299,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _showError(context.tr('checkout.selectAddressFirst'));
       return;
     }
-    final unavailableMessage = context.tr(
-      wallet == PaymentKind.applePay
-          ? 'checkout.payment.applePayUnavailable'
-          : 'checkout.payment.googlePayUnavailable',
-    );
+
+    final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+    final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+    final isApplePay = wallet == PaymentKind.applePay;
+    if (isApplePay ? !isIOS : !isAndroid) {
+      _showError(
+        context.tr(
+          isApplePay
+              ? 'checkout.payment.applePayUnavailable'
+              : 'checkout.payment.googlePayUnavailable',
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _placing = true;
@@ -321,62 +334,130 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             stripeMethod: 'card',
           );
 
-      final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
-      final isAndroid = defaultTargetPlatform == TargetPlatform.android;
-      final isApplePay = wallet == PaymentKind.applePay;
-      await _prepareStripe(intent.publishableKey, applePay: isApplePay);
-
       final testEnv = _stripeTestMode(intent);
-      final supported = isApplePay
-          ? isIOS && await Stripe.instance.isPlatformPaySupported()
-          : isAndroid &&
-                await Stripe.instance.isPlatformPaySupported(
-                  googlePay: IsGooglePaySupportedParams(testEnv: testEnv),
-                );
-      if (!supported) {
-        throw Exception(unavailableMessage);
+      bool supported = false;
+      try {
+        await _prepareStripe(intent.publishableKey, applePay: isApplePay);
+        supported = isApplePay
+            ? await Stripe.instance.isPlatformPaySupported()
+            : await Stripe.instance.isPlatformPaySupported(
+                googlePay: IsGooglePaySupportedParams(testEnv: testEnv),
+              );
+      } catch (_) {
+        // A missing merchant id, entitlement or unsupported device must not
+        // block the hosted Stripe fallback.
+        supported = false;
       }
 
-      final currencyCode = intent.currency.toUpperCase();
-      if (isApplePay) {
-        await Stripe.instance.confirmPlatformPayPaymentIntent(
-          clientSecret: intent.clientSecret,
-          confirmParams: PlatformPayConfirmParams.applePay(
-            applePay: ApplePayParams(
-              merchantCountryCode: AppConfig.stripeMerchantCountry,
-              currencyCode: currencyCode,
-              cartItems: [
-                ApplePayCartSummaryItem.immediate(
-                  label: AppConfig.appName,
-                  amount: _walletAmount(intent.chargeTotal ?? 0, currencyCode),
-                ),
-              ],
-            ),
-          ),
-        );
-      } else {
-        await Stripe.instance.confirmPlatformPayPaymentIntent(
-          clientSecret: intent.clientSecret,
-          confirmParams: PlatformPayConfirmParams.googlePay(
-            googlePay: GooglePayParams(
-              merchantCountryCode: AppConfig.stripeMerchantCountry,
-              currencyCode: currencyCode,
-              merchantName: AppConfig.appName,
-              testEnv: testEnv,
-            ),
-          ),
-        );
-      }
+      if (!mounted) return;
+      setState(() => _placing = false);
 
-      await _confirmStripeIntent(intent.intentId);
-    } on StripeException catch (e) {
-      if (e.error.code == FailureCode.Canceled) {
-        if (mounted) setState(() => _placing = false);
-        return;
+      final action = await showModalBottomSheet<WalletSheetAction>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        showDragHandle: false,
+        builder: (_) => CheckoutWalletSheet(
+          wallet: wallet,
+          clientSecret: intent.clientSecret,
+          currencyCode: intent.currency,
+          amount: intent.chargeTotal ?? intent.grandTotal ?? 0,
+          supported: supported,
+          testMode: testEnv,
+        ),
+      );
+      if (!mounted) return;
+
+      switch (action) {
+        case WalletSheetAction.paid:
+          setState(() => _placing = true);
+          await _confirmStripeIntent(intent.intentId);
+        case WalletSheetAction.hostedCheckout:
+          await _payWithHostedWallet(cart, address);
+        case null:
+          setState(() => _placing = false);
       }
-      _fail(e);
     } catch (e) {
       _fail(e);
+    }
+  }
+
+  /// Fallback for native wallets: Stripe's hosted Checkout still renders
+  /// Google Pay / Apple Pay in the in-app browser when the device / merchant
+  /// setup supports them, and works with a card everywhere else.
+  Future<void> _payWithHostedWallet(CartData cart, Address address) async {
+    final startFailed = context.tr('checkout.payment.stripeOpenFailed');
+
+    setState(() {
+      _placing = true;
+      _error = null;
+    });
+    try {
+      final currency = walletCheckoutCurrency(currencyController.value.code);
+      final session = await ref
+          .read(checkoutRepositoryProvider)
+          .createStripeCheckout(
+            sellerPayments: _sellerSelection(cart, PaymentKind.card),
+            deliveryOption: _delivery.apiValue,
+            deliveryAddressId: _delivery == DeliveryKind.pickup
+                ? null
+                : address.id,
+            paymentMethodType: 'card',
+            stripeMethod: 'card',
+            currency: currency.toLowerCase(),
+          );
+      if (session.url.isEmpty) {
+        throw Exception(startFailed);
+      }
+      final launched = await _openHostedCheckout(session.url);
+      if (!launched) {
+        throw Exception(startFailed);
+      }
+      if (!mounted) return;
+
+      final summary = await showDialog<PlacementSummary?>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => _HostedCheckoutWaitDialog(
+          intentId: session.intentId,
+          titleKey: 'checkout.payment.walletWaitingTitle',
+          bodyKey: 'checkout.payment.walletWaitingBody',
+        ),
+      );
+      if (!mounted) return;
+      if (summary != null) {
+        await _completeOrder(summary);
+        return;
+      }
+      setState(() {
+        _placing = false;
+        _error = context.tr('checkout.payment.walletNotCompleted');
+      });
+    } catch (e) {
+      _fail(e);
+    }
+  }
+
+  /// Wallet fallbacks prefer an in-app browser (SFSafariViewController / Chrome
+  /// Custom Tabs) because both support Apple Pay and Google Pay web checkout.
+  /// PayPal keeps its existing external-browser flow, which its login page
+  /// expects. Any in-app failure falls back to the external browser.
+  Future<bool> _openHostedCheckout(String url, {bool inApp = true}) async {
+    final uri = Uri.parse(url);
+    if (inApp) {
+      try {
+        if (await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
+          return true;
+        }
+      } catch (_) {
+        // Fall through to the external browser.
+      }
+    }
+    try {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -413,10 +494,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       if (session.url.isEmpty) {
         throw Exception(startFailed);
       }
-      final launched = await launchUrl(
-        Uri.parse(session.url),
-        mode: LaunchMode.externalApplication,
-      );
+      final launched = await _openHostedCheckout(session.url, inApp: false);
       if (!launched) {
         throw Exception(startFailed);
       }
@@ -425,7 +503,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final summary = await showDialog<PlacementSummary?>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => _PaypalWaitDialog(intentId: session.intentId),
+        builder: (_) => _HostedCheckoutWaitDialog(
+          intentId: session.intentId,
+          titleKey: 'checkout.payment.paypalWaitingTitle',
+          bodyKey: 'checkout.payment.paypalWaitingBody',
+        ),
       );
       if (!mounted) return;
       if (summary != null) {
@@ -472,15 +554,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ? intent.publishableKey
         : AppConfig.stripePublishableKey;
     return key.startsWith('pk_test_');
-  }
-
-  /// Apple Pay wants a decimal amount string, without minor units.
-  String _walletAmount(num amount, String currency) {
-    const zeroDecimal = {'JPY'};
-    if (zeroDecimal.contains(currency.toUpperCase())) {
-      return amount.round().toString();
-    }
-    return amount.toStringAsFixed(2);
   }
 
   /// Verifies the PaymentIntent server-side and places the order.
@@ -766,19 +839,27 @@ class _SellerChatSheet extends StatelessWidget {
   }
 }
 
-/// Waits for the Stripe-hosted PayPal session to be paid. The buyer completes
-/// the payment in the external browser; once the webhook places the order this
-/// dialog closes with the placed-order summary.
-class _PaypalWaitDialog extends ConsumerStatefulWidget {
-  const _PaypalWaitDialog({required this.intentId});
+/// Waits for a Stripe-hosted session (PayPal or a wallet fallback) to be paid.
+/// The buyer completes the payment in the browser; once the webhook places the
+/// order this dialog closes with the placed-order summary.
+class _HostedCheckoutWaitDialog extends ConsumerStatefulWidget {
+  const _HostedCheckoutWaitDialog({
+    required this.intentId,
+    required this.titleKey,
+    required this.bodyKey,
+  });
 
   final String intentId;
+  final String titleKey;
+  final String bodyKey;
 
   @override
-  ConsumerState<_PaypalWaitDialog> createState() => _PaypalWaitDialogState();
+  ConsumerState<_HostedCheckoutWaitDialog> createState() =>
+      _HostedCheckoutWaitDialogState();
 }
 
-class _PaypalWaitDialogState extends ConsumerState<_PaypalWaitDialog> {
+class _HostedCheckoutWaitDialogState
+    extends ConsumerState<_HostedCheckoutWaitDialog> {
   Timer? _timer;
   bool _checking = false;
   int _attempts = 0;
@@ -837,14 +918,14 @@ class _PaypalWaitDialogState extends ConsumerState<_PaypalWaitDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(context.tr('checkout.payment.paypalWaitingTitle')),
+      title: Text(context.tr(widget.titleKey)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const LinearProgressIndicator(),
           const SizedBox(height: 16),
           Text(
-            context.tr('checkout.payment.paypalWaitingBody'),
+            context.tr(widget.bodyKey),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
