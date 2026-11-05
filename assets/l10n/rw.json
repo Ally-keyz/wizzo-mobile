@@ -128,7 +128,9 @@
       "customer": "Ndi umukiriya",
       "customerDesc": "Gura ibicuruzwa ku bacuruzi bemewe mu Rwanda hose.",
       "seller": "Ndi umucuruzi",
-      "sellerDesc": "Fungura iduka ryawe maze utangire kugurisha abakiriya."
+      "sellerDesc": "Fungura iduka ryawe maze utangire kugurisha abakiriya.",
+      "individual": "Ndi umucuruzi ku giti cyanjye",
+      "individualDesc": "Gurisha ku izina ryawe utafunguye iduka."
     },
     "seller": {
       "title": "Fungura Iduka Ryawe",
@@ -136,7 +138,13 @@
       "verifySubtitle": "Inzira yanyuma — emeza imeyili yawe",
       "createStore": "Fungura Iduka",
       "verifyEmail": "Emeza Imeyili",
-      "weSentCode": "Tweherereje kode y'igitsi 6 kuri {email}."
+      "weSentCode": "Tweherereje kode y'igitsi 6 kuri {email}.",
+      "individual": "Umucuruzi ku giti cye",
+      "business": "Iduka ry'ubucuruzi",
+      "individualHint": "Nta iduka rikenewe — uzagurisha ku izina ryawe.",
+      "businessHint": "Fungura iduka ry'ubucuruzi bwawe.",
+      "createAccount": "Fungura konti",
+      "individualSubtitle": "Gurisha ku izina ryawe — nta iduka rikenewe."
     },
     "signIn": {
       "welcomeBack": "Murakaza neza kongera",
@@ -368,7 +376,7 @@
         "name": "Google Pay",
         "desc": "Paya ukoresheje k'akaunti kawe k'Google",
         "payButton": "Shyura ukoresheje Google Pay",
-        "redirect": "Urufunguzo rwa Google Pay ruzafunguka kugira ngo wemeze ubwishyu."
+        "redirect": "Uzajya ku ipaji y'ubwishyu ya Google Pay itekanye mu mushakisha wawe."
       },
       "applePay": {
         "name": "Apple Pay",
@@ -409,7 +417,9 @@
     "chatWithSellers": "Ganira n'abacuruzi",
     "chatSheetTitle": "Ganira n'umucuruzi",
     "chatSheetHint": "Ufite ikibazo ku kintu? Hitamo iduka utangire kuganira.",
-    "storeItemCount": "Ibintu {count}"
+    "storeItemCount": "Ibintu {count}",
+    "postalCodeField": "Kode y'iposita",
+    "postalCodeHint": "urugero 00100"
   },
   "city": {
     "chooseCity": "Hitamo igisagara cyawe",
@@ -1133,7 +1143,11 @@
     "addSecondHandProduct": "Ongeraho igicuruzwa cyakoreshejwe",
     "paypalEmail": "Imeyili ya PayPal",
     "paypalEmailHint": "wowe@urugero.com",
-    "errorPaypalEmailInvalid": "Injiza imeyili ihujwe na konti yawe ya PayPal."
+    "errorPaypalEmailInvalid": "Injiza imeyili ihujwe na konti yawe ya PayPal.",
+    "individual": "Umucuruzi ku giti cye",
+    "business": "Iduka ry'ubucuruzi",
+    "individualHint": "Gurisha ku izina ryawe. Nta logo cyangwa izina ry'iduka rikenewe.",
+    "businessHint": "Fungura iduka ufite izina na logo byawe."
   },
   "sellers": {
     "attributionCarto": "© abashyikirije OpenStreetMap © CARTO",

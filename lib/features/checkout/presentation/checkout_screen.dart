@@ -54,10 +54,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final id = await ref.read(accountRepositoryProvider).addAddress({
         'label': draft.label,
         'fullName': draft.fullName,
-        'phone': draft.phone,
+        if (draft.phone != null && draft.phone!.trim().isNotEmpty)
+          'phone': draft.phone,
         'country': draft.country,
         'city': draft.city,
-        'street': draft.street,
+        if (draft.street != null && draft.street!.trim().isNotEmpty)
+          'street': draft.street,
+        if (draft.postalCode != null && draft.postalCode!.trim().isNotEmpty)
+          'postalCode': draft.postalCode,
       });
       if (id.isEmpty)
         throw Exception('The server did not return an address id');
@@ -174,6 +178,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         await _payWithCard(cart);
         return;
       case PaymentKind.googlePay:
+        // Google Pay is not configured for the native Stripe Platform Pay
+        // merchant, so always use the hosted checkout flow. It renders Google
+        // Pay in the browser when the buyer's device supports it and falls
+        // back to card entry otherwise.
+        await _payWithHostedWallet(cart, address);
+        return;
       case PaymentKind.applePay:
         await _payWithWallet(cart, method);
         return;
@@ -286,10 +296,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
   }
 
-  /// Apple Pay / Google Pay: opens a modal with Stripe's own wallet button. The
-  /// button is rendered by the Stripe SDK, so the native wallet sheet and the
-  /// card payment method both come from Stripe. When the device cannot present
-  /// that wallet (or the merchant is not approved for it), the modal offers
+  /// Apple Pay: opens a modal with Stripe's own wallet button. The button is
+  /// rendered by the Stripe SDK, so the native wallet sheet and the card
+  /// payment method both come from Stripe. When the device cannot present that
+  /// wallet (or the merchant is not approved for it), the modal offers
   /// Stripe's hosted checkout page instead.
   Future<void> _payWithWallet(CartData cart, PaymentKind wallet) async {
     final address = _effectiveAddress(

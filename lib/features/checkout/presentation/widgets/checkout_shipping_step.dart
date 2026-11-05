@@ -42,6 +42,7 @@ class _ShippingStepState extends ConsumerState<ShippingStep> {
   late TextEditingController _country;
   final _city = TextEditingController();
   final _street = TextEditingController();
+  final _postal = TextEditingController();
   bool _showForm = false;
   bool _countryReady = false;
 
@@ -65,6 +66,7 @@ class _ShippingStepState extends ConsumerState<ShippingStep> {
     _country.dispose();
     _city.dispose();
     _street.dispose();
+    _postal.dispose();
     super.dispose();
   }
 
@@ -75,6 +77,7 @@ class _ShippingStepState extends ConsumerState<ShippingStep> {
     final fullName = _name.text.trim();
     final city = _city.text.trim();
     final street = _street.text.trim();
+    final postal = _postal.text.trim();
     final phone = _phone.text.trim();
     if (fullName.isEmpty || city.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -93,6 +96,7 @@ class _ShippingStepState extends ConsumerState<ShippingStep> {
             : _country.text.trim(),
         city: city,
         street: street.isEmpty ? null : street,
+        postalCode: postal.isEmpty ? null : postal,
       ),
     );
   }
@@ -300,6 +304,14 @@ class _ShippingStepState extends ConsumerState<ShippingStep> {
           label: context.tr('checkout.streetField'),
           hint: context.tr('checkout.streetHint'),
           textCapitalization: TextCapitalization.words,
+        ),
+        const SizedBox(height: 12),
+        WTextField(
+          controller: _postal,
+          label: context.tr('checkout.postalCodeField'),
+          hint: context.tr('checkout.postalCodeHint'),
+          keyboardType: TextInputType.streetAddress,
+          textCapitalization: TextCapitalization.characters,
         ),
         const SizedBox(height: 14),
         FilledButton.icon(

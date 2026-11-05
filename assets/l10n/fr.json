@@ -128,7 +128,9 @@
       "customer": "Je suis un client",
       "customerDesc": "Achetez des produits auprès de vendeurs vérifiés partout au Rwanda.",
       "seller": "Je suis un vendeur",
-      "sellerDesc": "Ouvrez votre boutique et commencez à vendre à vos clients."
+      "sellerDesc": "Ouvrez votre boutique et commencez à vendre à vos clients.",
+      "individual": "Je suis un vendeur individuel",
+      "individualDesc": "Vendez sous votre propre nom sans ouvrir de boutique."
     },
     "seller": {
       "title": "Ouvrez votre boutique",
@@ -136,7 +138,13 @@
       "verifySubtitle": "Dernière étape — vérifiez votre e-mail",
       "createStore": "Créer la boutique",
       "verifyEmail": "Vérifier l'e-mail",
-      "weSentCode": "Nous avons envoyé un code à 6 chiffres à {email}."
+      "weSentCode": "Nous avons envoyé un code à 6 chiffres à {email}.",
+      "individual": "Vendeur individuel",
+      "business": "Boutique d'entreprise",
+      "individualHint": "Aucune vitrine nécessaire — vous vendez sous votre propre nom.",
+      "businessHint": "Créez une vitrine pour votre entreprise.",
+      "createAccount": "Créer un compte",
+      "individualSubtitle": "Vendez sous votre propre nom — aucune vitrine requise."
     },
     "signIn": {
       "welcomeBack": "Bon retour parmi nous",
@@ -368,7 +376,7 @@
         "name": "Google Pay",
         "desc": "Payez avec votre compte Google",
         "payButton": "Payer avec Google Pay",
-        "redirect": "La fen?tre Google Pay s'ouvrira pour confirmer votre paiement."
+        "redirect": "Vous allez continuer vers une page de paiement Google Pay sécurisée dans votre navigateur."
       },
       "applePay": {
         "name": "Apple Pay",
@@ -409,7 +417,9 @@
     "chatWithSellers": "Discuter avec les vendeurs",
     "chatSheetTitle": "Discuter avec un vendeur",
     "chatSheetHint": "Une question sur un article ? Choisissez une boutique pour commencer la discussion.",
-    "storeItemCount": "{count} article(s)"
+    "storeItemCount": "{count} article(s)",
+    "postalCodeField": "Code postal",
+    "postalCodeHint": "ex. 00100"
   },
   "city": {
     "chooseCity": "Choisissez votre ville",
@@ -1133,7 +1143,11 @@
     "addSecondHandProduct": "Ajouter un produit d occasion",
     "paypalEmail": "E-mail PayPal",
     "paypalEmailHint": "vous@exemple.com",
-    "errorPaypalEmailInvalid": "Saisissez l'adresse e-mail li?e ? votre compte PayPal."
+    "errorPaypalEmailInvalid": "Saisissez l'adresse e-mail li?e ? votre compte PayPal.",
+    "individual": "Vendeur individuel",
+    "business": "Boutique d'entreprise",
+    "individualHint": "Vendez sous votre propre nom. Aucun logo ni nom de boutique requis.",
+    "businessHint": "Créez une vitrine avec votre nom et votre logo."
   },
   "sellers": {
     "attributionCarto": "© contributeurs d'OpenStreetMap © CARTO",

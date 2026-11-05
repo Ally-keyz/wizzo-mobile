@@ -10,6 +10,7 @@ class Address {
     this.city,
     this.district,
     this.street,
+    this.postalCode,
     this.notes,
     this.isDefault = false,
   });
@@ -22,6 +23,7 @@ class Address {
   final String? city;
   final String? district;
   final String? street;
+  final String? postalCode;
   final String? notes;
   final bool isDefault;
 
@@ -33,6 +35,7 @@ class Address {
         street,
         district,
         city,
+        postalCode,
       ].where((e) => e != null && e.isNotEmpty).join(', '),
     ].where((e) => e != null && e.toString().trim().isNotEmpty).toList();
     return parts.join(' • ');
@@ -52,6 +55,11 @@ class Address {
       city: resolveString(json['city']),
       district: json['district']?.toString(),
       street: json['streetAddress']?.toString() ?? json['street']?.toString(),
+      postalCode:
+          json['postalCode']?.toString() ??
+          json['postal_code']?.toString() ??
+          json['postcode']?.toString() ??
+          json['zip']?.toString(),
       notes: json['notes']?.toString(),
       isDefault: json['isDefault'] == true || json['default'] == true,
     );

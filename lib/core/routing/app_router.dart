@@ -101,7 +101,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/sign-up', builder: (_, _) => const BuyerSignUpScreen()),
       GoRoute(
         path: '/sign-up-seller',
-        builder: (_, _) => const SellerSignUpScreen(),
+        builder: (_, state) => SellerSignUpScreen(
+          individual: state.uri.queryParameters['type'] == 'individual',
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
@@ -199,7 +201,9 @@ List<RouteBase> _buildSharedRoutes() => [
   GoRoute(path: '/seller', builder: (_, _) => const SellerGateScreen()),
   GoRoute(
     path: '/seller/create-store',
-    builder: (_, _) => const CreateStoreScreen(),
+    builder: (_, state) => CreateStoreScreen(
+      individual: state.uri.queryParameters['type'] == 'individual',
+    ),
   ),
   GoRoute(
     path: '/seller/products',

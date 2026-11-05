@@ -41,7 +41,8 @@ class AuthRepository {
     required String fullName,
     required String email,
     required String password,
-    required String storeName,
+    String? sellerType,
+    String? storeName,
     String? aboutStore,
     String? country,
     String? district,
@@ -53,11 +54,16 @@ class AuthRepository {
         'fullName': fullName.trim(),
         'email': email.trim(),
         'password': password,
-        'storeName': storeName.trim(),
-        'aboutStore': aboutStore?.trim(),
-        'country': country?.trim(),
-        'district': district?.trim(),
-        'city': city?.trim(),
+        'sellerType': sellerType ?? 'business',
+        if (storeName != null && storeName.trim().isNotEmpty)
+          'storeName': storeName.trim(),
+        if (aboutStore != null && aboutStore.trim().isNotEmpty)
+          'aboutStore': aboutStore.trim(),
+        if (country != null && country.trim().isNotEmpty)
+          'country': country.trim(),
+        if (district != null && district.trim().isNotEmpty)
+          'district': district.trim(),
+        if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
       },
     );
     return _toResult(data);

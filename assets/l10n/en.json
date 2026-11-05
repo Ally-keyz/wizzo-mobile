@@ -128,7 +128,9 @@
       "customer": "I'm a Customer",
       "customerDesc": "Shop products from verified sellers across Rwanda.",
       "seller": "I'm a Seller",
-      "sellerDesc": "Open your store and start selling to customers."
+      "sellerDesc": "Open your store and start selling to customers.",
+      "individual": "I'm an Individual Trader",
+      "individualDesc": "Sell under your own name without opening a store."
     },
     "seller": {
       "title": "Open Your Store",
@@ -136,7 +138,13 @@
       "verifySubtitle": "One last step — verify your email",
       "createStore": "Create Store",
       "verifyEmail": "Verify Email",
-      "weSentCode": "We sent a 6-digit code to {email}."
+      "weSentCode": "We sent a 6-digit code to {email}.",
+      "individual": "Individual trader",
+      "business": "Business store",
+      "individualHint": "No storefront needed — you'll sell under your own name.",
+      "businessHint": "Create a branded storefront for your business.",
+      "createAccount": "Create account",
+      "individualSubtitle": "Sell under your own name — no storefront required."
     },
     "signIn": {
       "welcomeBack": "Welcome back",
@@ -368,7 +376,7 @@
         "name": "Google Pay",
         "desc": "Pay with your Google account",
         "payButton": "Pay with Google Pay",
-        "redirect": "The Google Pay sheet will open so you can confirm your payment."
+        "redirect": "You'll continue to a secure Google Pay checkout page in your browser."
       },
       "applePay": {
         "name": "Apple Pay",
@@ -409,7 +417,9 @@
     "chatWithSellers": "Chat with sellers",
     "chatSheetTitle": "Chat with a seller",
     "chatSheetHint": "Have a question about an item? Pick a store to start chatting.",
-    "storeItemCount": "{count} item(s)"
+    "storeItemCount": "{count} item(s)",
+    "postalCodeField": "Postal code",
+    "postalCodeHint": "e.g. 00100"
   },
   "city": {
     "chooseCity": "Choose your city",
@@ -1133,7 +1143,11 @@
     "addSecondHandProduct": "Add second hand product",
     "paypalEmail": "PayPal email",
     "paypalEmailHint": "you@example.com",
-    "errorPaypalEmailInvalid": "Enter the email address linked to your PayPal account."
+    "errorPaypalEmailInvalid": "Enter the email address linked to your PayPal account.",
+    "individual": "Individual trader",
+    "business": "Business store",
+    "individualHint": "Sell under your own name. No logo or store name needed.",
+    "businessHint": "Create a storefront with your own name and logo."
   },
   "sellers": {
     "attributionCarto": "© OpenStreetMap contributors © CARTO",

@@ -42,15 +42,12 @@ class PaymentStep extends StatelessWidget {
   final VoidCallback onChatWithSellers;
   final VoidCallback onPayNow;
 
-  /// Native wallets are platform-specific: Google Pay only exists on Android,
-  /// Apple Pay only on iOS. Both tiles stay visible on every platform so buyers
-  /// can see the option exists; the unsupported one is dimmed and explains why
-  /// instead of silently disappearing (Apple Pay was invisible on Android).
+  /// Apple Pay only exists on iOS. Google Pay is offered everywhere because
+  /// tapping it opens the Stripe-hosted checkout page, which renders Google Pay
+  /// where supported and card entry elsewhere.
   bool _isUnavailable(PaymentKind kind) {
     final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
-    final isAndroid = defaultTargetPlatform == TargetPlatform.android;
     return switch (kind) {
-      PaymentKind.googlePay => !isAndroid,
       PaymentKind.applePay => !isIOS,
       _ => false,
     };

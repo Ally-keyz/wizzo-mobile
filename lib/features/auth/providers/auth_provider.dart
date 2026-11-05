@@ -80,7 +80,8 @@ class AuthController extends Notifier<AuthState> {
     required String fullName,
     required String email,
     required String password,
-    required String storeName,
+    String? sellerType,
+    String? storeName,
     String? aboutStore,
     String? country,
     String? district,
@@ -92,6 +93,7 @@ class AuthController extends Notifier<AuthState> {
           fullName: fullName,
           email: email,
           password: password,
+          sellerType: sellerType,
           storeName: storeName,
           aboutStore: aboutStore,
           country: country,
@@ -105,6 +107,7 @@ class AuthController extends Notifier<AuthState> {
   /// token so the JWT carries the new `seller` role and reloads the user.
   Future<User> registerStore({
     required String storeName,
+    String? sellerType,
     String? aboutStore,
     String? logoUrl,
     String? country,
@@ -114,8 +117,11 @@ class AuthController extends Notifier<AuthState> {
     double? latitude,
     StorePayout? payout,
   }) async {
-    await ref.read(sellerRepositoryProvider).registerStore(
+    await ref
+        .read(sellerRepositoryProvider)
+        .registerStore(
           storeName: storeName,
+          sellerType: sellerType,
           aboutStore: aboutStore,
           logoUrl: logoUrl,
           country: country,
@@ -149,11 +155,15 @@ class AuthController extends Notifier<AuthState> {
     final data = await ref.read(apiClientProvider).get('/users/me');
     final rawUser =
         data is Map<String, dynamic> && data['user'] is Map<String, dynamic>
-            ? data['user']
-            : data;
+        ? data['user']
+        : data;
     final user = User.fromApi(rawUser);
     await repo.persistSession(
-      AuthResult(accessToken: refreshed, refreshToken: currentRefresh, user: user),
+      AuthResult(
+        accessToken: refreshed,
+        refreshToken: currentRefresh,
+        user: user,
+      ),
     );
     state = AuthState(user: user, initializing: false);
     return user;

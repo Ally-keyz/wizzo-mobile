@@ -15,7 +15,11 @@ import '../providers/seller_providers.dart';
 /// Become-a-seller wizard for an existing buyer account: stores logo + details,
 /// then creates the store and force-refreshes the token to the seller role.
 class CreateStoreScreen extends ConsumerStatefulWidget {
-  const CreateStoreScreen({super.key});
+  const CreateStoreScreen({super.key, this.individual = false});
+
+  /// Opened from the individual-trader flow: the account becomes a seller
+  /// without creating a branded storefront.
+  final bool individual;
 
   @override
   ConsumerState<CreateStoreScreen> createState() => _CreateStoreScreenState();
@@ -37,8 +41,15 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
   int _step = 0;
   bool _busy = false;
   bool _uploading = false;
+  bool _individual = false;
   String? _logoUploadedUrl;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _individual = widget.individual;
+  }
 
   @override
   void dispose() {
@@ -56,6 +67,7 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
   String? _validateCurrentStep() {
     switch (_step) {
       case 0:
+        if (_individual) return null;
         if (_storeName.text.trim().isEmpty) {
           return context.tr('seller.storeNameRequired');
         }
@@ -130,16 +142,20 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
       _busy = true;
     });
     try {
+      final user = ref.read(authControllerProvider).user;
+      final individualName = user?.fullName?.trim() ?? '';
       await ref
           .read(authControllerProvider.notifier)
           .registerStore(
-            storeName: _storeName.text,
-            aboutStore: _aboutStore.text,
-            logoUrl: _logoUploadedUrl,
-            country: _country.text,
-            district: _district.text,
-            city: _city.text,
-            payout: _payoutAccountName.text.trim().isNotEmpty &&
+            storeName: _individual ? individualName : _storeName.text,
+            sellerType: _individual ? 'individual' : 'business',
+            aboutStore: _individual ? null : _aboutStore.text,
+            logoUrl: _individual ? null : _logoUploadedUrl,
+            country: _individual ? null : _country.text,
+            district: _individual ? null : _district.text,
+            city: _individual ? null : _city.text,
+            payout:
+                _payoutAccountName.text.trim().isNotEmpty &&
                     _payoutAccountNumber.text.trim().isNotEmpty
                 ? StorePayout(
                     method: _payoutMethod,
@@ -172,17 +188,68 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
     }
     setState(() {
       _error = null;
-      _step += 1;
+      _step = _step == 0 && _individual ? 3 : _step + 1;
     });
   }
 
   void _back() {
     if (_step > 0) {
-      setState(() => _error = null);
-      setState(() => _step -= 1);
+      setState(() {
+        _error = null;
+        _step = _step == 3 && _individual ? 0 : _step - 1;
+      });
     } else {
       context.pop();
     }
+  }
+
+  Widget _typeCard(
+    ColorScheme scheme,
+    bool individual,
+    String label,
+    IconData icon,
+  ) {
+    final selected = _individual == individual;
+    return InkWell(
+      onTap: () => setState(() {
+        _individual = individual;
+        _error = null;
+      }),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+        decoration: BoxDecoration(
+          color: selected ? scheme.primaryContainer : scheme.surface,
+          border: Border.all(
+            color: selected ? scheme.primary : scheme.outlineVariant,
+            width: 1.5,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: selected
+                  ? scheme.onPrimaryContainer
+                  : scheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: selected
+                    ? scheme.onPrimaryContainer
+                    : scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _methodCard(
@@ -209,18 +276,20 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
             Icon(
               icon,
               size: 20,
-              color: selected ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
+              color: selected
+                  ? scheme.onPrimaryContainer
+                  : scheme.onSurfaceVariant,
             ),
             const SizedBox(height: 6),
             Text(
               method.label(context),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: selected
-                        ? scheme.onPrimaryContainer
-                        : scheme.onSurfaceVariant,
-                  ),
+                fontWeight: FontWeight.w600,
+                color: selected
+                    ? scheme.onPrimaryContainer
+                    : scheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -234,6 +303,10 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
     final scheme = theme.colorScheme;
     final user = ref.watch(authControllerProvider).user;
     final isLast = _step == _stepCount - 1;
+    final displayStepCount = _individual ? 3 : _stepCount;
+    final displayStepIndex = _individual
+        ? (_step <= 0 ? 0 : (_step == 3 ? 1 : 2))
+        : _step;
     return Scaffold(
       appBar: AppBar(
         title: Text(context.tr('seller.openStoreTitle')),
@@ -279,76 +352,111 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
                   const SizedBox(height: 24),
 
                   if (_step == 0) ...[
-                    Center(
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 44,
-                            backgroundColor: scheme.secondaryContainer,
-                            backgroundImage: _logoUploadedUrl != null
-                                ? NetworkImage(_logoUploadedUrl!)
-                                : null,
-                            child: _logoUploadedUrl == null
-                                ? Icon(
-                                    Icons.storefront_outlined,
-                                    size: 32,
-                                    color: scheme.primary,
-                                  )
-                                : null,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _typeCard(
+                            scheme,
+                            true,
+                            context.tr('seller.individual'),
+                            Icons.person_outline,
                           ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: InkWell(
-                              onTap: _pickLogo,
-                              customBorder: const CircleBorder(),
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: scheme.primary,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: _uploading
-                                    ? const Padding(
-                                        padding: EdgeInsets.all(8),
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _typeCard(
+                            scheme,
+                            false,
+                            context.tr('seller.business'),
+                            Icons.store_outlined,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      context.tr(
+                        _individual
+                            ? 'seller.individualHint'
+                            : 'seller.businessHint',
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (!_individual) ...[
+                      const SizedBox(height: 16),
+                      Center(
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 44,
+                              backgroundColor: scheme.secondaryContainer,
+                              backgroundImage: _logoUploadedUrl != null
+                                  ? NetworkImage(_logoUploadedUrl!)
+                                  : null,
+                              child: _logoUploadedUrl == null
+                                  ? Icon(
+                                      Icons.storefront_outlined,
+                                      size: 32,
+                                      color: scheme.primary,
+                                    )
+                                  : null,
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: InkWell(
+                                onTap: _pickLogo,
+                                customBorder: const CircleBorder(),
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: scheme.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: _uploading
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(8),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : Icon(
+                                          Icons.camera_alt_outlined,
+                                          size: 16,
+                                          color: scheme.onPrimary,
                                         ),
-                                      )
-                                    : Icon(
-                                        Icons.camera_alt_outlined,
-                                        size: 16,
-                                        color: scheme.onPrimary,
-                                      ),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Center(
-                      child: TextButton(
-                        onPressed: _pickLogo,
-                        child: Text(
-                          _logoUploadedUrl != null
-                              ? context.tr('seller.changeLogo')
-                              : context.tr('seller.addStoreLogoShort'),
-                          style: TextStyle(color: scheme.primary),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    WTextField(
-                      controller: _storeName,
-                      label: context.tr('seller.fieldStoreName'),
-                      hint: context.tr('seller.storeNameHint'),
-                      prefixIcon: Icons.store_outlined,
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.done,
-                    ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: TextButton(
+                          onPressed: _pickLogo,
+                          child: Text(
+                            _logoUploadedUrl != null
+                                ? context.tr('seller.changeLogo')
+                                : context.tr('seller.addStoreLogoShort'),
+                            style: TextStyle(color: scheme.primary),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      WTextField(
+                        controller: _storeName,
+                        label: context.tr('seller.fieldStoreName'),
+                        hint: context.tr('seller.storeNameHint'),
+                        prefixIcon: Icons.store_outlined,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.done,
+                      ),
+                    ],
                   ] else if (_step == 1) ...[
                     WTextField(
                       controller: _aboutStore,
@@ -447,7 +555,8 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
                               ),
                             ],
                           ),
-                          if (_payoutMethod == SellerPayoutMethod.mobileMoney) ...[
+                          if (_payoutMethod ==
+                              SellerPayoutMethod.mobileMoney) ...[
                             const SizedBox(height: 16),
                             WTextField(
                               controller: _payoutProvider,
@@ -478,11 +587,13 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
                     ),
                   ] else ...[
                     _StoreSummary(
-                      storeName: _storeName.text,
-                      about: _aboutStore.text,
-                      country: _country.text,
-                      district: _district.text,
-                      city: _city.text,
+                      storeName: _individual
+                          ? (user?.fullName ?? '')
+                          : _storeName.text,
+                      about: _individual ? '' : _aboutStore.text,
+                      country: _individual ? '' : _country.text,
+                      district: _individual ? '' : _district.text,
+                      city: _individual ? '' : _city.text,
                     ),
                   ],
 
@@ -535,7 +646,7 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  WStepBars(count: _stepCount, index: _step),
+                  WStepBars(count: displayStepCount, index: displayStepIndex),
                 ],
               ),
             ),
@@ -594,9 +705,12 @@ class _StoreSummary extends StatelessWidget {
               context.tr('seller.aboutSummary'),
               about,
             ),
-          _summaryRow(theme, scheme, context.tr('seller.country'), country),
-          _summaryRow(theme, scheme, context.tr('seller.district'), district),
-          _summaryRow(theme, scheme, context.tr('seller.city'), city),
+          if (country.trim().isNotEmpty)
+            _summaryRow(theme, scheme, context.tr('seller.country'), country),
+          if (district.trim().isNotEmpty)
+            _summaryRow(theme, scheme, context.tr('seller.district'), district),
+          if (city.trim().isNotEmpty)
+            _summaryRow(theme, scheme, context.tr('seller.city'), city),
         ],
       ),
     );

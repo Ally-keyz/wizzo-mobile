@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +14,11 @@ import '../providers/auth_provider.dart';
 /// Step-by-step seller sign-up (2 fields per step) plus email verification,
 /// mirroring the web `/sign-up/seller` wizard.
 class SellerSignUpScreen extends ConsumerStatefulWidget {
-  const SellerSignUpScreen({super.key});
+  const SellerSignUpScreen({super.key, this.individual = false});
+
+  /// Opened from the "individual trader" choice, skipping the storefront
+  /// details. The account type can still be switched on the first step.
+  final bool individual;
 
   @override
   ConsumerState<SellerSignUpScreen> createState() => _SellerSignUpScreenState();
@@ -37,9 +41,16 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
   int _step = 0;
   bool _busy = false;
   bool _showPassword = false;
+  bool _individual = false;
   String? _error;
   int _resendIn = 0;
   Timer? _resendTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _individual = widget.individual;
+  }
 
   @override
   void dispose() {
@@ -103,11 +114,12 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
             fullName: _fullName.text,
             email: _email.text,
             password: _password.text,
-            storeName: _storeName.text,
-            aboutStore: _aboutStore.text,
-            country: _country.text,
-            district: _district.text,
-            city: _city.text,
+            sellerType: _individual ? 'individual' : 'business',
+            storeName: _individual ? _fullName.text.trim() : _storeName.text,
+            aboutStore: _individual ? null : _aboutStore.text,
+            country: _individual ? null : _country.text,
+            district: _individual ? null : _district.text,
+            city: _individual ? null : _city.text,
           );
       if (!mounted) return;
       setState(() {
@@ -154,9 +166,7 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
       setState(() => _busy = false);
       _startResendTimer();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.tr('common.errors.codeResent')),
-        ),
+        SnackBar(content: Text(context.tr('common.errors.codeResent'))),
       );
     } catch (e) {
       if (mounted) {
@@ -202,6 +212,12 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
       setState(() => _error = error);
       return;
     }
+    if (_step == 1 && _individual) {
+      // Individual traders have no storefront details, so account creation
+      // starts right after the password step.
+      _createStore();
+      return;
+    }
     setState(() {
       _error = null;
       _step += 1;
@@ -209,6 +225,13 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
   }
 
   void _back() {
+    if (_step == 5 && _individual) {
+      setState(() {
+        _error = null;
+        _step = 1;
+      });
+      return;
+    }
     if (_step > 0) {
       setState(() {
         _error = null;
@@ -219,17 +242,73 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
     }
   }
 
-  String get _buttonLabel => switch (_step) {
-    4 => context.tr('auth.seller.createStore'),
-    5 => context.tr('auth.seller.verifyEmail'),
-    _ => context.tr('common.continueLabel'),
-  };
+  String get _buttonLabel {
+    if (_step == 1 && _individual) {
+      return context.tr('auth.seller.createAccount');
+    }
+    return switch (_step) {
+      4 => context.tr('auth.seller.createStore'),
+      5 => context.tr('auth.seller.verifyEmail'),
+      _ => context.tr('common.continueLabel'),
+    };
+  }
+
+  Widget _typeCard(
+    ColorScheme scheme,
+    bool individual,
+    String label,
+    IconData icon,
+  ) {
+    final selected = _individual == individual;
+    return InkWell(
+      onTap: () => setState(() {
+        _individual = individual;
+        _error = null;
+      }),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+        decoration: BoxDecoration(
+          color: selected ? scheme.primaryContainer : scheme.surface,
+          border: Border.all(
+            color: selected ? scheme.primary : scheme.outlineVariant,
+            width: 1.5,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: selected
+                  ? scheme.onPrimaryContainer
+                  : scheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: selected
+                    ? scheme.onPrimaryContainer
+                    : scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isLast = _step == 5;
+    final displayStepCount = _individual ? 3 : _stepCount;
+    final displayStepIndex = _individual && _step > 1 ? 2 : _step;
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -262,6 +341,8 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
                       Text(
                         _step == 5
                             ? context.tr('auth.seller.verifySubtitle')
+                            : _individual
+                            ? context.tr('auth.seller.individualSubtitle')
                             : context.tr('auth.seller.subtitle'),
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -299,6 +380,39 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
                       ],
 
                       if (_step == 0) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _typeCard(
+                                scheme,
+                                true,
+                                context.tr('auth.seller.individual'),
+                                Icons.person_outline,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _typeCard(
+                                scheme,
+                                false,
+                                context.tr('auth.seller.business'),
+                                Icons.store_outlined,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          context.tr(
+                            _individual
+                                ? 'auth.seller.individualHint'
+                                : 'auth.seller.businessHint',
+                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         WTextField(
                           controller: _fullName,
                           label: context.tr('common.fullName'),
@@ -490,7 +604,10 @@ class _SellerSignUpScreenState extends ConsumerState<SellerSignUpScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      WStepBars(count: _stepCount, index: _step),
+                      WStepBars(
+                        count: displayStepCount,
+                        index: displayStepIndex,
+                      ),
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,

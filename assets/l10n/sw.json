@@ -128,7 +128,9 @@
       "customer": "Mimi ni mnunuzi",
       "customerDesc": "Nunua bidhaa kutoka kwa wauzaji waliohakikiwa kote Rwanda.",
       "seller": "Mimi ni muuzaji",
-      "sellerDesc": "Fungua duka lako na uanze kuuza kwa wateja."
+      "sellerDesc": "Fungua duka lako na uanze kuuza kwa wateja.",
+      "individual": "Mimi ni mfanyabiashara binafsi",
+      "individualDesc": "Uza kwa jina lako mwenyewe bila kufungua duka."
     },
     "seller": {
       "title": "Fungua Duka Lako",
@@ -136,7 +138,13 @@
       "verifySubtitle": "Hatua moja ya mwisho — thibitisha barua pepe yako",
       "createStore": "Fungua Duka",
       "verifyEmail": "Thibitisha Barua Pepe",
-      "weSentCode": "Tumetuma nambari ya tarakimu 6 kwa {email}."
+      "weSentCode": "Tumetuma nambari ya tarakimu 6 kwa {email}.",
+      "individual": "Mfanyabiashara binafsi",
+      "business": "Duka la biashara",
+      "individualHint": "Duka halihitajiki — utauza kwa jina lako mwenyewe.",
+      "businessHint": "Unda duka la biashara yako.",
+      "createAccount": "Unda akaunti",
+      "individualSubtitle": "Uza kwa jina lako mwenyewe — duka halihitajiki."
     },
     "signIn": {
       "welcomeBack": "Karibu tena",
@@ -368,7 +376,7 @@
         "name": "Google Pay",
         "desc": "Lipa kwa kutumia akaunti yako ya Google",
         "payButton": "Lipa kwa Google Pay",
-        "redirect": "Dirisha la Google Pay litafunguka ili uthibitishe malipo yako."
+        "redirect": "Utaendelea kwenye ukurasa salama wa malipo ya Google Pay kwenye kivinjari chako."
       },
       "applePay": {
         "name": "Apple Pay",
@@ -409,7 +417,9 @@
     "chatWithSellers": "Soga na wauzaji",
     "chatSheetTitle": "Soga na muuzaji",
     "chatSheetHint": "Una swali kuhusu bidhaa? Chagua duka ili kuanza kusoga.",
-    "storeItemCount": "Bidhaa {count}"
+    "storeItemCount": "Bidhaa {count}",
+    "postalCodeField": "Msimbo wa posta",
+    "postalCodeHint": "mf. 00100"
   },
   "city": {
     "chooseCity": "Chagua jiji lako",
@@ -1133,7 +1143,11 @@
     "addSecondHandProduct": "Ongeza bidhaa ya mkono wa pili",
     "paypalEmail": "Barua pepe ya PayPal",
     "paypalEmailHint": "wewe@mfano.com",
-    "errorPaypalEmailInvalid": "Weka barua pepe iliyounganishwa na akaunti yako ya PayPal."
+    "errorPaypalEmailInvalid": "Weka barua pepe iliyounganishwa na akaunti yako ya PayPal.",
+    "individual": "Mfanyabiashara binafsi",
+    "business": "Duka la biashara",
+    "individualHint": "Uza kwa jina lako mwenyewe. Hakuna nembo au jina la duka linalohitajika.",
+    "businessHint": "Unda duka lenye jina na nembo yako."
   },
   "sellers": {
     "attributionCarto": "© wachangiaji wa OpenStreetMap © CARTO",

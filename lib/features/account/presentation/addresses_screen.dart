@@ -289,6 +289,7 @@ class _AddressCard extends StatelessWidget {
     final theme = Theme.of(context);
     final line = [
       address.street,
+      address.postalCode,
       address.city,
       address.country,
     ].where((e) => e != null && e.trim().isNotEmpty).join(', ');
@@ -439,6 +440,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
   final _country = TextEditingController();
   final _city = TextEditingController();
   final _street = TextEditingController();
+  final _postal = TextEditingController();
 
   bool _saving = false;
   bool _locating = false;
@@ -470,6 +472,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
         ? address!.city!
         : (savedCityName.isNotEmpty ? savedCityName : AppConfig.defaultCity);
     _street.text = address?.street ?? '';
+    _postal.text = address?.postalCode ?? '';
     final existing =
         ref.read(addressesProvider).value?.addresses ?? const <Address>[];
     _isDefault = address?.isDefault ?? existing.isEmpty;
@@ -483,6 +486,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
     _country.dispose();
     _city.dispose();
     _street.dispose();
+    _postal.dispose();
     super.dispose();
   }
 
@@ -551,6 +555,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
     final country = _country.text.trim();
     final city = _city.text.trim();
     final street = _street.text.trim();
+    final postal = _postal.text.trim();
 
     if (name.length < 2 || city.isEmpty || country.isEmpty) {
       _toast(context.tr('addresses.requiredFields'));
@@ -570,6 +575,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
         'country': country,
         'city': city,
         'street': street,
+        'postalCode': postal,
         'isDefault': _isDefault,
         if (_latitude != null && _longitude != null)
           'location': {'longitude': _longitude, 'latitude': _latitude},
@@ -669,6 +675,14 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
               label: context.tr('checkout.streetField'),
               hint: context.tr('checkout.streetHint'),
               textCapitalization: TextCapitalization.words,
+            ),
+            const SizedBox(height: 12),
+            WTextField(
+              controller: _postal,
+              label: context.tr('checkout.postalCodeField'),
+              hint: context.tr('checkout.postalCodeHint'),
+              keyboardType: TextInputType.streetAddress,
+              textCapitalization: TextCapitalization.characters,
             ),
             const SizedBox(height: 12),
             SizedBox(

@@ -78,36 +78,38 @@ class ProductInput {
   final String? supplierItemId;
 
   Map<String, dynamic> toJson({bool isUpdate = false}) => {
-        'name': name.trim(),
-        'categoryId': categoryId,
-        if (subcategoryId != null && subcategoryId!.trim().isNotEmpty)
-          'subcategoryId': subcategoryId,
-        'description': description.trim(),
-        'price': price,
-        'currency': currency,
-        if (discountPrice != null && discountPrice! > 0)
-          'discountPrice': discountPrice,
-        if (discountEndsAt != null) 'discountEndsAt': discountEndsAt!.toIso8601String(),
-        if (isUpdate && discountPrice != null && discountPrice! <= 0) 'discountPrice': null,
-        'stock': stock,
-        'images': images,
-        if (brand != null && brand!.trim().isNotEmpty) 'brand': brand!.trim(),
-        'condition': condition,
-        'listingType': listingType,
-        if (isUpdate || sizeOptions.isNotEmpty) 'sizeOptions': sizeOptions,
-        if (isUpdate || colorOptions.isNotEmpty) 'colorOptions': colorOptions,
-        if (isUpdate || colorVariants.isNotEmpty)
-          'colorVariants': colorVariants
-              .map((c) => {'name': c.name.trim(), 'image': c.image})
-              .toList(),
-        if (deliveryOptions.isNotEmpty) 'deliveryOptions': deliveryOptions,
-        if (tags.isNotEmpty) 'tags': tags,
-        if (video != null && video!.trim().isNotEmpty) 'video': video!.trim(),
-        if (!isUpdate && supplierId != null && supplierId!.isNotEmpty)
-          'supplierId': supplierId,
-        if (!isUpdate && supplierItemId != null && supplierItemId!.isNotEmpty)
-          'supplierItemId': supplierItemId,
-      };
+    'name': name.trim(),
+    'categoryId': categoryId,
+    if (subcategoryId != null && subcategoryId!.trim().isNotEmpty)
+      'subcategoryId': subcategoryId,
+    'description': description.trim(),
+    'price': price,
+    'currency': currency,
+    if (discountPrice != null && discountPrice! > 0)
+      'discountPrice': discountPrice,
+    if (discountEndsAt != null)
+      'discountEndsAt': discountEndsAt!.toIso8601String(),
+    if (isUpdate && discountPrice != null && discountPrice! <= 0)
+      'discountPrice': null,
+    'stock': stock,
+    'images': images,
+    if (brand != null && brand!.trim().isNotEmpty) 'brand': brand!.trim(),
+    'condition': condition,
+    'listingType': listingType,
+    if (isUpdate || sizeOptions.isNotEmpty) 'sizeOptions': sizeOptions,
+    if (isUpdate || colorOptions.isNotEmpty) 'colorOptions': colorOptions,
+    if (isUpdate || colorVariants.isNotEmpty)
+      'colorVariants': colorVariants
+          .map((c) => {'name': c.name.trim(), 'image': c.image})
+          .toList(),
+    if (deliveryOptions.isNotEmpty) 'deliveryOptions': deliveryOptions,
+    if (tags.isNotEmpty) 'tags': tags,
+    if (video != null && video!.trim().isNotEmpty) 'video': video!.trim(),
+    if (!isUpdate && supplierId != null && supplierId!.isNotEmpty)
+      'supplierId': supplierId,
+    if (!isUpdate && supplierItemId != null && supplierItemId!.isNotEmpty)
+      'supplierItemId': supplierItemId,
+  };
 }
 
 /// All seller dashboard API calls.
@@ -120,6 +122,7 @@ class SellerRepository {
   // -- Store ----------------------------------------------------------------
   Future<MyStore> registerStore({
     required String storeName,
+    String? sellerType,
     String? aboutStore,
     String? logoUrl,
     String? country,
@@ -130,20 +133,24 @@ class SellerRepository {
     StorePayout? payout,
   }) async {
     final hasPayout = payout?.hasDetails == true;
-    final data = await _api.post('/sellers/register', body: {
-      'storeName': storeName.trim(),
-      if (aboutStore != null && aboutStore.trim().isNotEmpty)
-        'aboutStore': aboutStore.trim(),
-      if (logoUrl != null && logoUrl.isNotEmpty) 'logoUrl': logoUrl,
-      if (country != null && country.trim().isNotEmpty)
-        'country': country.trim(),
-      if (district != null && district.trim().isNotEmpty)
-        'district': district.trim(),
-      if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
-      if (longitude != null) 'longitude': longitude,
-      if (latitude != null) 'latitude': latitude,
-      if (hasPayout) 'payout': payout!.toJson(),
-    });
+    final data = await _api.post(
+      '/sellers/register',
+      body: {
+        'storeName': storeName.trim(),
+        'sellerType': sellerType ?? 'business',
+        if (aboutStore != null && aboutStore.trim().isNotEmpty)
+          'aboutStore': aboutStore.trim(),
+        if (logoUrl != null && logoUrl.isNotEmpty) 'logoUrl': logoUrl,
+        if (country != null && country.trim().isNotEmpty)
+          'country': country.trim(),
+        if (district != null && district.trim().isNotEmpty)
+          'district': district.trim(),
+        if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
+        if (longitude != null) 'longitude': longitude,
+        if (latitude != null) 'latitude': latitude,
+        if (hasPayout) 'payout': payout!.toJson(),
+      },
+    );
     return MyStore.fromApi(_unwrap(data));
   }
 
@@ -164,14 +171,20 @@ class SellerRepository {
   }
 
   Future<void> updatePaymentAccounts(List<PaymentAccount> accounts) async {
-    await _api.patch('/sellers/me/payment-accounts', body: {
-      'paymentAccounts': accounts.take(10).map((a) => a.toJson()).toList(),
-    });
+    await _api.patch(
+      '/sellers/me/payment-accounts',
+      body: {
+        'paymentAccounts': accounts.take(10).map((a) => a.toJson()).toList(),
+      },
+    );
   }
 
   // -- Products ---------------------------------------------------------------
   Future<List<Product>> myProducts() async {
-    final data = await _api.get('/products/mine', query: {'page': '1', 'limit': '100'});
+    final data = await _api.get(
+      '/products/mine',
+      query: {'page': '1', 'limit': '100'},
+    );
     final items = _extractList(data);
     return items.map(Product.fromApi).toList();
   }
@@ -182,7 +195,10 @@ class SellerRepository {
   }
 
   Future<Product> updateProduct(String id, ProductInput input) async {
-    final data = await _api.patch('/products/$id', body: input.toJson(isUpdate: true));
+    final data = await _api.patch(
+      '/products/$id',
+      body: input.toJson(isUpdate: true),
+    );
     return Product.fromApi(_unwrap(data));
   }
 
@@ -210,7 +226,10 @@ class SellerRepository {
 
   // -- Orders ---------------------------------------------------------------
   Future<List<SellerOrder>> sellerOrders() async {
-    final data = await _api.get('/orders/seller', query: {'page': '1', 'limit': '100'});
+    final data = await _api.get(
+      '/orders/seller',
+      query: {'page': '1', 'limit': '100'},
+    );
     final items = _extractList(data);
     return items.map(SellerOrder.fromApi).toList();
   }
@@ -232,11 +251,18 @@ class SellerRepository {
     return const [];
   }
 
-  Future<void> updateOrderStatus(String id, String status, {String? note}) async {
-    await _api.patch('/orders/$id/status', body: {
-      'status': status,
-      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
-    });
+  Future<void> updateOrderStatus(
+    String id,
+    String status, {
+    String? note,
+  }) async {
+    await _api.patch(
+      '/orders/$id/status',
+      body: {
+        'status': status,
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      },
+    );
   }
 
   Future<void> confirmPayment(String id) async {
@@ -244,9 +270,10 @@ class SellerRepository {
   }
 
   Future<void> rejectPayment(String id, {String? note}) async {
-    await _api.post('/orders/$id/reject-payment', body: {
-      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
-    });
+    await _api.post(
+      '/orders/$id/reject-payment',
+      body: {if (note != null && note.trim().isNotEmpty) 'note': note.trim()},
+    );
   }
 
   // -- Uploads ---------------------------------------------------------------
@@ -282,7 +309,13 @@ class SellerRepository {
   static List<dynamic> _extractList(dynamic data) {
     if (data is List) return data;
     if (data is Map<String, dynamic>) {
-      for (final key in ['items', 'orders', 'products', 'payments', 'reviews']) {
+      for (final key in [
+        'items',
+        'orders',
+        'products',
+        'payments',
+        'reviews',
+      ]) {
         if (data[key] is List) return data[key] as List;
       }
       final nested = data['data'];
