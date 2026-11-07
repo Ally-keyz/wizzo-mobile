@@ -8,8 +8,8 @@ enum DeliveryKind {
 
   /// Value sent to the backend checkout endpoint.
   String get apiValue => switch (this) {
-    DeliveryKind.standard => 'delivery',
-    DeliveryKind.express => 'delivery',
+    DeliveryKind.standard => 'standard',
+    DeliveryKind.express => 'express',
     DeliveryKind.pickup => 'pickup',
   };
 }
