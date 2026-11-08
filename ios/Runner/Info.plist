@@ -86,5 +86,11 @@
 		     Google login is reintroduced. -->
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
+		<!-- Lets the system wake the app for silent Firebase data messages.
+		     Visible notification payloads are displayed even without this. -->
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>remote-notification</string>
+		</array>
 	</dict>
 </plist>

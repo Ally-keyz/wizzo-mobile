@@ -19,7 +19,7 @@ Store listing **app name: KATISHA** (owner's choice), app label stays "Wizzo Mar
 | Permissions | INTERNET + ACCESS_NETWORK_STATE + WAKE_LOCK (transitive), no others | ✔ minimal |
 | Cleartext traffic | blocked (network_security_config) | ✔ |
 | Backup rules | auth prefs excluded on Android ≤11 (backup_rules) and 12+ (data_extraction_rules) | ✔ |
-| Firebase / FCM | none | ✔ not required |
+| Firebase / FCM | Firebase Cloud Messaging for device notifications (configured via `google-services.json` / `GoogleService-Info.plist` + server service account) | ✔ code ready; credentials required |
 | Release signing | `key.properties` + `wizzo-upload.jks` (both gitignored); signed AAB uses upload key `CN=Wizzo Market, O=Wizzo`, 4096-bit RSA, valid to 2054 | ✔ |
 | App Bundle | `build/app/outputs/bundle/release/app-release.aab` (59.76 MB, 62,662,593 bytes) | ✔ built + verified |
 | Manifest in AAB | package correct, vc=44, vn=1.4.12, target=36, non-debuggable, label "Wizzo Market" | ✔ |
@@ -67,10 +67,10 @@ Data table ─ category / type / collected / shared / encrypted / deleted:
 | Location | **none from device GPS** (no GPS permission). City/country defaults to Kigali; user may pick a city; optional lat/lng only if an address is geocoded to send that address | limited | No | No | ✔ | On request |
 | Photos & videos | Only images/videos the user explicitly picks (image_picker) | ✔ | No | No (Cloudinary) | ✔ | On request |
 | App activity | Search terms (only forwarded to OSM/photon autocomplete, not stored by app) | ✘ (forwarded only) | — | OSM — do not collect | ✔ | — |
-| Device/other identifiers | **none** (no analytics, no crashreporting, no ad SDKs, no FCM) | ✘ | — | — | — | — |
+| Device/other identifiers | **FCM registration token** (used only to deliver app notifications; no analytics, crash reporting or ad SDKs) | ✔ | ✔ (for notifications) | Google Firebase | ✔ HTTPS | On logout / uninstall |
 | Health / contacts / calendar / biometrics | none | ✘ | — | — | — | — |
 
-Third-party SDKs present: `google_sign_in` (Google account), Cloudinary (seller image upload, server-signed — `upload_service.dart`), socket.io (chat/notifications), OpenStreetMap photon/nominatim (place search), open.er-api (currency rates), MapTiler/Carto (map tiles). All network traffic HTTPs (cleartext blocked).
+Third-party SDKs present: `google_sign_in` (Google account), Firebase Cloud Messaging (device notifications), Cloudinary (seller image upload, server-signed — `upload_service.dart`), socket.io (chat/notifications), OpenStreetMap photon/nominatim (place search), open.er-api (currency rates), MapTiler/Carto (map tiles). All network traffic HTTPs (cleartext blocked). See [`PUSH_NOTIFICATIONS.md`](PUSH_NOTIFICATIONS.md) for the Firebase setup.
 
 Security/ops details to state in the console:
 - Data encryption: in transit (HTTPS). At rest: auth token stored in `shared_preferences` (plaintext XML) but **excluded from Android backups** on both Android ≤11 and 12+; recommend migrating auth token to `flutter_secure_storage` (Keystore) as a future hardening item — not blocking release.
@@ -125,6 +125,7 @@ in `pubspec.yaml` (`1.4.12+46` → versionCode 46). Change name/features → bum
 - Open items (non-code blockers):
   - Privacy policy URL (owner).
   - Supply Google OAuth client IDs + MapTiler key for the *final* release build (owner/SI).
+  - Supply Firebase credentials before device notifications work: `google-services.json` (Android), `GoogleService-Info.plist` + APNs key (iOS), and the server's `FIREBASE_PROJECT_ID` / `FIREBASE_PRIVATE_KEY` / `FIREBASE_CLIENT_EMAIL` — see [`PUSH_NOTIFICATIONS.md`](PUSH_NOTIFICATIONS.md).
   - Confirm account/data deletion endpoint exists on backend (owner/backend) or document manual deletion.
   - Confirm they opted for Google Play App Signing (recommended).
 - Security notes: no secrets are in the repo; keystore + key.properties must stay local/backed up; auth token is not encrypted at rest (recommended: `flutter_secure_storage` follow-up).

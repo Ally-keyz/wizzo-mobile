@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13+ requires an explicit runtime permission to show device
+         notifications. Firebase Messaging requests it on first sign-in. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Device location for nearby sellers + delivery area detection. The OS
          shows its own permission prompt the first time we ask. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -45,6 +48,14 @@
         <meta-data
             android:name="com.google.android.gms.wallet.api.enabled"
             android:value="true" />
+        <!-- Route Firebase notification payloads into the channel the app
+             creates on first launch. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="wizzo_new_products" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_launcher_foreground" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

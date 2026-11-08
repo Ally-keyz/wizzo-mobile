@@ -49,6 +49,7 @@ app.*.map.json
 
 # Firebase config (contains project ids/keys) — provide via key.properties-style handoff
 /android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
 
 # Release signing credentials and keystore — NEVER commit these
 /android/key.properties

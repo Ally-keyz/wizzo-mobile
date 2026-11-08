@@ -9,6 +9,7 @@ import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/cookie_consent.dart';
 import 'features/messages/providers/chat_providers.dart';
+import 'features/notifications/data/push_notification_lifecycle.dart';
 import 'features/settings/theme_provider.dart';
 
 class WizzoApp extends ConsumerWidget {
@@ -29,6 +30,10 @@ class WizzoApp extends ConsumerWidget {
 
     // Keeps the chat socket alive and connected while the user is signed in.
     ref.watch(chatSocketLifecycleProvider);
+
+    // Initializes Firebase Messaging and registers this device for push
+    // notifications whenever a user signs in.
+    ref.watch(pushNotificationLifecycleProvider);
 
     // Rebuilds the whole tree when the display currency changes so every
     // price switches instantly (like the web re-rendering on store change).

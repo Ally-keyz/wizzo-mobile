@@ -8,6 +8,7 @@ import '../../../core/storage/app_prefs.dart';
 import '../../seller/data/seller_repository.dart';
 import '../../seller/models/store_payout.dart';
 import '../../seller/providers/seller_providers.dart';
+import '../../notifications/data/push_notification_service.dart';
 import '../data/auth_repository.dart';
 import '../models/user.dart';
 
@@ -218,6 +219,9 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    // Remove this device from the signed-in account before the auth token is
+    // cleared, so the server stops pushing to it.
+    await ref.read(pushNotificationServiceProvider).unregisterForUser();
     await ref.read(authRepositoryProvider).logout();
     await _signOutSilently();
   }

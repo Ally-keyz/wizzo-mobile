@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../currency/currency_controller.dart';
+import 'navigator_keys.dart';
 import '../../features/account/presentation/about_screen.dart';
 import '../../features/account/presentation/account_screen.dart';
 import '../../features/account/presentation/addresses_screen.dart';
@@ -67,6 +68,7 @@ final appRouteObserver = RouteObserver<ModalRoute<void>>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final goRouter = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/home',
     observers: [appRouteObserver],
     // Rebuild the current route when the display currency (or its rates)

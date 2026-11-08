@@ -44,6 +44,7 @@ class ProductInput {
     this.video,
     this.supplierId,
     this.supplierItemId,
+    this.status,
   });
 
   final String name;
@@ -77,6 +78,10 @@ class ProductInput {
   final String? supplierId;
   final String? supplierItemId;
 
+  /// `draft` keeps a listing private; `active` publishes it immediately. Sent
+  /// on both create and update so a draft can be published later.
+  final String? status;
+
   Map<String, dynamic> toJson({bool isUpdate = false}) => {
     'name': name.trim(),
     'categoryId': categoryId,
@@ -109,6 +114,7 @@ class ProductInput {
       'supplierId': supplierId,
     if (!isUpdate && supplierItemId != null && supplierItemId!.isNotEmpty)
       'supplierItemId': supplierItemId,
+    if (status != null && status!.isNotEmpty) 'status': status,
   };
 }
 

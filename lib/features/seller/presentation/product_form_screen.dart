@@ -441,6 +441,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       video: _video,
       supplierId: isEdit ? null : widget.dropship?.supplierId,
       supplierItemId: isEdit ? null : widget.dropship?.item.id,
+      // Publishing a draft is an edit, so the status must be sent on update
+      // too — otherwise "Save changes" would leave the listing private.
+      status: draft ? 'draft' : 'active',
     );
     try {
       final repo = ref.read(sellerRepositoryProvider);
@@ -452,7 +455,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         final created = await repo.createProduct(input);
         newId = created.id;
       }
-      if (draft) {
+      if (draft && isEdit) {
         try {
           await repo.updateProductStatus(newId, 'draft');
         } catch (_) {}

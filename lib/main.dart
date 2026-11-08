@@ -9,6 +9,7 @@ import 'core/currency/currency_controller.dart';
 import 'core/network/api_exception.dart';
 import 'core/storage/app_prefs.dart';
 import 'core/utils/crash_logger.dart';
+import 'features/notifications/data/push_notification_service.dart';
 
 /// Riverpod 3 retries failed providers automatically. Client errors (400, 401,
 /// 403, 404...) can never succeed on a retry, and retrying them keeps screens
@@ -29,6 +30,10 @@ Future<void> main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
       CrashLogger.init();
+      // Firebase is optional; this is a no-op when no google-services config
+      // is bundled. Doing it before runApp lets a notification tap that
+      // launched the app reach the router.
+      await PushNotificationService.bootstrap();
       final langCode = await AppPrefs.language();
       await currencyController.init();
       runApp(

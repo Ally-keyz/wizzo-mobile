@@ -82,7 +82,8 @@ class AppNotification {
         ? NotificationType.order
         : typeRaw.contains('chat') || typeRaw.contains('message')
         ? NotificationType.chat
-        : typeRaw.contains('promo') ||
+        : typeRaw == 'new_product' ||
+              typeRaw.contains('promo') ||
               typeRaw.contains('deal') ||
               typeRaw.contains('price')
         ? NotificationType.promo
