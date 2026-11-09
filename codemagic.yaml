@@ -7,6 +7,9 @@
 #   APP_STORE_CONNECT_ISSUER_ID     the issuer ID shown in App Store Connect
 #   CERTIFICATE_PRIVATE_KEY         PEM private key used to create/import the
 #                                   Apple Distribution certificate
+#   IOS_FIREBASE_SECRET             base64 of ios/Runner/GoogleService-Info.plist
+#                                   (gitignored; injected at build time — see
+#                                   CODEMAGIC_IOS.md §2)
 #
 # The App Store Connect API key must have App Manager rights, and an app record
 # for `app.wizzo.wizzoMarket` must already exist in App Store Connect.
@@ -43,6 +46,26 @@ workflows:
         - $FLUTTER_ROOT/.pub-cache
         - $HOME/Library/Caches/CocoaPods
     scripts:
+      - name: Load Firebase configuration
+        # GoogleService-Info.plist is gitignored (it holds the Firebase project
+        # API key) and is injected here from the base64-encoded
+        # IOS_FIREBASE_SECRET environment variable before the project compiles.
+        # The plist is wired into the Xcode project's "Copy Bundle Resources"
+        # phase, so this file is what ends up in the app bundle.
+        script: |
+          set -e
+          if [ -z "${IOS_FIREBASE_SECRET:-}" ]; then
+            echo "ERROR: IOS_FIREBASE_SECRET is empty."
+            echo "Add the base64 of ios/Runner/GoogleService-Info.plist to the 'apple store' Codemagic env group."
+            exit 1
+          fi
+          mkdir -p ios/Runner
+          printf '%s' "$IOS_FIREBASE_SECRET" \
+            | python3 -c 'import base64, sys; sys.stdout.buffer.write(base64.b64decode(sys.stdin.buffer.read()))' \
+            > ios/Runner/GoogleService-Info.plist
+          plutil -lint ios/Runner/GoogleService-Info.plist
+          echo "Wrote ios/Runner/GoogleService-Info.plist ($(wc -c < ios/Runner/GoogleService-Info.plist) bytes)."
+
       - name: Get Flutter packages
         script: flutter pub get
 

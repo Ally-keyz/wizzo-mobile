@@ -73,6 +73,7 @@ Codemagic → your app → Environment variables → create/select the group
 | `APP_STORE_CONNECT_KEY_IDENTIFIER` | Key ID from App Store Connect | no |
 | `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID from App Store Connect | no |
 | `CERTIFICATE_PRIVATE_KEY` | PEM private key used for the Apple Distribution certificate | yes |
+| `IOS_FIREBASE_SECRET` | base64 of `ios/Runner/GoogleService-Info.plist` | yes |
 
 `CERTIFICATE_PRIVATE_KEY` is required so Codemagic can create (or re-use) the
 Apple Distribution certificate for the team. Generate one with:
@@ -82,6 +83,22 @@ ssh-keygen -t rsa -b 2048 -m PEM -f ios_distribution_private_key -q -N ""
 ```
 
 Keep the `.p8` and the private key safe and never commit them.
+
+`IOS_FIREBASE_SECRET` feeds the gitignored Firebase config into the build. To
+make it, run this **on macOS** (Codemagic decodes the same format):
+
+```bash
+base64 -i ios/Runner/GoogleService-Info.plist -o encoded_plist.txt
+```
+
+then paste the **entire** contents of `encoded_plist.txt` (including any line
+wraps) into the `IOS_FIREBASE_SECRET` field. On Windows use Git Bash/WSL
+(`base64 -i` works there too) or PowerShell
+`[Convert]::ToBase64String([IO.File]::ReadAllBytes("..."))`. The workflow decodes
+it into `ios/Runner/GoogleService-Info.plist` and validates it with `plutil`
+before compiling. The plist is already registered in
+`ios/Runner.xcodeproj/project.pbxproj` (Runner → Copy Bundle Resources), so the
+injected file is what lands in the app bundle.
 
 > Alternatively you can store the certificate and App Store provisioning
 > profile under **Code signing identities** and use Codemagic's `ios_signing`
@@ -107,6 +124,11 @@ in the `apple store` group.
 
 Codemagic → application → **Start new build** → branch/commit → workflow
 **Wizzo Market iOS – App Store**.
+
+Before the steps below, the workflow decodes `IOS_FIREBASE_SECRET` into
+`ios/Runner/GoogleService-Info.plist` (and validates it with `plutil`), failing
+fast when the variable is missing — this is what puts the gitignored Firebase
+config into the app bundle.
 
 The workflow:
 
@@ -193,6 +215,8 @@ for a new store version, the name (`1.5.0+45`).
 | `No Apple Distribution identity in the keychain` | `keychain add-certificates` did not import a distribution certificate — `CERTIFICATE_PRIVATE_KEY` is missing or does not match the certificate in the `apple store` group. |
 | `PROVISIONING_PROFILE_SPECIFIER is empty` | `xcode-project use-profiles` did not find a downloaded profile for `app.wizzo.wizzoMarket`. Check the "Fetch App Store signing files" output and that the App ID exists. |
 | `Missing value PRIVATE_KEY` / `401` while uploading (not skipped) | The three `APP_STORE_CONNECT_*` values reached the build but Apple rejected them — see the rows above; `publishing.app_store_connect.api_key` must contain the `.p8` **contents**, not a file path. |
+| "Load Firebase configuration" fails: `IOS_FIREBASE_SECRET is empty` | The Firebase plist secret is not set. Add `IOS_FIREBASE_SECRET` (base64 of `ios/Runner/GoogleService-Info.plist`) to the `apple store` group, then rebuild. |
+| Build succeeds but push notifications never arrive | `GoogleService-Info.plist` was not bundled or was invalid. It must be registered under Runner → Copy Bundle Resources (it is in this repo), and `IOS_FIREBASE_SECRET` must decode to a valid plist — check the step's `plutil -lint` output. |
 
 ## 6. After the upload
 
