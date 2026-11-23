@@ -378,7 +378,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   /// Opens the Wizzo WhatsApp community group.
   static const _whatsAppCommunityUrl =
-      'https://chat.whatsapp.com/HEeBCmTxFVKAXLNsU8hbZT?s=cl&p=i&mlu=4&ilr=4';
+      'https://whatsapp.com/channel/0029Vb7FA90HAdNSZFZT9q22';
 
   Future<void> _openWhatsAppCommunity(BuildContext context) async {
     final launched = await launchUrl(

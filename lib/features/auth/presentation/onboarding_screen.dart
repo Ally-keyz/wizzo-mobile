@@ -186,7 +186,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void _showCommunity(BuildContext context) async {
     final launched = await launchUrl(
       Uri.parse(
-          'https://chat.whatsapp.com/HEeBCmTxFVKAXLNsU8hbZT?s=cl&p=i&mlu=4&ilr=4'),
+          'https://whatsapp.com/channel/0029Vb7FA90HAdNSZFZT9q22'),
       mode: LaunchMode.externalApplication,
     );
     if (!launched && context.mounted) {

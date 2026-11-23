@@ -31,7 +31,7 @@ class CurrencyDef {
 const String kBaseCurrency = 'RWF';
 
 const List<CurrencyDef> kCurrencies = [
-  CurrencyDef(code: 'RWF', name: 'Rwandan Franc', symbol: 'FRw', decimals: 0, flagCode: 'rw'),
+  CurrencyDef(code: 'RWF', name: 'Rwandan Franc', symbol: 'FRw', decimals: 2, flagCode: 'rw'),
   CurrencyDef(code: 'USD', name: 'US Dollar', symbol: r'$', decimals: 2, flagCode: 'us'),
   CurrencyDef(code: 'EUR', name: 'Euro', symbol: '€', decimals: 2, flagCode: 'eu'),
   CurrencyDef(code: 'GBP', name: 'British Pound', symbol: '£', decimals: 2, flagCode: 'gb'),

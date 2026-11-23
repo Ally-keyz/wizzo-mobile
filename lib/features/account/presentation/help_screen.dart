@@ -8,7 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/coming_soon_sheet.dart';
 
 const _whatsAppCommunityUrl =
-    'https://chat.whatsapp.com/HEeBCmTxFVKAXLNsU8hbZT?s=cl&p=i&mlu=4&ilr=4';
+    'https://whatsapp.com/channel/0029Vb7FA90HAdNSZFZT9q22';
 
 class HelpScreen extends ConsumerWidget {
   const HelpScreen({super.key});
