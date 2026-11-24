@@ -162,6 +162,7 @@ class Product {
     this.description,
     this.category,
     this.subcategory,
+    this.productType,
     this.seller,
     this.deliveryOptions = const [],
     this.featured = false,
@@ -194,6 +195,8 @@ class Product {
   final String? description;
   final CategoryRef? category;
   final CategoryRef? subcategory;
+  /// Optional third-level category (product type) under the subcategory.
+  final CategoryRef? productType;
   final ProductSeller? seller;
   final List<String> deliveryOptions;
   final bool featured;
@@ -270,6 +273,7 @@ class Product {
       description: resolveString(json['description']),
       category: CategoryRef.fromApi(json['category'] ?? json['categoryId']),
       subcategory: CategoryRef.fromApi(json['subcategory'] ?? json['subcategoryId']),
+      productType: CategoryRef.fromApi(json['productType'] ?? json['productTypeId']),
       seller: ProductSeller.fromPopulated(
         store: _mapOrNull(json['storeId']),
         user: _mapOrNull(json['sellerId']),

@@ -58,8 +58,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   String? _categoryId;
   String? _subcategoryId;
+  String? _productTypeId;
   String? _categoryName;
   String? _subcategoryName;
+  String? _productTypeName;
   String _condition = 'new';
   String _listingType = 'standard';
   String _priceCurrency = kBaseCurrency;
@@ -95,11 +97,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       _discountEndsAt = p.discountEndsAt;
       _categoryId = p.category?.id;
       _subcategoryId = p.subcategory?.id;
+      _productTypeId = p.productType?.id;
       _categoryName = p.category?.name?.trim().isNotEmpty == true
           ? p.category!.name
           : null;
       _subcategoryName = p.subcategory?.name?.trim().isNotEmpty == true
           ? p.subcategory!.name
+          : null;
+      _productTypeName = p.productType?.name?.trim().isNotEmpty == true
+          ? p.productType!.name
           : null;
       _images.addAll(p.images);
       _sizeOptions.addAll(p.sizeOptions);
@@ -244,7 +250,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   void _pickCategory() {
-    showModalBottomSheet<({CategoryNode top, CategoryNode? sub})>(
+    showModalBottomSheet<
+      ({CategoryNode top, CategoryNode? sub, CategoryNode? productType})
+    >(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
@@ -254,12 +262,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       ),
     ).then((selection) {
       if (selection != null) {
-        _applyCategory(selection.top, selection.sub);
+        _applyCategory(selection.top, selection.sub, selection.productType);
       }
     });
   }
 
-  void _applyCategory(CategoryNode? category, CategoryNode? subcategory) {
+  void _applyCategory(
+    CategoryNode? category,
+    CategoryNode? subcategory,
+    CategoryNode? productType,
+  ) {
     if (category == null) return;
     setState(() {
       _categoryId = category.id.isNotEmpty ? category.id : category.slug;
@@ -270,6 +282,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           ? subcategory.id
           : subcategory.slug;
       _subcategoryName = subcategory?.name;
+      _productTypeId = productType == null
+          ? null
+          : productType.id.isNotEmpty
+          ? productType.id
+          : productType.slug;
+      _productTypeName = productType?.name;
     });
   }
 
@@ -340,7 +358,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       typed,
       _priceCurrency,
       currencyController.value.rates,
-    ).round();
+    );
   }
 
   /// Trims a converted amount for the text field: `25000`, `24.5`, `$0.00`.
@@ -418,6 +436,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       name: _name.text,
       categoryId: _categoryId!,
       subcategoryId: _subcategoryId,
+      productTypeId: _productTypeId,
       description: _description.text,
       price: price,
       currency: _priceCurrency,
@@ -761,7 +780,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     border: const OutlineInputBorder(),
                   ),
                   child: Text(
-                    _subcategoryName?.trim().isNotEmpty == true
+                    _productTypeName?.trim().isNotEmpty == true
+                        ? '${_subcategoryName ?? ''} · $_productTypeName'
+                        : _subcategoryName?.trim().isNotEmpty == true
                         ? _subcategoryName!
                         : _categoryName?.trim().isNotEmpty == true
                         ? _categoryName!
@@ -1393,7 +1414,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 }
 
-/// Bottom-sheet category picker (top-level then optional subcategory).
+/// Bottom-sheet category picker: top level → subcategory → optional
+/// third-level product type.
 class _CategoryPickerShell extends ConsumerStatefulWidget {
   const _CategoryPickerShell();
 
@@ -1405,6 +1427,32 @@ class _CategoryPickerShell extends ConsumerStatefulWidget {
 class _CategoryPickerShellState extends ConsumerState<_CategoryPickerShell> {
   CategoryNode? _selected;
   List<CategoryNode>? _subs;
+  CategoryNode? _selectedSub;
+  List<CategoryNode>? _types;
+
+  void _done(
+    CategoryNode top, {
+    CategoryNode? sub,
+    CategoryNode? productType,
+  }) {
+    Navigator.of(context).pop((
+      top: top,
+      sub: sub,
+      productType: productType,
+    ));
+  }
+
+  void _goBack() {
+    setState(() {
+      if (_types != null) {
+        _types = null;
+        _selectedSub = null;
+      } else {
+        _subs = null;
+        _selected = null;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1415,13 +1463,19 @@ class _CategoryPickerShellState extends ConsumerState<_CategoryPickerShell> {
       value: categoriesAsync,
       onRetry: () => ref.invalidate(categoriesProvider),
       builder: (context, categories) {
+        final items = _types ?? _subs ?? categories;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
               child: Text(
-                _subs != null
+                _types != null
+                    ? context.tr(
+                        'seller.productTypeTitle',
+                        namedArgs: {'category': _selectedSub!.name},
+                      )
+                    : _subs != null
                     ? context.tr(
                         'seller.subcategoryTitle',
                         namedArgs: {'category': _selected!.name},
@@ -1436,28 +1490,46 @@ class _CategoryPickerShellState extends ConsumerState<_CategoryPickerShell> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 children: [
-                  for (final category in _subs ?? categories)
+                  if (_types != null)
+                    ListTile(
+                      leading: Icon(Icons.remove_circle_outline, color: scheme.primary),
+                      title: Text(context.tr('seller.noProductType')),
+                      onTap: () => _done(_selected!, sub: _selectedSub),
+                    ),
+                  for (final category in items)
                     ListTile(
                       leading: Icon(
                         category.icon ?? Icons.category_outlined,
                         color: scheme.primary,
                       ),
                       title: Text(category.name),
-                      trailing: category.children.isNotEmpty && _subs != null
+                      trailing: category.children.isNotEmpty && _types == null
                           ? const Icon(Icons.chevron_right, size: 18)
                           : null,
                       onTap: () {
-                        if (_subs == null && category.children.isNotEmpty) {
+                        if (_types == null && category.children.isNotEmpty) {
                           setState(() {
-                            _selected = category;
-                            _subs = category.children;
+                            if (_subs == null) {
+                              _selected = category;
+                              _subs = category.children;
+                            } else {
+                              _selectedSub = category;
+                              _types = category.children;
+                            }
                           });
                           return;
                         }
-                        final sub = _subs == null ? null : category;
-                        Navigator.of(
-                          context,
-                        ).pop((top: _selected ?? category, sub: sub));
+                        if (_subs == null) {
+                          _done(category);
+                        } else if (_types == null) {
+                          _done(_selected!, sub: category);
+                        } else {
+                          _done(
+                            _selected!,
+                            sub: _selectedSub,
+                            productType: category,
+                          );
+                        }
                       },
                     ),
                   if (_subs != null) ...[
@@ -1465,9 +1537,15 @@ class _CategoryPickerShellState extends ConsumerState<_CategoryPickerShell> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(
-                        onPressed: () => setState(() => _subs = null),
+                        onPressed: _goBack,
                         icon: const Icon(Icons.arrow_back, size: 16),
-                        label: Text(context.tr('seller.backToCategories')),
+                        label: Text(
+                          context.tr(
+                            _types != null
+                                ? 'seller.backToSubcategories'
+                                : 'seller.backToCategories',
+                          ),
+                        ),
                       ),
                     ),
                   ],

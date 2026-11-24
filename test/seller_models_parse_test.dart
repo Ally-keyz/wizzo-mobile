@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:wizzo_market/features/catalog/models/product.dart';
 import 'package:wizzo_market/features/seller/data/seller_repository.dart';
 import 'package:wizzo_market/features/seller/models/payment_account.dart';
 import 'package:wizzo_market/features/seller/models/seller_order.dart';
@@ -242,6 +243,47 @@ void main() {
       final json = cleared.toJson(isUpdate: true);
       expect(json['discountPrice'], isNull);
       expect(json['discountEndsAt'], isNull);
+    });
+
+    test('sends the selected third-level product type', () {
+      const withType = ProductInput(
+        name: 'Dried fish',
+        categoryId: 'cat-1',
+        subcategoryId: 'sub-1',
+        productTypeId: 'type-1',
+        description: 'Sun-dried fish',
+        price: 5000,
+        stock: 3,
+        images: ['https://res.cloudinary.com/x/a.jpg'],
+      );
+      expect(withType.toJson()['productTypeId'], 'type-1');
+    });
+
+    test('update clears a removed product type to null', () {
+      const cleared = ProductInput(
+        name: 'Dried fish',
+        categoryId: 'cat-1',
+        subcategoryId: 'sub-1',
+        description: 'Sun-dried fish',
+        price: 5000,
+        stock: 3,
+        images: ['https://res.cloudinary.com/x/a.jpg'],
+      );
+      final json = cleared.toJson(isUpdate: true);
+      expect(json.containsKey('productTypeId'), isTrue);
+      expect(json['productTypeId'], isNull);
+    });
+  });
+
+  group('Product.fromApi third-level category', () {
+    test('reads productTypeId as a CategoryRef id', () {
+      final product = Product.fromApi({
+        '_id': 'p-1',
+        'name': 'Dried fish',
+        'price': 5000,
+        'productTypeId': 'type-1',
+      });
+      expect(product.productType?.id, 'type-1');
     });
   });
 }

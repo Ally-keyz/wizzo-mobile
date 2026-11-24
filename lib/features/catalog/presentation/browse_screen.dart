@@ -12,6 +12,21 @@ import 'product_shelf.dart';
 
 enum _Sort { featured, newest, priceLow, priceHigh, rating }
 
+/// Locates a slug anywhere in the category tree so browse pages work for
+/// roots, subcategories and third-level product-type slugs alike.
+({CategoryNode? root, CategoryNode? sub})? _locateCategory(
+  List<CategoryNode> tree,
+  String slug,
+) {
+  for (final root in tree) {
+    if (root.slug == slug) return (root: root, sub: null);
+    for (final sub in root.children) {
+      if (sub.slug == slug) return (root: root, sub: sub);
+    }
+  }
+  return null;
+}
+
 class BrowseScreen extends ConsumerStatefulWidget {
   const BrowseScreen({
     super.key,
@@ -30,6 +45,7 @@ class BrowseScreen extends ConsumerStatefulWidget {
 
 class _BrowseScreenState extends ConsumerState<BrowseScreen> {
   String? _sub;
+  String? _productType;
   _Sort _sort = _Sort.featured;
   bool _showFilters = false;
   num? _priceMin;
@@ -72,7 +88,28 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveSlug = _sub ?? widget.slug;
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final located = _locateCategory(
+      categoriesAsync.value ?? const <CategoryNode>[],
+      widget.slug,
+    );
+    final subs = widget.subCategories.isNotEmpty
+        ? widget.subCategories
+        : (located?.root?.children ?? const <CategoryNode>[]);
+    CategoryNode? selectedSub = located?.sub;
+    if (selectedSub == null && _sub != null) {
+      for (final sub in subs) {
+        if (sub.slug == _sub) {
+          selectedSub = sub;
+          break;
+        }
+      }
+    }
+    final types = selectedSub?.children ?? const <CategoryNode>[];
+
+    // Third-level product types are real categories, so their slug can be
+    // passed straight to the depth-aware /categories/:slug/products endpoint.
+    final effectiveSlug = _productType ?? _sub ?? widget.slug;
     final products = ref.watch(categoryProductsProvider(effectiveSlug));
 
     final sorted = _sortedFiltered(products.value ?? const []);
@@ -103,7 +140,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
       ),
       body: Column(
         children: [
-          if (widget.subCategories.isNotEmpty)
+          if (subs.isNotEmpty)
             SizedBox(
               height: 52,
               child: ListView(
@@ -116,15 +153,59 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                   WChip(
                     label: context.tr('browse.all'),
                     selected: _sub == null,
-                    onTap: () => setState(() => _sub = null),
+                    onTap: () => setState(() {
+                      _sub = null;
+                      _productType = null;
+                    }),
                   ),
-                  for (final sub in widget.subCategories)
+                  for (final sub in subs)
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: WChip(
                         label: sub.name,
                         selected: _sub == sub.slug,
-                        onTap: () => setState(() => _sub = sub.slug),
+                        onTap: () => setState(() {
+                          _sub = sub.slug;
+                          _productType = null;
+                        }),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          if (types.isNotEmpty)
+            SizedBox(
+              height: 52,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                children: [
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        context.tr('browse.productType'),
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                  WChip(
+                    label: context.tr('browse.all'),
+                    selected: _productType == null,
+                    onTap: () => setState(() => _productType = null),
+                  ),
+                  for (final type in types)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: WChip(
+                        label: type.name,
+                        selected: _productType == type.slug,
+                        onTap: () => setState(() => _productType = type.slug),
                       ),
                     ),
                 ],

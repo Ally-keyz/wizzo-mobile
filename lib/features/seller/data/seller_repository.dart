@@ -26,6 +26,7 @@ class ProductInput {
     required this.name,
     required this.categoryId,
     this.subcategoryId,
+    this.productTypeId,
     required this.description,
     required this.price,
     this.currency = 'EUR',
@@ -50,6 +51,8 @@ class ProductInput {
   final String name;
   final String categoryId;
   final String? subcategoryId;
+  /// Optional third-level category id (product type).
+  final String? productTypeId;
   final String description;
 
   /// Seller-entered selling price in [currency]. The backend derives the
@@ -87,6 +90,12 @@ class ProductInput {
     'categoryId': categoryId,
     if (subcategoryId != null && subcategoryId!.trim().isNotEmpty)
       'subcategoryId': subcategoryId,
+    if (productTypeId != null && productTypeId!.trim().isNotEmpty)
+      'productTypeId': productTypeId,
+    // On update, an explicitly cleared product type must be sent as null so
+    // the server unsets the old third-level category.
+    if (isUpdate && (productTypeId == null || productTypeId!.trim().isEmpty))
+      'productTypeId': null,
     'description': description.trim(),
     'price': price,
     'currency': currency,
