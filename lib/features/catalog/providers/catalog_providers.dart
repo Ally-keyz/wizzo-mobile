@@ -17,6 +17,10 @@ final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
 class HomeFeedController extends AsyncNotifier<Paged<Product>> {
   static const int _pageSize = 10;
 
+  /// Guards against the scroll listener and a provider rebuild both firing a
+  /// fetch for the same cursor page at the same time.
+  bool _loadingMore = false;
+
   @override
   Future<Paged<Product>> build() async {
     final repo = ref.watch(catalogRepositoryProvider);
@@ -26,6 +30,7 @@ class HomeFeedController extends AsyncNotifier<Paged<Product>> {
   /// Appends the next cursor page of products to the feed. No-op while
   /// already loading, after an error, or when there is no next page.
   Future<void> loadMore() async {
+    if (_loadingMore) return;
     final data = state.value;
     if (state.isLoading ||
         state.hasError ||
@@ -34,6 +39,7 @@ class HomeFeedController extends AsyncNotifier<Paged<Product>> {
         data.nextCursor == null) {
       return;
     }
+    _loadingMore = true;
     try {
       final more = await ref
           .read(catalogRepositoryProvider)
@@ -52,7 +58,9 @@ class HomeFeedController extends AsyncNotifier<Paged<Product>> {
         ),
       );
     } catch (_) {
-      // Keep the previous page; the button stays tappable to retry.
+      // Keep the previous page; scrolling retries when the threshold is hit.
+    } finally {
+      _loadingMore = false;
     }
   }
 }

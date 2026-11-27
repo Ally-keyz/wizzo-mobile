@@ -37,12 +37,41 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _greetingKey = 'home.greetingGoodDay';
 
+  /// Drives endless loading of the For You feed: a new page is fetched as the
+  /// user approaches the bottom instead of requiring a button tap.
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     _computeGreeting();
     ref.read(nearbySellersProvider);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoDetect());
+    _scrollController.addListener(_maybeLoadMore);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeAutoDetect();
+      _maybeLoadMore();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_maybeLoadMore);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Fetches the next page when the scroll position nears the end. The feed
+  /// controller rejects duplicate calls, so this is safe to invoke from both
+  /// the scroll listener and provider rebuilds.
+  void _maybeLoadMore() {
+    if (!mounted || !_scrollController.hasClients) return;
+    final feed = ref.read(homeFeedProvider);
+    final data = feed.value;
+    if (feed.isLoading || feed.hasError || data == null) return;
+    if (!data.hasNext || data.nextCursor == null) return;
+    if (_scrollController.position.extentAfter < 600) {
+      unawaited(ref.read(homeFeedProvider.notifier).loadMore());
+    }
   }
 
   /// Ask for the device location on first launch so the app can show the
@@ -129,6 +158,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Re-check after each feed update: if a page still doesn't fill the
+    // viewport, keep loading until it does (or until the server has no more).
+    ref.listen(homeFeedProvider, (_, _) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _maybeLoadMore());
+    });
+
     final theme = Theme.of(context);
     final userName = ref.watch(authDisplayNameProvider);
     final unreadNotifications =
@@ -221,6 +256,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ]);
         },
         child: CustomScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             // Category strip sits directly below the app bar. Tapping a
@@ -349,9 +385,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             _ForYouSection(),
-
-            // Continue viewing CTA — keeps the endless For You scroll going.
-            const SliverToBoxAdapter(child: _ContinueViewingButton()),
 
             // Top sellers rail
             SliverToBoxAdapter(
@@ -1290,93 +1323,6 @@ class _ForYouSection extends ConsumerWidget {
     }
 
     return SliverProductGrid(products: products);
-  }
-}
-
-class _ContinueViewingButton extends ConsumerStatefulWidget {
-  const _ContinueViewingButton();
-
-  @override
-  ConsumerState<_ContinueViewingButton> createState() =>
-      _ContinueViewingButtonState();
-}
-
-class _ContinueViewingButtonState
-    extends ConsumerState<_ContinueViewingButton> {
-  bool _loading = false;
-
-  Future<void> _loadMore() async {
-    setState(() => _loading = true);
-    await ref.read(homeFeedProvider.notifier).loadMore();
-    if (mounted) setState(() => _loading = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final feed = ref.watch(homeFeedProvider);
-    final products = feed.value?.items ?? const <Product>[];
-    if (products.isEmpty || !(feed.value?.hasNext ?? false)) {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      child: Material(
-        color: Palette.gold,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: _loading ? null : _loadMore,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (_loading) ...[
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Palette.navy,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ] else ...[
-                  const Icon(
-                    Icons.play_circle_fill,
-                    color: Palette.navy,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                ],
-                Flexible(
-                  child: Text(
-                    context.tr('home.continueViewing'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: Palette.navy,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
-                if (!_loading) ...[
-                  const SizedBox(width: 10),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: Palette.navy,
-                    size: 20,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 
